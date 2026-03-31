@@ -6,3 +6,251 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+// ─── Utenti e Auth ────────────────────────────────────────────────────────────
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  password     String
+  firstName    String
+  lastName     String
+  isActive     Boolean       @default(true)
+  userRoles    UserRole[]
+  managers     UserManager[] @relation("UserManaged")
+  managing     UserManager[] @relation("UserManager")
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model UserManager {
+  managerId String
+  userId    String
+  manager   User   @relation("UserManager", fields: [managerId], references: [id], onDelete: Cascade)
+  user      User   @relation("UserManaged", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([managerId, userId])
+}
+
+model Role {
+  id              String           @id @default(cuid())
+  name            String           @unique
+  label           String
+  isSystem        Boolean          @default(false)
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+}
+
+model Permission {
+  id              String           @id @default(cuid())
+  resource        String
+  action          String
+  rolePermissions RolePermission[]
+
+  @@unique([resource, action])
+}
+
+model UserRole {
+  userId String
+  roleId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+model RolePermission {
+  roleId       String
+  permissionId String
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+// ─── Articoli Funebri — Cofani ────────────────────────────────────────────────
+
+model CoffinArticle {
+  id             String              @id @default(cuid())
+  code           String              @unique
+  description    String
+  notes          String?
+  imageUrl       String?
+  categories     CoffinCategory[]
+  subcategories  CoffinSubcategory[]
+  essences       Essence[]
+  figures        Figure[]
+  colors         Color[]
+  finishes       Finish[]
+  measure        InternalMeasure?
+  priceListItems PriceListItem[]
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+}
+
+model InternalMeasure {
+  id        String        @id @default(cuid())
+  articleId String        @unique
+  article   CoffinArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  head      Float
+  feet      Float
+  shoulder  Float
+  height    Float
+  width     Float
+  depth     Float
+}
+
+model CoffinCategory {
+  id       String          @id @default(cuid())
+  code     String          @unique
+  label    String
+  articles CoffinArticle[]
+}
+
+model CoffinSubcategory {
+  id       String          @id @default(cuid())
+  code     String          @unique
+  label    String
+  articles CoffinArticle[]
+}
+
+model Essence {
+  id       String          @id @default(cuid())
+  code     String          @unique
+  label    String
+  articles CoffinArticle[]
+}
+
+model Figure {
+  id       String          @id @default(cuid())
+  code     String          @unique
+  label    String
+  articles CoffinArticle[]
+}
+
+model Color {
+  id       String          @id @default(cuid())
+  code     String          @unique
+  label    String
+  articles CoffinArticle[]
+}
+
+model Finish {
+  id       String          @id @default(cuid())
+  code     String          @unique
+  label    String
+  articles CoffinArticle[]
+}
+
+// ─── Articoli Funebri — Accessori ─────────────────────────────────────────────
+
+model AccessoryArticle {
+  id             String                 @id @default(cuid())
+  code           String                 @unique
+  description    String
+  notes          String?
+  imageUrl       String?
+  pdfPage        Int?
+  categories     AccessoryCategory[]
+  subcategories  AccessorySubcategory[]
+  priceListItems PriceListItem[]
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
+}
+
+model AccessoryCategory {
+  id       String             @id @default(cuid())
+  code     String             @unique
+  label    String
+  articles AccessoryArticle[]
+}
+
+model AccessorySubcategory {
+  id       String             @id @default(cuid())
+  code     String             @unique
+  label    String
+  articles AccessoryArticle[]
+}
+
+// ─── Articoli Marmisti ────────────────────────────────────────────────────────
+
+model MarmistaArticle {
+  id             String             @id @default(cuid())
+  code           String             @unique
+  description    String
+  notes          String?
+  pdfPage        Int?
+  publicPrice    Float?
+  accessoryId    String?
+  accessory      MarmistaArticle?   @relation("MarmistaAccessory", fields: [accessoryId], references: [id])
+  accessories    MarmistaArticle[]  @relation("MarmistaAccessory")
+  categories     MarmistaCategory[]
+  priceListItems PriceListItem[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model MarmistaCategory {
+  id       String            @id @default(cuid())
+  code     String            @unique
+  label    String
+  articles MarmistaArticle[]
+}
+
+// ─── Listini ──────────────────────────────────────────────────────────────────
+
+enum PriceListType {
+  purchase
+  sale
+}
+
+enum DiscountType {
+  percentage
+  absolute
+}
+
+model PriceList {
+  id         String          @id @default(cuid())
+  name       String
+  type       PriceListType
+  parentId   String?
+  parent     PriceList?      @relation("PriceListParent", fields: [parentId], references: [id])
+  children   PriceList[]     @relation("PriceListParent")
+  autoUpdate Boolean         @default(false)
+  rules      PriceRule[]
+  items      PriceListItem[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model PriceRule {
+  id            String       @id @default(cuid())
+  priceListId   String
+  priceList     PriceList    @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  filterType    String?
+  filterValue   String?
+  discountType  DiscountType
+  discountValue Float
+}
+
+model PriceListItem {
+  id                 String            @id @default(cuid())
+  priceListId        String
+  priceList          PriceList         @relation(fields: [priceListId], references: [id], onDelete: Cascade)
+  coffinArticleId    String?
+  coffinArticle      CoffinArticle?    @relation(fields: [coffinArticleId], references: [id])
+  accessoryArticleId String?
+  accessoryArticle   AccessoryArticle? @relation(fields: [accessoryArticleId], references: [id])
+  marmistaArticleId  String?
+  marmistaArticle    MarmistaArticle?  @relation(fields: [marmistaArticleId], references: [id])
+  price              Float
+}
+
+// ─── PDF Catalogo ─────────────────────────────────────────────────────────────
+
+model PdfCatalog {
+  id         String   @id @default(cuid())
+  filePath   String
+  fileName   String
+  uploadedAt DateTime @default(now())
+}
