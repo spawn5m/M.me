@@ -50,11 +50,5 @@ export interface ArticleContext {
   subcategoryCode?: string
 }
 
-// Estensione sessione Fastify
-
-declare module '@fastify/secure-session' {
-  interface SessionData {
-    userId: string
-    roles: string[]
-  }
-}
+// Nota: SessionData augmentation è in src/plugins/auth.ts
+// dove @fastify/secure-session viene importato
