@@ -1,0 +1,60 @@
+// Tipi API
+
+export interface ApiError {
+  error: string
+  message: string
+  statusCode: number
+}
+
+export interface PaginatedResponse<T> {
+  data: T[]
+  pagination: {
+    page: number
+    pageSize: number
+    total: number
+    totalPages: number
+  }
+}
+
+export interface AuthUser {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  roles: string[]
+  isActive: boolean
+}
+
+// Tipi priceEngine
+
+export type PriceListType = 'purchase' | 'sale'
+export type DiscountType = 'percentage' | 'absolute'
+
+export interface PriceRule {
+  filterType: 'category' | 'subcategory' | null
+  filterValue: string | null
+  discountType: DiscountType
+  discountValue: number
+}
+
+export interface PriceListNode {
+  type: PriceListType
+  autoUpdate: boolean
+  rules: PriceRule[]
+  parent?: PriceListNode
+}
+
+export interface ArticleContext {
+  basePrice: number
+  categoryCode?: string
+  subcategoryCode?: string
+}
+
+// Estensione sessione Fastify
+
+declare module '@fastify/secure-session' {
+  interface SessionData {
+    userId: string
+    roles: string[]
+  }
+}
