@@ -1,0 +1,27 @@
+{
+  "nav": {
+    "home": "Home",
+    "ourStory": "La Nostra Storia",
+    "whereWeAre": "Dove Siamo",
+    "funeralHomes": "Per le Imprese Funebri",
+    "marmistas": "Per i Marmisti",
+    "reservedArea": "Area Riservata"
+  },
+  "auth": {
+    "login": "Accedi",
+    "logout": "Esci",
+    "email": "Email",
+    "password": "Password",
+    "loginButton": "Accedi"
+  },
+  "errors": {
+    "unauthorized": "Accesso non autorizzato",
+    "forbidden": "Non hai i permessi per questa operazione",
+    "notFound": "Pagina non trovata",
+    "serverError": "Errore interno del server"
+  },
+  "home": {},
+  "catalog": {},
+  "ourStory": {},
+  "whereWeAre": {}
+}
