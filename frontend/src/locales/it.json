@@ -20,7 +20,22 @@
     "notFound": "Pagina non trovata",
     "serverError": "Errore interno del server"
   },
-  "home": {},
+  "home": {
+    "badge": "Dal 1965 in Sardegna",
+    "headline": "ECCELLENZA FUNEBRE.",
+    "subheadline": "Fornitore leader in Sardegna di arredi funebri e semilavorati in marmo.",
+    "ctaPrimary": "SCOPRI I PRODOTTI",
+    "ctaSecondary": "CONTATTACI",
+    "sectionFunebri": "Per le Imprese Funebri",
+    "sectionFunebriDesc": "Cofani, accessori e arredi di alta qualità per i professionisti del settore.",
+    "sectionFunebriCta": "VEDI IL CATALOGO",
+    "sectionMarmisti": "Per i Marmisti",
+    "sectionMarmistiDesc": "Semilavorati in marmo e granito con consegna in tutta la Sardegna.",
+    "sectionMarmistiCta": "SCOPRI I PRODOTTI",
+    "locationTitle": "LE NOSTRE SEDI",
+    "locationVillamar": "Villamar",
+    "locationSassari": "Sassari"
+  },
   "catalog": {},
   "ourStory": {},
   "whereWeAre": {}

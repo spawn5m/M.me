@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import Navbar from './components/layout/Navbar'
 import FooterDark from './components/layout/FooterDark'
 import FooterLight from './components/layout/FooterLight'
+import HomePage from './pages/HomePage'
 
 function PlaceholderPage({ name }: { name: string }) {
   const { t } = useTranslation()
@@ -23,14 +24,14 @@ function AppContent() {
     <>
       <Navbar variant={isDark ? 'dark' : 'light'} />
       <Routes>
-        <Route path="/" element={<PlaceholderPage name="Home" />} />
+        <Route path="/" element={<HomePage />} />
         <Route path="/storia" element={<PlaceholderPage name="La Nostra Storia" />} />
         <Route path="/dove-siamo" element={<PlaceholderPage name="Dove Siamo" />} />
         <Route path="/imprese-funebri" element={<PlaceholderPage name="Per le Imprese Funebri" />} />
         <Route path="/marmisti" element={<PlaceholderPage name="Per i Marmisti" />} />
         <Route path="/area-riservata" element={<PlaceholderPage name="Area Riservata" />} />
       </Routes>
-      {isDark ? <FooterDark /> : <FooterLight />}
+      {isDark ? null : <FooterLight />}
     </>
   )
 }
