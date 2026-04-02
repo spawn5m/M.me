@@ -36,7 +36,47 @@
     "locationVillamar": "Villamar",
     "locationSassari": "Sassari"
   },
-  "catalog": {},
-  "ourStory": {},
-  "whereWeAre": {}
+  "catalog": {
+    "coffins": "Cofani",
+    "accessories": "Accessori",
+    "marmista": "Per i Marmisti",
+    "ceabis": "Catalogo Ceabis",
+    "noResults": "Nessun prodotto trovato",
+    "loading": "Caricamento...",
+    "filterAll": "Tutti",
+    "filterSearch": "Cerca prodotto...",
+    "clearFilters": "Pulisci filtri",
+    "viewDetails": "Vedi dettagli"
+  },
+  "ourStory": {
+    "title": "Mirigliani",
+    "subtitle": "Dal 1965 in Sardegna",
+    "narrative": "Da oltre mezzo secolo, Mirigliani è il punto di riferimento in Sardegna per le forniture funebri e i semilavorati in marmo e granito.",
+    "value1Title": "Qualità Certificata",
+    "value1Desc": "Solo materiali selezionati dai migliori fornitori italiani ed europei.",
+    "value2Title": "Tradizione",
+    "value2Desc": "Oltre 60 anni di esperienza nel settore, tramandati di generazione in generazione.",
+    "value3Title": "Servizio",
+    "value3Desc": "Consegne puntuali in tutta la Sardegna, supporto tecnico dedicato.",
+    "locationTitle": "LE NOSTRE SEDI"
+  },
+  "whereWeAre": {
+    "title": "Dove Siamo",
+    "subtitle": "Due sedi per servirti meglio in tutta la Sardegna.",
+    "villamar": "Sede di Villamar",
+    "villamarAddress": "Via Roma 12, 09020 Villamar (SU)",
+    "villamarPhone": "+39 070 930 1234",
+    "villamarHours": "Lun-Ven 8:00-18:00",
+    "sassari": "Sede di Sassari",
+    "sassariAddress": "Via Sassari 45, 07100 Sassari (SS)",
+    "sassariPhone": "+39 079 123 4567",
+    "sassariHours": "Lun-Ven 8:30-17:30",
+    "contactTitle": "Contattaci",
+    "contactName": "Nome",
+    "contactEmail": "Email",
+    "contactMessage": "Messaggio",
+    "contactSend": "INVIA MESSAGGIO",
+    "contactSent": "Messaggio inviato con successo!",
+    "contactError": "Errore nell'invio. Riprova."
+  }
 }

@@ -3,6 +3,10 @@ import { useTranslation } from 'react-i18next'
 import Navbar from './components/layout/Navbar'
 import FooterLight from './components/layout/FooterLight'
 import HomePage from './pages/HomePage'
+import ImpreseFunebrePage from './pages/ImpreseFunebrePage'
+import MarmistiPage from './pages/MarmistiPage'
+import NostraStoriaPage from './pages/NostraStoriaPage'
+import DoveSiamoPage from './pages/DoveSiamoPage'
 
 function PlaceholderPage({ name }: { name: string }) {
   const { t } = useTranslation()
@@ -24,10 +28,10 @@ function AppContent() {
       <Navbar variant={isDark ? 'dark' : 'light'} />
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/storia" element={<PlaceholderPage name="La Nostra Storia" />} />
-        <Route path="/dove-siamo" element={<PlaceholderPage name="Dove Siamo" />} />
-        <Route path="/imprese-funebri" element={<PlaceholderPage name="Per le Imprese Funebri" />} />
-        <Route path="/marmisti" element={<PlaceholderPage name="Per i Marmisti" />} />
+        <Route path="/storia" element={<NostraStoriaPage />} />
+        <Route path="/dove-siamo" element={<DoveSiamoPage />} />
+        <Route path="/imprese-funebri" element={<ImpreseFunebrePage />} />
+        <Route path="/marmisti" element={<MarmistiPage />} />
         <Route path="/area-riservata" element={<PlaceholderPage name="Area Riservata" />} />
       </Routes>
       {isDark ? null : <FooterLight />}
