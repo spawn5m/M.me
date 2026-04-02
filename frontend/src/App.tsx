@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from './components/layout/Navbar'
-import FooterDark from './components/layout/FooterDark'
 import FooterLight from './components/layout/FooterLight'
 import HomePage from './pages/HomePage'
 
