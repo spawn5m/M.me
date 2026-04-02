@@ -149,7 +149,7 @@ export default function ContactForm() {
         disabled={status === 'sending'}
         className="w-full md:w-auto px-10 py-3 text-sm font-medium uppercase tracking-[0.15em] border border-[#031634] text-[#031634] hover:bg-[#031634] hover:text-white transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {status === 'sending' ? 'Invio...' : t('whereWeAre.contactSend')}
+        {status === 'sending' ? t('whereWeAre.contactSending') : t('whereWeAre.contactSend')}
       </button>
     </form>
   )

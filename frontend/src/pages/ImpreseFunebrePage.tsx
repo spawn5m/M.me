@@ -117,11 +117,10 @@ export default function ImpreseFunebrePage() {
           {t('nav.funeralHomes')}
         </p>
         <h1 className="font-serif text-4xl md:text-5xl text-[#031634] leading-tight">
-          Per le Imprese Funebri
+          {t('catalog.funeralHomesTitle')}
         </h1>
         <p className="mt-3 text-[#6B7280] text-base max-w-2xl">
-          Cofani, accessori e arredi di alta qualità per i professionisti del settore.
-          Tutta la gamma Ceabis disponibile su richiesta.
+          {t('catalog.funeralHomesSubtitle')}
         </p>
       </div>
 
@@ -174,13 +173,13 @@ export default function ImpreseFunebrePage() {
       <section className="px-6 md:px-12 lg:px-20 py-14 border-t border-[#E5E0D8] bg-white">
         <div className="mb-8">
           <p className="text-xs font-medium uppercase tracking-[0.15em] text-[#C9A96E] mb-2">
-            Marchi partner
+            {t('catalog.partnerBrands')}
           </p>
           <h2 className="font-serif text-3xl md:text-4xl text-[#031634]">
             {t('catalog.ceabis')}
           </h2>
           <p className="mt-2 text-[#6B7280] max-w-xl">
-            La gamma completa Ceabis — articoli funerari di alta qualità disponibili su ordinazione.
+            {t('catalog.ceabisSubtitle')}
           </p>
         </div>
 

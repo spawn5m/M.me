@@ -63,6 +63,6 @@ const start = async () => {
 }
 
 start().catch((err) => {
-  console.error(err)
+  process.stderr.write(String(err) + '\n')
   process.exit(1)
 })

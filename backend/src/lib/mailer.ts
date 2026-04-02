@@ -31,6 +31,15 @@ export function setTransporter(t: Transporter): void {
   transporter = t
 }
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
 export async function sendContactEmail(data: ContactEmailData): Promise<void> {
   const to = process.env.CONTACT_EMAIL_TO ?? 'info@mirigliani.me'
   await getTransporter().sendMail({
@@ -38,6 +47,6 @@ export async function sendContactEmail(data: ContactEmailData): Promise<void> {
     to,
     subject: `Contatto dal sito — ${data.name}`,
     text: `Nome: ${data.name}\nEmail: ${data.email}\n\nMessaggio:\n${data.message}`,
-    html: `<p><strong>Nome:</strong> ${data.name}</p><p><strong>Email:</strong> ${data.email}</p><hr><p>${data.message.replace(/\n/g, '<br>')}</p>`,
+    html: `<p><strong>Nome:</strong> ${escapeHtml(data.name)}</p><p><strong>Email:</strong> ${data.email}</p><hr><p>${escapeHtml(data.message).replace(/\n/g, '<br>')}</p>`,
   })
 }

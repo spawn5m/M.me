@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import type { CoffinItem, AccessoryItem, MarmistaItem, CeabisItem } from '../../lib/types'
 
 type ModalType = 'coffin' | 'accessory' | 'marmista' | 'ceabis'
@@ -30,6 +31,7 @@ const TYPE_LABELS: Record<ModalType, string> = {
 }
 
 export default function ProductModal({ item, type, onClose }: ProductModalProps) {
+  const { t } = useTranslation()
   if (!item) return null
 
   const coffinItem = isCoffin(item, type) ? item : null
@@ -102,7 +104,7 @@ export default function ProductModal({ item, type, onClose }: ProductModalProps)
             {coffinItem && (
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest text-[#031634] mb-2">
-                  Caratteristiche
+                  {t('catalog.characteristics')}
                 </h3>
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   {coffinItem.essences.length > 0 && (
@@ -145,7 +147,7 @@ export default function ProductModal({ item, type, onClose }: ProductModalProps)
             {coffinItem?.internalMeasures && (
               <div>
                 <h3 className="text-xs font-bold uppercase tracking-widest text-[#031634] mb-2">
-                  Misure Interne
+                  {t('catalog.internalMeasures')}
                 </h3>
                 <table className="w-full text-sm border-collapse">
                   <tbody>
@@ -183,7 +185,7 @@ export default function ProductModal({ item, type, onClose }: ProductModalProps)
                     </tr>
                   </tbody>
                 </table>
-                <p className="text-xs text-[#44474e] mt-1 italic">Valori in cm</p>
+                <p className="text-xs text-[#44474e] mt-1 italic">{t('catalog.measureUnit')}</p>
               </div>
             )}
 
@@ -191,7 +193,7 @@ export default function ProductModal({ item, type, onClose }: ProductModalProps)
             {hasPdfPage(item) && item.pdfPage !== undefined && (
               <div className="mt-auto pt-2">
                 <p className="text-sm text-[#44474e]">
-                  Pagina catalogo PDF:{' '}
+                  {t('catalog.pdfPage')}:{' '}
                   <span className="font-mono font-bold text-[#031634]">
                     {item.pdfPage}
                   </span>
@@ -207,13 +209,13 @@ export default function ProductModal({ item, type, onClose }: ProductModalProps)
             disabled
             className="text-sm font-medium text-[#44474e] border border-[#E5E0D8] px-4 py-2 disabled:opacity-40 cursor-default"
           >
-            ← Prodotto precedente
+            ← {t('catalog.prevProduct')}
           </button>
           <button
             disabled
             className="text-sm font-medium text-[#44474e] border border-[#E5E0D8] px-4 py-2 disabled:opacity-40 cursor-default"
           >
-            Prodotto successivo →
+            {t('catalog.nextProduct')} →
           </button>
         </div>
       </div>

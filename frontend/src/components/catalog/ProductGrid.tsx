@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import ProductCard from './ProductCard'
 
 interface GridItem {
@@ -34,6 +35,7 @@ export default function ProductGrid({
   onItemClick,
   loading,
 }: ProductGridProps) {
+  const { t } = useTranslation()
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -47,7 +49,7 @@ export default function ProductGrid({
   if (items.length === 0) {
     return (
       <div className="flex items-center justify-center py-24 text-[#44474e] text-base">
-        Nessun prodotto trovato
+        {t('catalog.noResults')}
       </div>
     )
   }

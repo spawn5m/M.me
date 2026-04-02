@@ -46,7 +46,21 @@
     "filterAll": "Tutti",
     "filterSearch": "Cerca prodotto...",
     "clearFilters": "Pulisci filtri",
-    "viewDetails": "Vedi dettagli"
+    "viewDetails": "Vedi dettagli",
+    "allCategories": "Tutte le categorie",
+    "allSubcategories": "Tutte le sottocategorie",
+    "searchPlaceholder": "Cerca prodotto...",
+    "itemsFound": "Articoli trovati",
+    "characteristics": "Caratteristiche",
+    "internalMeasures": "Misure Interne",
+    "measureUnit": "Valori in cm",
+    "pdfPage": "Pagina catalogo PDF",
+    "prevProduct": "Prodotto precedente",
+    "nextProduct": "Prodotto successivo",
+    "funeralHomesTitle": "Per le Imprese Funebri",
+    "funeralHomesSubtitle": "Cofani, accessori e arredi di alta qualità per i professionisti del settore. Tutta la gamma Ceabis disponibile su richiesta.",
+    "partnerBrands": "Marchi partner",
+    "ceabisSubtitle": "La gamma completa Ceabis — articoli funerari di alta qualità disponibili su ordinazione."
   },
   "ourStory": {
     "title": "Mirigliani",
@@ -76,6 +90,7 @@
     "contactEmail": "Email",
     "contactMessage": "Messaggio",
     "contactSend": "INVIA MESSAGGIO",
+    "contactSending": "Invio in corso...",
     "contactSent": "Messaggio inviato con successo!",
     "contactError": "Errore nell'invio. Riprova."
   }

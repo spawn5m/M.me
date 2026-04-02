@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface FilterBarProps {
   categories: string[]
@@ -13,6 +14,7 @@ export default function FilterBar({
   onFilter,
   totalCount,
 }: FilterBarProps) {
+  const { t } = useTranslation()
   const [category, setCategory] = useState('')
   const [subcategory, setSubcategory] = useState('')
   const [search, setSearch] = useState('')
@@ -57,7 +59,7 @@ export default function FilterBar({
             onChange={(e) => handleCategoryChange(e.target.value)}
             className="bg-white border-0 focus:ring-2 focus:ring-[#C9A96E] rounded px-3 py-2 text-sm text-[#031634] min-w-[160px] cursor-pointer outline-none"
           >
-            <option value="">Tutte le categorie</option>
+            <option value="">{t('catalog.allCategories')}</option>
             {categories.map((cat) => (
               <option key={cat} value={cat}>
                 {cat}
@@ -79,7 +81,7 @@ export default function FilterBar({
               onChange={(e) => handleSubcategoryChange(e.target.value)}
               className="bg-white border-0 focus:ring-2 focus:ring-[#C9A96E] rounded px-3 py-2 text-sm text-[#031634] min-w-[160px] cursor-pointer outline-none"
             >
-              <option value="">Tutte le sottocategorie</option>
+              <option value="">{t('catalog.allSubcategories')}</option>
               {subcategories.map((sub) => (
                 <option key={sub} value={sub}>
                   {sub}
@@ -111,7 +113,7 @@ export default function FilterBar({
             type="text"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder="Cerca prodotto..."
+            placeholder={t('catalog.searchPlaceholder')}
             className="w-full bg-white border-0 focus:ring-2 focus:ring-[#C9A96E] rounded pl-10 pr-4 py-2 text-sm text-[#031634] outline-none"
           />
         </div>
@@ -122,14 +124,14 @@ export default function FilterBar({
             onClick={handleReset}
             className="text-sm font-medium text-[#C9A96E] border border-[#C9A96E] px-3 py-2 hover:bg-[#C9A96E] hover:text-white transition-colors duration-150 rounded"
           >
-            Pulisci filtri
+            {t('catalog.clearFilters')}
           </button>
         )}
 
         {/* Contatore */}
         {totalCount !== undefined && (
           <span className="font-mono text-xs text-[#44474e] ml-auto">
-            {totalCount} Articoli trovati
+            {totalCount} {t('catalog.itemsFound')}
           </span>
         )}
       </div>
