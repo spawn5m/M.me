@@ -55,7 +55,7 @@ export default function ProductModal({ item, type, onClose }: ProductModalProps)
         {/* Header */}
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-center gap-3">
-            <span className="font-mono text-xs text-[#44474e] tracking-wide">
+            <span className="font-mono text-[1.5rem] font-bold text-[#C9A96E] tracking-widest leading-none uppercase">
               {item.code}
             </span>
             <span className="bg-[#031634] text-white text-xs font-bold uppercase tracking-widest px-3 py-1">

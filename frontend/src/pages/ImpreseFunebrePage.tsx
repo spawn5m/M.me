@@ -6,6 +6,7 @@ import { useCeabis } from '../hooks/useCeabis'
 import FilterBar from '../components/catalog/FilterBar'
 import ProductGrid from '../components/catalog/ProductGrid'
 import ProductModal from '../components/catalog/ProductModal'
+import AccessoriesView from '../components/catalog/AccessoriesView'
 import type { CoffinItem, AccessoryItem, CeabisItem } from '../lib/types'
 
 type ActiveTab = 'coffins' | 'accessories'
@@ -150,23 +151,30 @@ export default function ImpreseFunebrePage() {
           </button>
         </div>
 
-        {/* FilterBar */}
-        <FilterBar
-          categories={activeCategories}
-          subcategories={activeSubcategories}
-          onFilter={handleFilter}
-          totalCount={activeItems.length}
-        />
-
-        {/* ProductGrid */}
-        <div className="mt-6">
-          <ProductGrid
-            items={activeItems}
-            showPrice={false}
-            onItemClick={activeOnClick}
-            loading={activeLoading}
+        {/* Tab accessori — split PDF view */}
+        {activeTab === 'accessories' ? (
+          <AccessoriesView
+            items={filteredAccessories}
+            loading={loadingAccessories}
           />
-        </div>
+        ) : (
+          <>
+            <FilterBar
+              categories={activeCategories}
+              subcategories={activeSubcategories}
+              onFilter={handleFilter}
+              totalCount={activeItems.length}
+            />
+            <div className="mt-6">
+              <ProductGrid
+                items={activeItems}
+                showPrice={false}
+                onItemClick={activeOnClick}
+                loading={activeLoading}
+              />
+            </div>
+          </>
+        )}
       </section>
 
       {/* Sezione 2 — Catalogo Ceabis */}

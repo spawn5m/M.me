@@ -38,8 +38,8 @@ export default function Navbar({ variant }: NavbarProps) {
   const linkBase = "font-['Newsreader'] italic text-sm transition-colors"
   const linkColor = isDark
     ? 'text-[#8A9BB5] hover:text-white'
-    : 'text-[#031634]/70 hover:text-[#031634]'
-  const linkActiveColor = isDark ? 'text-white' : 'text-[#031634] border-b border-[#C9A96E] pb-0.5'
+    : 'text-[#031634]/50 hover:text-[#031634]'
+  const linkActiveColor = isDark ? 'text-white' : 'text-[#C9A96E] font-semibold'
 
   // CTA button styles
   const ctaBase = 'px-6 py-2 font-[Inter] text-[10px] tracking-widest uppercase font-medium transition-all'

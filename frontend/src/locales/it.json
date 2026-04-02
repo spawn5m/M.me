@@ -60,7 +60,18 @@
     "funeralHomesTitle": "Per le Imprese Funebri",
     "funeralHomesSubtitle": "Cofani, accessori e arredi di alta qualità per i professionisti del settore. Tutta la gamma Ceabis disponibile su richiesta.",
     "partnerBrands": "Marchi partner",
-    "ceabisSubtitle": "La gamma completa Ceabis — articoli funerari di alta qualità disponibili su ordinazione."
+    "ceabisSubtitle": "La gamma completa Ceabis — articoli funerari di alta qualità disponibili su ordinazione.",
+    "searchFilters": "Filtri di ricerca",
+    "searchByDescription": "Cerca descrizione o codice...",
+    "description": "Descrizione",
+    "price": "Prezzo",
+    "category": "Categoria",
+    "selectItemToView": "Seleziona un articolo per visualizzare il catalogo PDF",
+    "accessoryCatalog": "Catalogo accessori",
+    "offerOfMonth": "Offerta del Mese",
+    "publicPrice": "Prezzo pubblico",
+    "contactAgent": "Contatta L'Agente",
+    "imageNotAvailable": "Immagine non disponibile"
   },
   "ourStory": {
     "title": "Mirigliani",

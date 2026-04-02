@@ -1,55 +1,29 @@
-import { useState, useMemo } from 'react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMarmista } from '../hooks/useMarmista'
-import FilterBar from '../components/catalog/FilterBar'
-import ProductGrid from '../components/catalog/ProductGrid'
-import ProductModal from '../components/catalog/ProductModal'
-import type { MarmistaItem } from '../lib/types'
-
-interface Filters {
-  category: string
-  subcategory: string
-  search: string
-}
+import { useAuth } from '../hooks/useAuth'
+import AccessoriesView from '../components/catalog/AccessoriesView'
+import OffertaMeseCard from '../components/catalog/OffertaMeseCard'
 
 export default function MarmistiPage() {
   const { t } = useTranslation()
-  const [filters, setFilters] = useState<Filters>({ category: '', subcategory: '', search: '' })
-  const [selectedItem, setSelectedItem] = useState<MarmistaItem | null>(null)
+  const { user } = useAuth()
+  const isMarmista = user?.role === 'marmista'
+  const { items, loading } = useMarmista()
 
-  const { items, loading } = useMarmista({
-    category: filters.category,
-    search: filters.search,
-  })
-
-  const categories = useMemo(
-    () => [...new Set(items.flatMap((i) => i.categories))],
+  const catalogItems = useMemo(
+    () =>
+      items.map((item) => ({
+        id: item.id,
+        code: item.code,
+        description: item.description,
+        notes: item.notes,
+        categories: item.categories,
+        pdfPage: item.pdfPage,
+        price: item.publicPrice,
+      })),
     [items]
   )
-
-  const filteredItems = useMemo(() => {
-    return items.filter((item) => {
-      const matchCat = !filters.category || item.categories.includes(filters.category)
-      const matchSearch =
-        !filters.search ||
-        item.description.toLowerCase().includes(filters.search.toLowerCase()) ||
-        item.code.toLowerCase().includes(filters.search.toLowerCase())
-      return matchCat && matchSearch
-    })
-  }, [items, filters])
-
-  function handleFilter(f: Filters) {
-    setFilters(f)
-  }
-
-  function handleItemClick(id: string) {
-    const item = items.find((i) => i.id === id) ?? null
-    setSelectedItem(item)
-  }
-
-  function handleCloseModal() {
-    setSelectedItem(null)
-  }
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
@@ -67,34 +41,21 @@ export default function MarmistiPage() {
         </p>
       </div>
 
-      {/* Catalog */}
+      {/* Catalog — split PDF view */}
       <section className="px-6 md:px-12 lg:px-20 py-10">
-        <FilterBar
-          categories={categories}
-          onFilter={handleFilter}
-          totalCount={filteredItems.length}
+        <AccessoriesView
+          items={catalogItems}
+          loading={loading}
+          showPrice={true}
+          catalogPdfUrl="/uploads/pdf/VEZZANI%20CATALOGO%202026.pdf"
         />
-
-        <div className="mt-6">
-          <ProductGrid
-            items={filteredItems.map((item) => ({
-              ...item,
-              price: item.publicPrice,
-            }))}
-            showPrice={true}
-            onItemClick={handleItemClick}
-            loading={loading}
-          />
-        </div>
       </section>
 
-      {/* ProductModal */}
-      {selectedItem && (
-        <ProductModal
-          item={selectedItem}
-          type="marmista"
-          onClose={handleCloseModal}
-        />
+      {/* Offerta del mese — visibile solo ai marmisti autenticati */}
+      {isMarmista && catalogItems[0] && (
+        <section className="bg-[#F4F3F0] border-t border-[#C9A96E] px-6 md:px-12 lg:px-20 py-10">
+          <OffertaMeseCard item={catalogItems[0]} />
+        </section>
       )}
     </div>
   )
