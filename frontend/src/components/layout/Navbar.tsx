@@ -16,6 +16,7 @@ const NAV_LINKS: NavLink[] = [
   { labelKey: 'nav.whereWeAre', path: '/dove-siamo' },
   { labelKey: 'nav.funeralHomes', path: '/imprese-funebri' },
   { labelKey: 'nav.marmistas', path: '/marmisti' },
+  { labelKey: 'nav.altris', path: '/altri' },
 ]
 
 export default function Navbar({ variant }: NavbarProps) {

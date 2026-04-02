@@ -2,16 +2,12 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCoffins } from '../hooks/useCoffins'
 import { useAccessories } from '../hooks/useAccessories'
-import { useCeabis } from '../hooks/useCeabis'
 import FilterBar from '../components/catalog/FilterBar'
 import ProductGrid from '../components/catalog/ProductGrid'
 import ProductModal from '../components/catalog/ProductModal'
 import AccessoriesView from '../components/catalog/AccessoriesView'
-import type { CoffinItem, AccessoryItem, CeabisItem } from '../lib/types'
-
 type ActiveTab = 'coffins' | 'accessories'
-type ModalItem = CoffinItem | AccessoryItem | CeabisItem | null
-type ModalType = 'coffin' | 'accessory' | 'ceabis'
+type ModalType = 'coffin' | 'accessory'
 
 interface Filters {
   category: string
@@ -23,7 +19,7 @@ export default function ImpreseFunebrePage() {
   const { t } = useTranslation()
   const [activeTab, setActiveTab] = useState<ActiveTab>('coffins')
   const [filters, setFilters] = useState<Filters>({ category: '', subcategory: '', search: '' })
-  const [selectedItem, setSelectedItem] = useState<ModalItem>(null)
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null)
   const [selectedType, setSelectedType] = useState<ModalType>('coffin')
 
   const { items: coffins, loading: loadingCoffins } = useCoffins({
@@ -34,9 +30,7 @@ export default function ImpreseFunebrePage() {
     category: filters.category,
     search: filters.search,
   })
-  const { items: ceabis, loading: loadingCeabis } = useCeabis()
-
-  const coffinCategories = useMemo(
+const coffinCategories = useMemo(
     () => [...new Set(coffins.flatMap((c) => c.categories))],
     [coffins]
   )
@@ -62,25 +56,17 @@ export default function ImpreseFunebrePage() {
   }
 
   function handleCoffinClick(id: string) {
-    const item = coffins.find((c) => c.id === id) ?? null
-    setSelectedItem(item)
-    setSelectedType('coffin')
+    const idx = filteredCoffins.findIndex((c) => c.id === id)
+    if (idx !== -1) { setSelectedIndex(idx); setSelectedType('coffin') }
   }
 
   function handleAccessoryClick(id: string) {
-    const item = accessories.find((a) => a.id === id) ?? null
-    setSelectedItem(item)
-    setSelectedType('accessory')
-  }
-
-  function handleCeabisClick(id: string) {
-    const item = ceabis.find((c) => c.id === id) ?? null
-    setSelectedItem(item)
-    setSelectedType('ceabis')
+    const idx = filteredAccessories.findIndex((a) => a.id === id)
+    if (idx !== -1) { setSelectedIndex(idx); setSelectedType('accessory') }
   }
 
   function handleCloseModal() {
-    setSelectedItem(null)
+    setSelectedIndex(null)
   }
 
   const filteredCoffins = useMemo(() => {
@@ -109,6 +95,7 @@ export default function ImpreseFunebrePage() {
   const activeItems = activeTab === 'coffins' ? filteredCoffins : filteredAccessories
   const activeLoading = activeTab === 'coffins' ? loadingCoffins : loadingAccessories
   const activeOnClick = activeTab === 'coffins' ? handleCoffinClick : handleAccessoryClick
+  const modalItems = selectedType === 'coffin' ? filteredCoffins : filteredAccessories
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
@@ -171,39 +158,20 @@ export default function ImpreseFunebrePage() {
                 showPrice={false}
                 onItemClick={activeOnClick}
                 loading={activeLoading}
+                columns={4}
               />
             </div>
           </>
         )}
       </section>
 
-      {/* Sezione 2 — Catalogo Ceabis */}
-      <section className="px-6 md:px-12 lg:px-20 py-14 border-t border-[#E5E0D8] bg-white">
-        <div className="mb-8">
-          <p className="text-xs font-medium uppercase tracking-[0.15em] text-[#C9A96E] mb-2">
-            {t('catalog.partnerBrands')}
-          </p>
-          <h2 className="font-serif text-3xl md:text-4xl text-[#031634]">
-            {t('catalog.ceabis')}
-          </h2>
-          <p className="mt-2 text-[#6B7280] max-w-xl">
-            {t('catalog.ceabisSubtitle')}
-          </p>
-        </div>
-
-        <ProductGrid
-          items={ceabis}
-          showPrice={false}
-          onItemClick={handleCeabisClick}
-          loading={loadingCeabis}
-        />
-      </section>
-
-      {/* ProductModal */}
-      {selectedItem && (
+{/* ProductModal */}
+      {selectedIndex !== null && (
         <ProductModal
-          item={selectedItem}
+          items={modalItems}
+          currentIndex={selectedIndex}
           type={selectedType}
+          onNavigate={setSelectedIndex}
           onClose={handleCloseModal}
         />
       )}

@@ -16,6 +16,7 @@ interface ProductGridProps {
   showPrice?: boolean
   onItemClick: (id: string) => void
   loading?: boolean
+  columns?: 3 | 4
 }
 
 function SkeletonCard() {
@@ -34,12 +35,17 @@ export default function ProductGrid({
   showPrice,
   onItemClick,
   loading,
+  columns = 3,
 }: ProductGridProps) {
   const { t } = useTranslation()
+  const gridCols = columns === 4
+    ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+    : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        {Array.from({ length: 6 }).map((_, i) => (
+      <div className={`grid ${gridCols} gap-10`}>
+        {Array.from({ length: columns === 4 ? 8 : 6 }).map((_, i) => (
           <SkeletonCard key={i} />
         ))}
       </div>
@@ -55,7 +61,7 @@ export default function ProductGrid({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+    <div className={`grid ${gridCols} gap-10`}>
       {items.map((item) => (
         <ProductCard
           key={item.id}

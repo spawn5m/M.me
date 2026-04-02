@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+
 
 const NAV_LINKS = [
   { label: 'Home', path: '/' },
@@ -10,6 +12,8 @@ const NAV_LINKS = [
 ]
 
 export default function FooterDark() {
+  const { t } = useTranslation()
+
   return (
     <footer className="bg-[#070F1C] border-t border-[#C9A96E]">
       <div className="max-w-screen-2xl mx-auto py-16 px-12 grid grid-cols-1 md:grid-cols-3 gap-12">
@@ -53,7 +57,7 @@ export default function FooterDark() {
             </div>
             <div>
               <p className="text-white text-xs uppercase tracking-wider mb-1">Sassari</p>
-              <p>Via Example 2, Sassari (SS)</p>
+              <p>{t('whereWeAre.sassariAddress')}</p>
               <p>Tel: +39 079 000 0000</p>
             </div>
             <div>

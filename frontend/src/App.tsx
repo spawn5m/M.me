@@ -25,7 +25,7 @@ function AppContent() {
 
   return (
     <>
-      <Navbar variant={isDark ? 'dark' : 'light'} />
+      {!isDark && <Navbar variant="light" />}
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/storia" element={<NostraStoriaPage />} />
@@ -34,7 +34,7 @@ function AppContent() {
         <Route path="/marmisti" element={<MarmistiPage />} />
         <Route path="/area-riservata" element={<PlaceholderPage name="Area Riservata" />} />
       </Routes>
-      {isDark ? null : <FooterLight />}
+      {!isDark && <FooterLight />}
     </>
   )
 }

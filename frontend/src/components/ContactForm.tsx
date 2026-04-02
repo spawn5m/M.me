@@ -3,17 +3,20 @@ import { useTranslation } from 'react-i18next'
 import { z } from 'zod'
 import api from '../lib/api'
 
-const contactSchema = z.object({
-  name: z.string().min(2, 'Il nome deve avere almeno 2 caratteri'),
-  email: z.string().email('Email non valida'),
-  message: z.string().min(10, 'Il messaggio deve avere almeno 10 caratteri'),
-})
-
-type FormValues = z.infer<typeof contactSchema>
+type FormValues = { name: string; email: string; message: string }
 type Status = 'idle' | 'sending' | 'sent' | 'error'
+
+function createContactSchema(t: (k: string) => string) {
+  return z.object({
+    name: z.string().min(2, t('whereWeAre.validationName')),
+    email: z.string().email(t('whereWeAre.validationEmail')),
+    message: z.string().min(10, t('whereWeAre.validationMessage')),
+  })
+}
 
 export default function ContactForm() {
   const { t } = useTranslation()
+  const contactSchema = createContactSchema(t)
   const [values, setValues] = useState<FormValues>({ name: '', email: '', message: '' })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [status, setStatus] = useState<Status>('idle')
