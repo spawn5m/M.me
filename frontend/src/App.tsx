@@ -1,5 +1,8 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import Navbar from './components/layout/Navbar'
+import FooterDark from './components/layout/FooterDark'
+import FooterLight from './components/layout/FooterLight'
 
 function PlaceholderPage({ name }: { name: string }) {
   const { t } = useTranslation()
@@ -12,9 +15,13 @@ function PlaceholderPage({ name }: { name: string }) {
   )
 }
 
-export default function App() {
+function AppContent() {
+  const location = useLocation()
+  const isDark = location.pathname === '/'
+
   return (
-    <BrowserRouter>
+    <>
+      <Navbar variant={isDark ? 'dark' : 'light'} />
       <Routes>
         <Route path="/" element={<PlaceholderPage name="Home" />} />
         <Route path="/storia" element={<PlaceholderPage name="La Nostra Storia" />} />
@@ -23,6 +30,15 @@ export default function App() {
         <Route path="/marmisti" element={<PlaceholderPage name="Per i Marmisti" />} />
         <Route path="/area-riservata" element={<PlaceholderPage name="Area Riservata" />} />
       </Routes>
+      {isDark ? <FooterDark /> : <FooterLight />}
+    </>
+  )
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   )
 }
