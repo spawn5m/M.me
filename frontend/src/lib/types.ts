@@ -23,10 +23,13 @@ export interface CoffinItem {
   figures: string[]
   colors: string[]
   finishes: string[]
-  internalMeasures?: {
-    headWidth: number
-    feetWidth: number
-    shoulderWidth: number
+  measure?: {
+    id: string
+    code: string
+    label: string
+    head: number
+    feet: number
+    shoulder: number
     height: number
     width: number
     depth: number

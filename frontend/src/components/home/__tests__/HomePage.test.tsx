@@ -33,10 +33,10 @@ describe('HomePage', () => {
     expect(document.body).toBeTruthy()
   })
 
-  // Test 2: contiene headline "ECCELLENZA FUNEBRE."
+  // Test 2: contiene wordmark principale
   it('contiene la headline principale', () => {
     renderHomePage()
-    expect(screen.getByText(/ECCELLENZA FUNEBRE\./i)).toBeInTheDocument()
+    expect(screen.getByText(/MIRIGLIANI/i)).toBeInTheDocument()
   })
 
   // Test 3: contiene link a /imprese-funebri

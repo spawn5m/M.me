@@ -47,6 +47,7 @@ export default function ProductModal({
 
   return (
     <div
+      data-testid="modal-overlay"
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
       className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center"
     >
@@ -123,19 +124,31 @@ export default function ProductModal({
               </div>
             )}
 
+            {/* Pagina PDF per accessori */}
+            {!coffinItem && (item as AccessoryItem).pdfPage && (
+              <div className="col-span-4">
+                <p className="text-[9px] font-bold uppercase tracking-widest text-[#031634] mb-1.5">
+                  {t('catalog.pdfPage')}
+                </p>
+                <span className="font-mono text-xl text-[#031634]">
+                  {(item as AccessoryItem).pdfPage}
+                </span>
+              </div>
+            )}
+
             {/* Misure interne — 2 coppie per riga */}
-            {coffinItem?.internalMeasures && (
+            {coffinItem?.measure && (
               <div className="col-span-2">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-[#031634] mb-1.5">
                   {t('catalog.internalMeasures')}
                 </p>
                 <dl className="grid grid-cols-4 gap-x-3 gap-y-1 text-sm">
-                  <dt className="text-[#6B7280]">{t('catalog.fieldHead')}</dt><dd className="font-mono text-[#031634]">{coffinItem.internalMeasures.headWidth}</dd>
-                  <dt className="text-[#6B7280]">{t('catalog.fieldFeet')}</dt><dd className="font-mono text-[#031634]">{coffinItem.internalMeasures.feetWidth}</dd>
-                  <dt className="text-[#6B7280]">{t('catalog.fieldShoulder')}</dt><dd className="font-mono text-[#031634]">{coffinItem.internalMeasures.shoulderWidth}</dd>
-                  <dt className="text-[#6B7280]">{t('catalog.fieldHeight')}</dt><dd className="font-mono text-[#031634]">{coffinItem.internalMeasures.height}</dd>
-                  <dt className="text-[#6B7280]">{t('catalog.fieldWidth')}</dt><dd className="font-mono text-[#031634]">{coffinItem.internalMeasures.width}</dd>
-                  <dt className="text-[#6B7280]">{t('catalog.fieldDepth')}</dt><dd className="font-mono text-[#031634]">{coffinItem.internalMeasures.depth}</dd>
+                  <dt className="text-[#6B7280]">{t('catalog.fieldHead')}</dt><dd className="font-mono text-[#031634]">{coffinItem.measure.head}</dd>
+                  <dt className="text-[#6B7280]">{t('catalog.fieldFeet')}</dt><dd className="font-mono text-[#031634]">{coffinItem.measure.feet}</dd>
+                  <dt className="text-[#6B7280]">{t('catalog.fieldShoulder')}</dt><dd className="font-mono text-[#031634]">{coffinItem.measure.shoulder}</dd>
+                  <dt className="text-[#6B7280]">{t('catalog.fieldHeight')}</dt><dd className="font-mono text-[#031634]">{coffinItem.measure.height}</dd>
+                  <dt className="text-[#6B7280]">{t('catalog.fieldWidth')}</dt><dd className="font-mono text-[#031634]">{coffinItem.measure.width}</dd>
+                  <dt className="text-[#6B7280]">{t('catalog.fieldDepth')}</dt><dd className="font-mono text-[#031634]">{coffinItem.measure.depth}</dd>
                 </dl>
               </div>
             )}
