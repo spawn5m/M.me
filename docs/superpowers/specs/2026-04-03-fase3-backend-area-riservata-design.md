@@ -14,7 +14,7 @@ Fase 3 implementa:
 2. La **dashboard admin** (`/admin/*`) nel SPA React esistente
 3. L'**upload immagini** articoli (multipart via `@fastify/multipart`)
 4. L'**upload PDF** catalogo (due PDF distinti: accessori e marmisti)
-5. Una **migration Prisma** per aggiungere `type` enum a `PdfCatalog`
+5. Una **migration Prisma** per aggiungere `type` enum a `PdfCatalog` e introdurre `CoffinMeasure`
 
 **Escluso dalla Fase 3:** logica listini (Fase 4), viste Impresario/Marmista (Fase 5).
 
@@ -35,6 +35,7 @@ Fase 3 implementa:
 /api/articles/coffins/figures/*           ← CRUD lookup Figure
 /api/articles/coffins/colors/*            ← CRUD lookup Color
 /api/articles/coffins/finishes/*          ← CRUD lookup Finish
+/api/articles/coffins/measures/*          ← CRUD lookup CoffinMeasure
 /api/articles/accessories/*               ← CRUD accessori
 /api/articles/accessories/categories/*    ← CRUD lookup AccessoryCategory
 /api/articles/accessories/subcategories/* ← CRUD lookup AccessorySubcategory
@@ -85,6 +86,34 @@ model PdfCatalog {
 
 Il constraint `@unique` su `type` garantisce un solo PDF attivo per categoria.
 
+### Misure cofani — nuovo modello condiviso
+
+Sostituisce il modello `InternalMeasure` (1:1) con una lookup table riusabile:
+
+```prisma
+model CoffinMeasure {
+  id       String          @id @default(cuid())
+  code     String          @unique   // es. "STD-ADULTO", "XL", "BIMBO"
+  label    String
+  head     Float
+  feet     Float
+  shoulder Float
+  height   Float
+  width    Float
+  depth    Float
+  articles CoffinArticle[]
+}
+```
+
+`CoffinArticle` sostituisce la relazione `InternalMeasure` con:
+
+```prisma
+measureId  String?
+measure    CoffinMeasure? @relation(fields: [measureId], references: [id])
+```
+
+Migration: drop `InternalMeasure`, crea `CoffinMeasure`, aggiunge `measureId` su `CoffinArticle`.
+
 ---
 
 ## 4. Permessi per ruolo
@@ -133,7 +162,7 @@ Errori sempre nel formato: `{ error: string, message: string, statusCode: number
 
 ### 5.4 Coffins (`/api/articles/coffins`)
 
-- Body include: `{ code, description, notes?, categoryIds[], subcategoryIds[], essenceIds[], figureIds[], colorIds[], finishIds[], measure?: { head, feet, shoulder, height, width, depth } }`
+- Body include: `{ code, description, notes?, categoryIds[], subcategoryIds[], essenceIds[], figureIds[], colorIds[], finishIds[], measureId? }`
 - Relazioni many-to-many gestite via `connect`/`set` Prisma
 - **Upload immagine:** `POST /api/uploads/coffins/:id/image` (multipart, campo `file`)
   - Validazione MIME lato server: solo `image/jpeg`, `image/png`, `image/webp`
@@ -243,9 +272,10 @@ Card con conteggi: utenti attivi, cofani, accessori, articoli marmisti. Nessun d
 ### Cofani (`/admin/coffins`)
 - `DataTable`: codice, descrizione, categorie, thumbnail immagine, azioni
 - `FormModal` con 2 tab:
-  - **Dati**: codice, descrizione, note + multi-select per ogni campo multiplo + 6 campi misure
+  - **Dati**: codice, descrizione, note + multi-select per ogni campo multiplo + select "Misura" (da `CoffinMeasure`)
   - **Immagine**: `<ImageUpload>` con preview
-- Sezione "Valori di riferimento": accordion con una tabella per tipo (categorie, essenze, ecc.), CRUD inline
+- Sezione "Valori di riferimento": accordion con una tabella per tipo (categorie, essenze, misure, ecc.), CRUD inline
+  - La tabella **Misure** mostra: codice, label, e i 6 valori numerici (head, feet, shoulder, height, width, depth)
 
 ### Accessori (`/admin/accessories`)
 - Identico a Cofani senza misure interne; aggiunge campo "Pagina PDF"
