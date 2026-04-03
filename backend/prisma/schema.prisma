@@ -76,28 +76,30 @@ model CoffinArticle {
   description    String
   notes          String?
   imageUrl       String?
+  measureId      String?
+  measure        CoffinMeasure?      @relation(fields: [measureId], references: [id])
   categories     CoffinCategory[]
   subcategories  CoffinSubcategory[]
   essences       Essence[]
   figures        Figure[]
   colors         Color[]
   finishes       Finish[]
-  measure        InternalMeasure?
   priceListItems PriceListItem[]
   createdAt      DateTime            @default(now())
   updatedAt      DateTime            @updatedAt
 }
 
-model InternalMeasure {
-  id        String        @id @default(cuid())
-  articleId String        @unique
-  article   CoffinArticle @relation(fields: [articleId], references: [id], onDelete: Cascade)
-  head      Float
-  feet      Float
-  shoulder  Float
-  height    Float
-  width     Float
-  depth     Float
+model CoffinMeasure {
+  id       String          @id @default(cuid())
+  code     String          @unique
+  label    String
+  head     Float
+  feet     Float
+  shoulder Float
+  height   Float
+  width    Float
+  depth    Float
+  articles CoffinArticle[]
 }
 
 model CoffinCategory {
@@ -248,9 +250,15 @@ model PriceListItem {
 
 // ─── PDF Catalogo ─────────────────────────────────────────────────────────────
 
+enum PdfCatalogType {
+  accessories
+  marmista
+}
+
 model PdfCatalog {
-  id         String   @id @default(cuid())
+  id         String         @id @default(cuid())
   filePath   String
   fileName   String
-  uploadedAt DateTime @default(now())
+  type       PdfCatalogType @unique
+  uploadedAt DateTime       @default(now())
 }
