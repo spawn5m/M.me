@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from './components/layout/Navbar'
 import FooterLight from './components/layout/FooterLight'
@@ -7,6 +7,23 @@ import ImpreseFunebrePage from './pages/ImpreseFunebrePage'
 import MarmistiPage from './pages/MarmistiPage'
 import NostraStoriaPage from './pages/NostraStoriaPage'
 import DoveSiamoPage from './pages/DoveSiamoPage'
+
+import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/admin/ProtectedRoute'
+import AdminLayout from './components/admin/AdminLayout'
+import LoginPage from './pages/LoginPage'
+import DashboardPage from './pages/admin/DashboardPage'
+import UsersPage from './pages/admin/UsersPage'
+import RolesPage from './pages/admin/RolesPage'
+
+function PlaceholderAdmin({ name }: { name: string }) {
+  return (
+    <div className="text-[#6B7280] text-sm p-4">
+      <h3 className="text-lg text-[#1A2B4A] mb-2">{name}</h3>
+      <p>Disponibile nelle prossime fasi.</p>
+    </div>
+  )
+}
 
 function PlaceholderPage({ name }: { name: string }) {
   const { t } = useTranslation()
@@ -25,16 +42,50 @@ function AppContent() {
 
   return (
     <>
-      {!isDark && <Navbar variant="light" />}
+      {!isDark && !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/login') && (
+        <Navbar variant="light" />
+      )}
       <Routes>
+        {/* Pubbliche */}
         <Route path="/" element={<HomePage />} />
         <Route path="/storia" element={<NostraStoriaPage />} />
         <Route path="/dove-siamo" element={<DoveSiamoPage />} />
         <Route path="/imprese-funebri" element={<ImpreseFunebrePage />} />
         <Route path="/marmisti" element={<MarmistiPage />} />
         <Route path="/area-riservata" element={<PlaceholderPage name="Area Riservata" />} />
+
+        {/* Auth */}
+        <Route path="/login" element={<LoginPage />} />
+
+        {/* Admin — protette */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="/admin/dashboard" replace />} />
+          <Route path="dashboard" element={<DashboardPage />} />
+          <Route path="users" element={<UsersPage />} />
+          <Route
+            path="roles"
+            element={
+              <ProtectedRoute requiredRoles={['super_admin']}>
+                <RolesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="coffins" element={<PlaceholderAdmin name="Cofani" />} />
+          <Route path="accessories" element={<PlaceholderAdmin name="Accessori" />} />
+          <Route path="marmista" element={<PlaceholderAdmin name="Marmista" />} />
+          <Route path="catalog" element={<PlaceholderAdmin name="Catalogo PDF" />} />
+        </Route>
       </Routes>
-      {!isDark && <FooterLight />}
+      {!isDark && !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/login') && (
+        <FooterLight />
+      )}
     </>
   )
 }
@@ -42,7 +93,9 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </BrowserRouter>
   )
 }
