@@ -50,5 +50,33 @@ export interface ArticleContext {
   subcategoryCode?: string
 }
 
+// ─── Tipi Admin ───────────────────────────────────────────────────────────────
+
+export interface AdminRole {
+  id: string
+  name: string
+  label: string
+  isSystem: boolean
+}
+
+export interface AdminUser {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
+  isActive: boolean
+  roles: AdminRole[]
+  manager: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AdminStats {
+  users: number
+  coffins: number
+  accessories: number
+  marmista: number
+}
+
 // Nota: SessionData augmentation è in src/plugins/auth.ts
 // dove @fastify/secure-session viene importato

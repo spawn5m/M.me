@@ -1,16 +1,84 @@
 import { FastifyPluginAsync } from 'fastify'
+import { z } from 'zod'
 
-const NOT_IMPLEMENTED = { error: 'NotImplemented', message: 'Endpoint disponibile dalla Fase 3', statusCode: 501 }
+const createRoleSchema = z.object({
+  name: z.string().regex(/^[a-z_]+$/, 'Il nome deve contenere solo lettere minuscole e underscore'),
+  label: z.string().min(1, 'Label obbligatoria')
+})
 
 const rolesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
   fastify.addHook('preHandler', fastify.checkRole(['super_admin']))
 
-  fastify.get('/', async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
-  fastify.post('/', async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
-  fastify.get('/:id', async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
-  fastify.put('/:id', async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
-  fastify.delete('/:id', async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
+  // GET /api/roles
+  fastify.get('/', async (_req, reply) => {
+    const roles = await fastify.prisma.role.findMany({
+      orderBy: { name: 'asc' }
+    })
+    return reply.send({
+      data: roles,
+      pagination: {
+        page: 1,
+        pageSize: roles.length,
+        total: roles.length,
+        totalPages: 1
+      }
+    })
+  })
+
+  // POST /api/roles
+  fastify.post('/', async (req, reply) => {
+    const parsed = createRoleSchema.safeParse(req.body)
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: 'ValidationError',
+        message: parsed.error.errors[0].message,
+        statusCode: 400
+      })
+    }
+
+    const { name, label } = parsed.data
+
+    const existing = await fastify.prisma.role.findUnique({ where: { name } })
+    if (existing) {
+      return reply.status(409).send({
+        error: 'Conflict',
+        message: 'Nome ruolo già in uso',
+        statusCode: 409
+      })
+    }
+
+    const role = await fastify.prisma.role.create({
+      data: { name, label, isSystem: false }
+    })
+
+    return reply.status(201).send(role)
+  })
+
+  // DELETE /api/roles/:id
+  fastify.delete('/:id', async (req, reply) => {
+    const { id } = req.params as { id: string }
+
+    const role = await fastify.prisma.role.findUnique({ where: { id } })
+    if (!role) {
+      return reply.status(404).send({
+        error: 'NotFound',
+        message: 'Ruolo non trovato',
+        statusCode: 404
+      })
+    }
+
+    if (role.isSystem) {
+      return reply.status(409).send({
+        error: 'Conflict',
+        message: 'I ruoli di sistema non possono essere eliminati',
+        statusCode: 409
+      })
+    }
+
+    await fastify.prisma.role.delete({ where: { id } })
+    return reply.status(204).send()
+  })
 }
 
 export default rolesRoutes
