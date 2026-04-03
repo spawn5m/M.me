@@ -1,6 +1,5 @@
 import Fastify, { FastifyInstance } from 'fastify'
 import fastifySecureSession from '@fastify/secure-session'
-import fastifyRateLimit from '@fastify/rate-limit'
 import bcrypt from 'bcrypt'
 
 import prismaPlugin from './plugins/prisma'
@@ -24,11 +23,6 @@ export async function buildTestApp(): Promise<FastifyInstance> {
       sameSite: 'strict',
       secure: false
     }
-  })
-
-  await app.register(fastifyRateLimit, {
-    max: 1000,
-    timeWindow: '1 minute'
   })
 
   await app.register(prismaPlugin)
