@@ -1,5 +1,10 @@
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
+import { pipeline } from 'stream/promises'
+import * as fs from 'fs'
+import * as path from 'path'
+import { parseExcelFile, splitCodes, validateImagePath } from '../../lib/excelImporter'
+import type { ImportResult } from '../../types/shared'
 
 const coffinBodySchema = z.object({
   code: z.string().min(1),
@@ -113,6 +118,95 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
     await fastify.prisma.coffinArticle.delete({ where: { id: req.params.id } })
     return reply.status(204).send()
   })
+
+  // POST /import — importa da Excel
+  fastify.post('/import', async (req, reply) => {
+    const data = await req.file()
+    if (!data) {
+      return reply.status(400).send({ error: 'BadRequest', message: 'File mancante', statusCode: 400 })
+    }
+
+    const tmpPath = `/tmp/import_coffins_${Date.now()}.xlsx`
+    await pipeline(data.file, fs.createWriteStream(tmpPath))
+
+    const rows = parseExcelFile(tmpPath)
+    const result: ImportResult = { imported: 0, skipped: 0, errors: [], warnings: [] }
+    const uploadsRoot = path.join(process.cwd(), '..', 'uploads', 'images', 'coffins')
+
+    for (let i = 0; i < rows.length; i++) {
+      const row = rows[i]
+      const rowNum = i + 2
+      if (!row.codice) {
+        result.errors.push({ row: rowNum, code: '', reason: 'Colonna codice mancante' })
+        continue
+      }
+      try {
+        const categoryResult = await resolveCodes(fastify.prisma.coffinCategory, splitCodes(row.categorie ?? ''))
+        if (categoryResult.missing.length) {
+          result.skipped++
+          result.errors.push({ row: rowNum, code: row.codice, reason: `Categorie non trovate: ${categoryResult.missing.join(', ')}` })
+          continue
+        }
+        const subcategoryResult = await resolveCodes(fastify.prisma.coffinSubcategory, splitCodes(row.sottocategorie ?? ''))
+        const essenceResult = await resolveCodes(fastify.prisma.essence, splitCodes(row.essenze ?? ''))
+        const figureResult = await resolveCodes(fastify.prisma.figure, splitCodes(row.figure ?? ''))
+        const colorResult = await resolveCodes(fastify.prisma.color, splitCodes(row.colori ?? ''))
+        const finishResult = await resolveCodes(fastify.prisma.finish, splitCodes(row.finiture ?? ''))
+
+        let imageUrl: string | null = null
+        if (row.immagine) {
+          imageUrl = validateImagePath(row.immagine, uploadsRoot)
+          if (!imageUrl) {
+            result.warnings.push({ row: rowNum, code: row.codice, reason: `Immagine non trovata: ${row.immagine}` })
+          }
+        }
+
+        await fastify.prisma.coffinArticle.upsert({
+          where: { code: row.codice },
+          create: {
+            code: row.codice,
+            description: row.descrizione ?? '',
+            notes: row.note || null,
+            imageUrl,
+            categories: { connect: categoryResult.ids.map(id => ({ id })) },
+            subcategories: { connect: subcategoryResult.ids.map(id => ({ id })) },
+            essences: { connect: essenceResult.ids.map(id => ({ id })) },
+            figures: { connect: figureResult.ids.map(id => ({ id })) },
+            colors: { connect: colorResult.ids.map(id => ({ id })) },
+            finishes: { connect: finishResult.ids.map(id => ({ id })) },
+          },
+          update: {
+            description: row.descrizione ?? '',
+            notes: row.note || null,
+            imageUrl,
+            categories: { set: categoryResult.ids.map(id => ({ id })) },
+            subcategories: { set: subcategoryResult.ids.map(id => ({ id })) },
+            essences: { set: essenceResult.ids.map(id => ({ id })) },
+            figures: { set: figureResult.ids.map(id => ({ id })) },
+            colors: { set: colorResult.ids.map(id => ({ id })) },
+            finishes: { set: finishResult.ids.map(id => ({ id })) },
+          },
+        })
+        result.imported++
+      } catch (e) {
+        result.errors.push({ row: rowNum, code: row.codice, reason: String(e) })
+      }
+    }
+
+    fs.unlinkSync(tmpPath)
+    return result
+  })
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function resolveCodes(model: any, codes: string[]): Promise<{ ids: string[]; missing: string[] }> {
+  if (!codes.length) return { ids: [], missing: [] }
+  const found = await model.findMany({ where: { code: { in: codes } } })
+  const foundCodes = found.map((f: { code: string }) => f.code)
+  return {
+    ids: found.map((f: { id: string }) => f.id),
+    missing: codes.filter(c => !foundCodes.includes(c)),
+  }
 }
 
 export default coffinsRoutes

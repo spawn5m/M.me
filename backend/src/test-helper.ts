@@ -1,5 +1,6 @@
 import Fastify, { FastifyInstance } from 'fastify'
 import fastifySecureSession from '@fastify/secure-session'
+import multipart from '@fastify/multipart'
 import bcrypt from 'bcrypt'
 
 import prismaPlugin from './plugins/prisma'
@@ -29,6 +30,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
     }
   })
 
+  await app.register(multipart)
   await app.register(prismaPlugin)
   await app.register(errorHandlerPlugin)
   await app.register(authPlugin)

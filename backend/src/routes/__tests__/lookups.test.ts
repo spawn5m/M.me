@@ -17,6 +17,15 @@ describe('Lookups API', () => {
   })
 
   beforeEach(async () => {
+    await app.prisma.coffinCategory.deleteMany()
+    await app.prisma.coffinSubcategory.deleteMany()
+    await app.prisma.essence.deleteMany()
+    await app.prisma.figure.deleteMany()
+    await app.prisma.color.deleteMany()
+    await app.prisma.finish.deleteMany()
+    await app.prisma.accessoryCategory.deleteMany()
+    await app.prisma.accessorySubcategory.deleteMany()
+    await app.prisma.marmistaCategory.deleteMany()
     await cleanupTestDb(app)
 
     await seedTestUser(app, { email: 'manager@test.com', password: 'password123', roles: ['manager'] })

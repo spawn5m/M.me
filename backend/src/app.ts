@@ -2,6 +2,7 @@ import 'dotenv/config'
 import Fastify from 'fastify'
 import fastifySecureSession from '@fastify/secure-session'
 import fastifyRateLimit from '@fastify/rate-limit'
+import multipart from '@fastify/multipart'
 
 import prismaPlugin from './plugins/prisma'
 import errorHandlerPlugin from './plugins/errorHandler'
@@ -44,6 +45,7 @@ const start = async () => {
     timeWindow: '1 minute'
   })
 
+  await app.register(multipart)
   await app.register(prismaPlugin)
   await app.register(errorHandlerPlugin)
   await app.register(authPlugin)
