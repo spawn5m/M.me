@@ -59,6 +59,15 @@ export interface AdminRole {
   isSystem: boolean
 }
 
+export type ArticleType = 'funeral' | 'marmista'
+
+export interface AdminAssignedPriceList {
+  id: string
+  name: string
+  type: PriceListType
+  articleType: ArticleType
+}
+
 export interface AdminUser {
   id: string
   email: string
@@ -67,6 +76,8 @@ export interface AdminUser {
   isActive: boolean
   roles: AdminRole[]
   manager: string | null
+  funeralPriceList: AdminAssignedPriceList | null
+  marmistaPriceList: AdminAssignedPriceList | null
   createdAt: string
   updatedAt: string
 }
@@ -77,8 +88,6 @@ export interface AdminStats {
   accessories: number
   marmista: number
 }
-
-export type ArticleType = 'funeral' | 'marmista'
 
 export interface AdminLookup { id: string; code: string; label: string }
 

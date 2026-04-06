@@ -3,19 +3,37 @@ import bcrypt from 'bcrypt'
 import { z } from 'zod'
 import { Prisma, User, UserRole, Role } from '@prisma/client'
 
+const PRICE_LIST_SUMMARY_SELECT = {
+  id: true,
+  name: true,
+  type: true,
+  articleType: true,
+} as const
+
+const USER_INCLUDE = {
+  userRoles: { include: { role: true } },
+  managers: true,
+  funeralPriceList: { select: PRICE_LIST_SUMMARY_SELECT },
+  marmistaPriceList: { select: PRICE_LIST_SUMMARY_SELECT },
+} as const
+
 // ─── Tipi interni ─────────────────────────────────────────────────────────────
 
 type UserWithRoles = User & {
   userRoles: (UserRole & { role: Role })[]
   managers?: { managerId: string }[]
+  funeralPriceList?: { id: string; name: string; type: 'purchase' | 'sale'; articleType: 'funeral' | 'marmista' } | null
+  marmistaPriceList?: { id: string; name: string; type: 'purchase' | 'sale'; articleType: 'funeral' | 'marmista' } | null
 }
 
 function userToResponse(user: UserWithRoles) {
-  const { password: _pw, userRoles, managers, ...rest } = user
+  const { password: _pw, userRoles, managers, funeralPriceList, marmistaPriceList, ...rest } = user
   return {
     ...rest,
     roles: userRoles.map((ur) => ({ id: ur.role.id, name: ur.role.name, label: ur.role.label })),
-    manager: managers?.[0]?.managerId ?? null
+    manager: managers?.[0]?.managerId ?? null,
+    funeralPriceList: funeralPriceList ?? null,
+    marmistaPriceList: marmistaPriceList ?? null,
   }
 }
 
@@ -95,16 +113,11 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
       ]
     }
 
-    const include = {
-      userRoles: { include: { role: true } },
-      managers: true
-    }
-
     const [total, users] = await Promise.all([
       fastify.prisma.user.count({ where }),
       fastify.prisma.user.findMany({
         where,
-        include,
+        include: USER_INCLUDE,
         skip,
         take: pageSize,
         orderBy: { createdAt: 'desc' }
@@ -158,10 +171,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
             ? { create: roleIds.map((roleId) => ({ roleId })) }
             : undefined
       },
-      include: {
-        userRoles: { include: { role: true } },
-        managers: true
-      }
+      include: USER_INCLUDE
     })
 
     return reply.status(201).send(userToResponse(user))
@@ -173,10 +183,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const subordinates = await fastify.prisma.user.findMany({
       where: { managers: { some: { managerId: userId } } },
-      include: {
-        userRoles: { include: { role: true } },
-        managers: true
-      }
+      include: USER_INCLUDE
     })
 
     return reply.send(subordinates.map(userToResponse))
@@ -188,10 +195,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const user = await fastify.prisma.user.findUnique({
       where: { id },
-      include: {
-        userRoles: { include: { role: true } },
-        managers: true
-      }
+      include: USER_INCLUDE
     })
 
     if (!user) {
@@ -247,10 +251,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     const updated = await fastify.prisma.user.update({
       where: { id },
       data: updateData,
-      include: {
-        userRoles: { include: { role: true } },
-        managers: true
-      }
+      include: USER_INCLUDE
     })
 
     return reply.send(userToResponse(updated))

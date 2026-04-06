@@ -12,6 +12,7 @@ interface WizardStep1 {
   type: 'sale' | 'purchase'
   articleType: 'funeral' | 'marmista'
   isDerivato: boolean
+  autoUpdate: boolean
   parentId: string
 }
 
@@ -20,12 +21,13 @@ export default function PriceListsPage() {
   const [items, setItems] = useState<AdminPriceList[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isCreating, setIsCreating] = useState(false)
+  const [editing, setEditing] = useState<AdminPriceList | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<WizardStep1>({
-    defaultValues: { type: 'sale', articleType: 'funeral', isDerivato: false },
+    defaultValues: { type: 'sale', articleType: 'funeral', isDerivato: false, autoUpdate: false },
   })
   const isDerivato = watch('isDerivato')
 
@@ -42,21 +44,42 @@ export default function PriceListsPage() {
   useEffect(() => { load() }, [load])
 
   const openCreate = () => {
-    reset({ name: '', type: 'sale', articleType: 'funeral', isDerivato: false, parentId: '' })
+    setEditing(null)
+    reset({ name: '', type: 'sale', articleType: 'funeral', isDerivato: false, autoUpdate: false, parentId: '' })
+    setIsCreating(true)
+  }
+
+  const openEdit = (item: AdminPriceList) => {
+    setEditing(item)
+    reset({
+      name: item.name,
+      type: item.type,
+      articleType: item.articleType,
+      isDerivato: !!item.parentId,
+      autoUpdate: item.autoUpdate,
+      parentId: item.parentId ?? '',
+    })
     setIsCreating(true)
   }
 
   const onSubmit = handleSubmit(async (data) => {
     setIsSubmitting(true)
     try {
-      await pricelistsApi.create({
+      const payload = {
         name: data.name,
         type: data.type,
         articleType: data.articleType,
         parentId: data.isDerivato && data.parentId ? data.parentId : null,
-        autoUpdate: data.isDerivato,
-      })
+        autoUpdate: data.isDerivato ? data.autoUpdate : false,
+      }
+
+      if (editing) {
+        await pricelistsApi.update(editing.id, payload)
+      } else {
+        await pricelistsApi.create(payload)
+      }
       setIsCreating(false)
+      setEditing(null)
       reset()
       load()
     } finally {
@@ -106,6 +129,7 @@ export default function PriceListsPage() {
   ]
 
   const actions = [
+    { label: 'Modifica', onClick: (item: Record<string, unknown>) => openEdit(item as unknown as AdminPriceList) },
     { label: 'Dettaglio', onClick: (item: Record<string, unknown>) => navigate(`/admin/pricelists/${item.id}`) },
     { label: 'Elimina', onClick: (item: Record<string, unknown>) => setDeletingId(item.id as string), variant: 'danger' as const },
   ]
@@ -127,7 +151,7 @@ export default function PriceListsPage() {
 
       <DataTable columns={columns} data={items as unknown as Record<string, unknown>[]} keyField="id" actions={actions} isLoading={isLoading} />
 
-      <FormModal isOpen={isCreating} title="Nuovo Listino" onClose={() => setIsCreating(false)} onSubmit={onSubmit} isSubmitting={isSubmitting} submitLabel="Crea Listino">
+      <FormModal isOpen={isCreating} title={editing ? 'Modifica Listino' : 'Nuovo Listino'} onClose={() => { setIsCreating(false); setEditing(null) }} onSubmit={onSubmit} isSubmitting={isSubmitting} submitLabel={editing ? 'Salva Modifiche' : 'Crea Listino'}>
         <div className="space-y-4">
           <div>
             <label className="admin-label">Nome <span className="text-red-500">*</span></label>
@@ -155,14 +179,21 @@ export default function PriceListsPage() {
             <label htmlFor="isDerivato" className="text-sm text-[#1A1A1A]">Listino derivato (basato su un listino padre)</label>
           </div>
           {isDerivato && (
-            <div>
-              <label className="admin-label">Listino padre</label>
-              <select {...register('parentId')} className="admin-select">
-                <option value="">— Seleziona —</option>
-                {baseListinos.map(pl => (
-                  <option key={pl.id} value={pl.id}>{pl.name}</option>
-                ))}
-              </select>
+            <div className="space-y-4">
+              <div>
+                <label className="admin-label">Listino padre</label>
+                <select {...register('parentId')} className="admin-select">
+                  <option value="">— Seleziona —</option>
+                  {baseListinos.filter((pl) => !editing || pl.id !== editing.id).map(pl => (
+                    <option key={pl.id} value={pl.id}>{pl.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <label className="flex items-center gap-2 text-sm text-[#1A1A1A]">
+                <input type="checkbox" {...register('autoUpdate')} className="rounded border-[#E5E0D8]" />
+                Calcolo dinamico (`autoUpdate`)
+              </label>
             </div>
           )}
         </div>

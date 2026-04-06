@@ -11,6 +11,7 @@ const base = '/admin/articles'
 
 interface ListParams {
   page?: number
+  pageSize?: number
   search?: string
   category?: string
 }

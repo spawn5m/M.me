@@ -46,6 +46,30 @@ const columns = [
     )
   },
   {
+    key: 'assignedPriceLists',
+    header: 'Listini',
+    render: (u: AdminUser) => {
+      const labels = [
+        u.funeralPriceList ? `Funebre: ${u.funeralPriceList.name}` : null,
+        u.marmistaPriceList ? `Marmista: ${u.marmistaPriceList.name}` : null,
+      ].filter(Boolean)
+
+      if (labels.length === 0) {
+        return <span className="text-xs text-[#6B7280]">—</span>
+      }
+
+      return (
+        <div className="flex flex-wrap gap-1">
+          {labels.map((label) => (
+            <span key={label} className="admin-badge admin-badge-gold">
+              {label}
+            </span>
+          ))}
+        </div>
+      )
+    }
+  },
+  {
     key: 'isActive',
     header: 'Stato',
     render: (u: AdminUser) => (
@@ -97,16 +121,20 @@ export default function UsersPage() {
 
   const openAssign = (user: AdminUser) => {
     setAssignTarget(user)
-    setAssignFuneralId('')
-    setAssignMarmistaId('')
+    setAssignFuneralId(user.funeralPriceList?.id ?? '')
+    setAssignMarmistaId(user.marmistaPriceList?.id ?? '')
   }
 
   const handleAssign = async () => {
     if (!assignTarget) return
     setIsAssigning(true)
     try {
-      if (assignFuneralId) await pricelistsApi.assign(assignFuneralId, assignTarget.id)
-      if (assignMarmistaId) await pricelistsApi.assign(assignMarmistaId, assignTarget.id)
+      if (assignFuneralId && assignFuneralId !== assignTarget.funeralPriceList?.id) {
+        await pricelistsApi.assign(assignFuneralId, assignTarget.id)
+      }
+      if (assignMarmistaId && assignMarmistaId !== assignTarget.marmistaPriceList?.id) {
+        await pricelistsApi.assign(assignMarmistaId, assignTarget.id)
+      }
       setAssignTarget(null)
       loadUsers()
     } finally {
@@ -292,6 +320,20 @@ export default function UsersPage() {
               <button onClick={() => setAssignTarget(null)} className="text-[#6B7280] text-xl transition-colors hover:text-[#031634]">×</button>
             </div>
             <div className="px-6 py-4 space-y-4">
+              {(assignTarget.funeralPriceList || assignTarget.marmistaPriceList) && (
+                <div className="admin-soft-panel p-4">
+                  <p className="admin-label">Assegnazioni correnti</p>
+                  <div className="flex flex-wrap gap-2">
+                    {assignTarget.funeralPriceList && (
+                      <span className="admin-badge admin-badge-gold">Funebre: {assignTarget.funeralPriceList.name}</span>
+                    )}
+                    {assignTarget.marmistaPriceList && (
+                      <span className="admin-badge admin-badge-gold">Marmista: {assignTarget.marmistaPriceList.name}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {(userHasRole(assignTarget, 'impresario_funebre') || userHasRole(assignTarget, 'manager') || userHasRole(assignTarget, 'super_admin')) && (
                 <div>
                   <label className="admin-label">Listino Funebre</label>

@@ -13,11 +13,19 @@ describe('Users API', () => {
   })
 
   afterAll(async () => {
+    await app.prisma.user.updateMany({ data: { funeralPriceListId: null, marmistaPriceListId: null } })
+    await app.prisma.priceListItem.deleteMany()
+    await app.prisma.priceRule.deleteMany()
+    await app.prisma.priceList.deleteMany()
     await cleanupTestDb(app)
     await app.close()
   })
 
   beforeEach(async () => {
+    await app.prisma.user.updateMany({ data: { funeralPriceListId: null, marmistaPriceListId: null } })
+    await app.prisma.priceListItem.deleteMany()
+    await app.prisma.priceRule.deleteMany()
+    await app.prisma.priceList.deleteMany()
     await cleanupTestDb(app)
 
     await seedTestUser(app, {
@@ -156,6 +164,42 @@ describe('Users API', () => {
       })
       expect(res.statusCode).toBe(200)
       expect(JSON.parse(res.body)).not.toHaveProperty('password')
+    })
+
+    it('espone i listini assegnati nella scheda utente', async () => {
+      const created = await app.prisma.priceList.create({
+        data: { name: 'Listino Funebre', type: 'sale', articleType: 'funeral', autoUpdate: false },
+      })
+
+      const list = await app.inject({
+        method: 'GET',
+        url: '/api/users',
+        headers: { cookie: superAdminCookie }
+      })
+      const { data } = JSON.parse(list.body)
+      const target = data.find((user: { roles: { name: string }[] }) =>
+        user.roles.some((role) => role.name === 'manager')
+      )
+
+      await app.prisma.user.update({
+        where: { id: target.id },
+        data: { funeralPriceListId: created.id },
+      })
+
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/users/${target.id}`,
+        headers: { cookie: superAdminCookie }
+      })
+
+      expect(res.statusCode).toBe(200)
+      expect(JSON.parse(res.body)).toMatchObject({
+        funeralPriceList: {
+          id: created.id,
+          name: 'Listino Funebre',
+          articleType: 'funeral',
+        },
+      })
     })
 
     it('restituisce 404 per ID inesistente', async () => {

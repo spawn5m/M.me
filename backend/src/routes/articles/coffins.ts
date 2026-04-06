@@ -34,9 +34,9 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.checkRole(['manager', 'super_admin']))
 
   // GET / — lista paginata
-  fastify.get<{ Querystring: { page?: string; search?: string; category?: string } }>('/', async (req) => {
+  fastify.get<{ Querystring: { page?: string; pageSize?: string; search?: string; category?: string } }>('/', async (req) => {
     const page = Math.max(1, parseInt(req.query.page ?? '1', 10))
-    const pageSize = 50
+    const pageSize = Math.min(500, Math.max(1, parseInt(req.query.pageSize ?? '50', 10)))
     const where = req.query.search
       ? {
           OR: [
@@ -131,7 +131,7 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
 
     const rows = parseExcelFile(tmpPath)
     const result: ImportResult = { imported: 0, skipped: 0, errors: [], warnings: [] }
-    const uploadsRoot = path.join(process.cwd(), '..', 'uploads', 'images', 'coffins')
+    const uploadsRoot = path.join(process.cwd(), '..', 'uploads', 'images')
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
