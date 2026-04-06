@@ -53,9 +53,9 @@ const start = async () => {
   await app.register(usersRoutes, { prefix: '/api/users' })
   await app.register(rolesRoutes, { prefix: '/api/roles' })
   await app.register(lookupsRoutes, { prefix: '/api/admin/lookups' })
-  await app.register(coffinsRoutes, { prefix: '/api/articles/coffins' })
-  await app.register(accessoriesRoutes, { prefix: '/api/articles/accessories' })
-  await app.register(marmistaRoutes, { prefix: '/api/articles/marmista' })
+  await app.register(coffinsRoutes, { prefix: '/api/admin/articles/coffins' })
+  await app.register(accessoriesRoutes, { prefix: '/api/admin/articles/accessories' })
+  await app.register(marmistaRoutes, { prefix: '/api/admin/articles/marmista' })
   await app.register(pricelistsRoutes, { prefix: '/api/pricelists' })
   await app.register(catalogRoutes, { prefix: '/api/catalog' })
 

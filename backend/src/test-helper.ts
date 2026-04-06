@@ -11,6 +11,9 @@ import usersRoutes from './routes/users'
 import rolesRoutes from './routes/roles'
 import adminRoutes from './routes/admin'
 import lookupsRoutes from './routes/lookups'
+import coffinsRoutes from './routes/articles/coffins'
+import accessoriesRoutes from './routes/articles/accessories'
+import marmistaRoutes from './routes/articles/marmista'
 
 export async function buildTestApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false })
@@ -35,6 +38,9 @@ export async function buildTestApp(): Promise<FastifyInstance> {
   await app.register(rolesRoutes, { prefix: '/api/roles' })
   await app.register(adminRoutes, { prefix: '/api/admin' })
   await app.register(lookupsRoutes, { prefix: '/api/admin/lookups' })
+  await app.register(coffinsRoutes, { prefix: '/api/admin/articles/coffins' })
+  await app.register(accessoriesRoutes, { prefix: '/api/admin/articles/accessories' })
+  await app.register(marmistaRoutes, { prefix: '/api/admin/articles/marmista' })
 
   await app.ready()
   return app
