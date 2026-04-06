@@ -58,7 +58,7 @@ const start = async () => {
   await app.register(coffinsRoutes, { prefix: '/api/admin/articles/coffins' })
   await app.register(accessoriesRoutes, { prefix: '/api/admin/articles/accessories' })
   await app.register(marmistaRoutes, { prefix: '/api/admin/articles/marmista' })
-  await app.register(pricelistsRoutes, { prefix: '/api/pricelists' })
+  await app.register(pricelistsRoutes, { prefix: '/api/admin/pricelists' })
   await app.register(catalogRoutes, { prefix: '/api/catalog' })
 
   const port = Number(process.env.PORT) || 3001
