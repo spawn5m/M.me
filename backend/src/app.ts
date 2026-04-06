@@ -16,6 +16,7 @@ import accessoriesRoutes from './routes/articles/accessories'
 import marmistaRoutes from './routes/articles/marmista'
 import pricelistsRoutes from './routes/pricelists'
 import catalogRoutes from './routes/catalog'
+import lookupsRoutes from './routes/lookups'
 
 const app = Fastify({
   logger: {
@@ -56,6 +57,7 @@ const start = async () => {
   await app.register(marmistaRoutes, { prefix: '/api/articles/marmista' })
   await app.register(pricelistsRoutes, { prefix: '/api/pricelists' })
   await app.register(catalogRoutes, { prefix: '/api/catalog' })
+  await app.register(lookupsRoutes, { prefix: '/api/admin/lookups' })
 
   const port = Number(process.env.PORT) || 3001
   await app.listen({ port, host: '127.0.0.1' })

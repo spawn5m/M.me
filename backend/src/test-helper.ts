@@ -10,6 +10,7 @@ import authRoutes from './routes/auth'
 import usersRoutes from './routes/users'
 import rolesRoutes from './routes/roles'
 import adminRoutes from './routes/admin'
+import lookupsRoutes from './routes/lookups'
 
 export async function buildTestApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false })
@@ -33,6 +34,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
   await app.register(usersRoutes, { prefix: '/api/users' })
   await app.register(rolesRoutes, { prefix: '/api/roles' })
   await app.register(adminRoutes, { prefix: '/api/admin' })
+  await app.register(lookupsRoutes, { prefix: '/api/admin/lookups' })
 
   await app.ready()
   return app
