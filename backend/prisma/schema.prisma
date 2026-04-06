@@ -10,17 +10,21 @@ datasource db {
 // ─── Utenti e Auth ────────────────────────────────────────────────────────────
 
 model User {
-  id           String        @id @default(cuid())
-  email        String        @unique
-  password     String
-  firstName    String
-  lastName     String
-  isActive     Boolean       @default(true)
-  userRoles    UserRole[]
-  managers     UserManager[] @relation("UserManaged")
-  managing     UserManager[] @relation("UserManager")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id                  String        @id @default(cuid())
+  email               String        @unique
+  password            String
+  firstName           String
+  lastName            String
+  isActive            Boolean       @default(true)
+  funeralPriceListId  String?
+  marmistaPriceListId String?
+  funeralPriceList    PriceList?    @relation("UserFuneralPL", fields: [funeralPriceListId], references: [id])
+  marmistaPriceList   PriceList?    @relation("UserMarmistaPL", fields: [marmistaPriceListId], references: [id])
+  userRoles           UserRole[]
+  managers            UserManager[] @relation("UserManaged")
+  managing            UserManager[] @relation("UserManager")
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 }
 
 model UserManager {
@@ -206,23 +210,31 @@ enum PriceListType {
   sale
 }
 
+enum ArticleType {
+  funeral
+  marmista
+}
+
 enum DiscountType {
   percentage
   absolute
 }
 
 model PriceList {
-  id         String          @id @default(cuid())
-  name       String
-  type       PriceListType
-  parentId   String?
-  parent     PriceList?      @relation("PriceListParent", fields: [parentId], references: [id])
-  children   PriceList[]     @relation("PriceListParent")
-  autoUpdate Boolean         @default(false)
-  rules      PriceRule[]
-  items      PriceListItem[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
+  id                  String          @id @default(cuid())
+  name                String
+  type                PriceListType
+  articleType         ArticleType
+  parentId            String?
+  parent              PriceList?      @relation("PriceListParent", fields: [parentId], references: [id])
+  children            PriceList[]     @relation("PriceListParent")
+  autoUpdate          Boolean         @default(false)
+  rules               PriceRule[]
+  items               PriceListItem[]
+  funeralPriceListFor User[]          @relation("UserFuneralPL")
+  marmistaPriceListFor User[]         @relation("UserMarmistaPL")
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
 }
 
 model PriceRule {

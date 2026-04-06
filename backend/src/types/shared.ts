@@ -78,5 +78,40 @@ export interface AdminStats {
   marmista: number
 }
 
+export type ArticleType = 'funeral' | 'marmista'
+
+export interface AdminLookup { id: string; code: string; label: string }
+
+export interface AdminCoffinArticle {
+  id: string; code: string; description: string; notes: string | null
+  imageUrl: string | null; measure: AdminLookup | null
+  categories: AdminLookup[]; subcategories: AdminLookup[]
+  essences: AdminLookup[]; figures: AdminLookup[]
+  colors: AdminLookup[]; finishes: AdminLookup[]
+}
+
+export interface AdminAccessoryArticle {
+  id: string; code: string; description: string; notes: string | null
+  imageUrl: string | null; pdfPage: number | null
+  categories: AdminLookup[]; subcategories: AdminLookup[]
+}
+
+export interface AdminMarmistaArticle {
+  id: string; code: string; description: string; notes: string | null
+  pdfPage: number | null; publicPrice: number | null
+  accessory: AdminLookup | null; categories: AdminLookup[]
+}
+
+export interface AdminPriceList {
+  id: string; name: string; type: PriceListType; articleType: ArticleType
+  parentId: string | null; autoUpdate: boolean; _count: { items: number }
+}
+
+export interface ImportResult {
+  imported: number; skipped: number
+  errors: Array<{ row: number; code: string; reason: string }>
+  warnings: Array<{ row: number; code: string; reason: string }>
+}
+
 // Nota: SessionData augmentation è in src/plugins/auth.ts
 // dove @fastify/secure-session viene importato
