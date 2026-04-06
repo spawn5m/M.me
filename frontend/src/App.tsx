@@ -16,6 +16,9 @@ import DashboardPage from './pages/admin/DashboardPage'
 import UsersPage from './pages/admin/UsersPage'
 import RolesPage from './pages/admin/RolesPage'
 import LookupPage from './pages/admin/LookupPage'
+import CoffinsPage from './pages/admin/CoffinsPage'
+import AccessoriesPage from './pages/admin/AccessoriesPage'
+import MarmistaArticlesPage from './pages/admin/MarmistaArticlesPage'
 
 function PlaceholderAdmin({ name }: { name: string }) {
   return (
@@ -78,9 +81,9 @@ function AppContent() {
               </ProtectedRoute>
             }
           />
-          <Route path="coffins" element={<PlaceholderAdmin name="Cofani" />} />
-          <Route path="accessories" element={<PlaceholderAdmin name="Accessori" />} />
-          <Route path="marmista" element={<PlaceholderAdmin name="Marmista" />} />
+          <Route path="articles/coffins" element={<CoffinsPage />} />
+          <Route path="articles/accessories" element={<AccessoriesPage />} />
+          <Route path="articles/marmista" element={<MarmistaArticlesPage />} />
           <Route path="catalog" element={<PlaceholderAdmin name="Catalogo PDF" />} />
           <Route path="lookups/:type" element={<LookupPage />} />
         </Route>
