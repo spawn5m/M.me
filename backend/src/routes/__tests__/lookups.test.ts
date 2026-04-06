@@ -17,6 +17,7 @@ describe('Lookups API', () => {
   })
 
   beforeEach(async () => {
+    await app.prisma.coffinMeasure.deleteMany()
     await app.prisma.coffinCategory.deleteMany()
     await app.prisma.coffinSubcategory.deleteMany()
     await app.prisma.essence.deleteMany()
@@ -138,6 +139,62 @@ describe('Lookups API', () => {
         headers: { cookie: managerCookie },
       })
       expect(list.json().data).toHaveLength(0)
+    })
+  })
+
+  describe('CRUD /api/admin/lookups/coffin-measures', () => {
+    it('crea, aggiorna ed elimina una misura', async () => {
+      const created = await app.inject({
+        method: 'POST',
+        url: '/api/admin/lookups/coffin-measures',
+        headers: { cookie: managerCookie },
+        payload: {
+          code: 'MIS-01',
+          label: 'Standard',
+          head: 52,
+          feet: 28,
+          shoulder: 58,
+          height: 42,
+          width: 74,
+          depth: 38,
+        },
+      })
+      expect(created.statusCode).toBe(201)
+      expect(created.json()).toMatchObject({ code: 'MIS-01', label: 'Standard' })
+      const id = created.json().id
+
+      const updated = await app.inject({
+        method: 'PUT',
+        url: `/api/admin/lookups/coffin-measures/${id}`,
+        headers: { cookie: managerCookie },
+        payload: {
+          code: 'MIS-01',
+          label: 'Standard XL',
+          head: 53,
+          feet: 29,
+          shoulder: 59,
+          height: 43,
+          width: 75,
+          depth: 39,
+        },
+      })
+      expect(updated.statusCode).toBe(200)
+      expect(updated.json()).toMatchObject({ label: 'Standard XL', width: 75 })
+
+      const list = await app.inject({
+        method: 'GET',
+        url: '/api/admin/lookups/coffin-measures',
+        headers: { cookie: managerCookie },
+      })
+      expect(list.statusCode).toBe(200)
+      expect(list.json().data).toHaveLength(1)
+
+      const del = await app.inject({
+        method: 'DELETE',
+        url: `/api/admin/lookups/coffin-measures/${id}`,
+        headers: { cookie: managerCookie },
+      })
+      expect(del.statusCode).toBe(204)
     })
   })
 })
