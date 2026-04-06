@@ -39,7 +39,7 @@ export default function HomePage() {
 
         {/* Area Riservata */}
         <Link
-          to="/area-riservata"
+          to="/login"
           className="btn-home-gold font-['Inter'] font-medium text-sm uppercase tracking-[0.15em] px-8 py-4"
         >
           {t('nav.reservedArea')}

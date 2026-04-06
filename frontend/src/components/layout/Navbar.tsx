@@ -78,7 +78,7 @@ export default function Navbar({ variant }: NavbarProps) {
 
         {/* CTA */}
         <Link
-          to="/area-riservata"
+          to="/login"
           data-testid="navbar-cta"
           className={`${ctaBase} ${ctaStyle}`}
         >

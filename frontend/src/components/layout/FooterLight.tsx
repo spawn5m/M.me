@@ -12,7 +12,7 @@ export default function FooterLight() {
     { label: t('nav.funeralHomes'), path: '/imprese-funebri' },
     { label: t('nav.marmistas'), path: '/marmisti' },
     { label: t('nav.altris'), path: '/altri' },
-    { label: t('nav.reservedArea'), path: '/area-riservata' },
+    { label: t('nav.reservedArea'), path: '/login' },
   ]
 
   return (

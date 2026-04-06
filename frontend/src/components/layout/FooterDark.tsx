@@ -8,7 +8,7 @@ const NAV_LINKS = [
   { label: 'Dove Siamo', path: '/dove-siamo' },
   { label: 'Per le Imprese Funebri', path: '/imprese-funebri' },
   { label: 'Per i Marmisti', path: '/marmisti' },
-  { label: 'Area Riservata', path: '/area-riservata' },
+  { label: 'Area Riservata', path: '/login' },
 ]
 
 export default function FooterDark() {

@@ -236,8 +236,8 @@ Il componente `Navbar` deve accettare una prop `variant: 'dark' | 'light'` e ren
 - [ ] Fase 0 — Setup & Skill
 - [x] Fase 1 — Fondamenta
 - [x] Fase 2 — Front End Pubblico
-- [ ] Fase 3 — Back End Area Riservata ← corrente
-- [ ] Fase 4 — Listini
+- [x] Fase 3 — Back End Area Riservata
+- [ ] Fase 4 — Listini ← corrente
 - [ ] Fase 5 — Area Clienti
 - [ ] Fase 6 — Deploy VPS
 
