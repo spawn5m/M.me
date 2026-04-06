@@ -111,10 +111,16 @@ export default function PriceListsPage() {
   ]
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl text-[#1A2B4A]" style={{ fontFamily: 'Playfair Display, serif' }}>Listini Prezzi</h1>
-        <button onClick={openCreate} className="bg-[#1A2B4A] text-white px-4 py-2 text-sm font-medium rounded hover:bg-[#2C4A7C] transition-colors">
+    <div>
+      <div className="admin-page-intro">
+        <div>
+          <p className="admin-page-kicker">Motore commerciale</p>
+          <h1 className="admin-page-title">Listini Prezzi</h1>
+          <p className="admin-page-description">
+            Crea listini base e derivati per i diversi domini di vendita mantenendo il controllo su aggiornamento e struttura dei prezzi.
+          </p>
+        </div>
+        <button onClick={openCreate} className="admin-button-primary">
           + Nuovo Listino
         </button>
       </div>
@@ -124,21 +130,21 @@ export default function PriceListsPage() {
       <FormModal isOpen={isCreating} title="Nuovo Listino" onClose={() => setIsCreating(false)} onSubmit={onSubmit} isSubmitting={isSubmitting} submitLabel="Crea Listino">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Nome <span className="text-red-500">*</span></label>
-            <input {...register('name', { required: 'Obbligatorio' })} className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A]" />
+            <label className="admin-label">Nome <span className="text-red-500">*</span></label>
+            <input {...register('name', { required: 'Obbligatorio' })} className="admin-input" />
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Tipo</label>
-              <select {...register('type')} className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A] bg-white">
+              <label className="admin-label">Tipo</label>
+              <select {...register('type')} className="admin-select">
                 <option value="sale">Vendita</option>
                 <option value="purchase">Acquisto</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Dominio</label>
-              <select {...register('articleType')} className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A] bg-white">
+              <label className="admin-label">Dominio</label>
+              <select {...register('articleType')} className="admin-select">
                 <option value="funeral">Funebre</option>
                 <option value="marmista">Marmista</option>
               </select>
@@ -150,8 +156,8 @@ export default function PriceListsPage() {
           </div>
           {isDerivato && (
             <div>
-              <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Listino padre</label>
-              <select {...register('parentId')} className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A] bg-white">
+              <label className="admin-label">Listino padre</label>
+              <select {...register('parentId')} className="admin-select">
                 <option value="">— Seleziona —</option>
                 {baseListinos.map(pl => (
                   <option key={pl.id} value={pl.id}>{pl.name}</option>

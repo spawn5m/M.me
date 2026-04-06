@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import DataTable from '../../components/admin/DataTable'
 import FormModal from '../../components/admin/FormModal'
@@ -27,7 +26,7 @@ const columns = [
     key: 'name',
     header: 'Identificatore',
     render: (r: AdminRole) => (
-      <code className="text-xs bg-[#F8F7F4] px-2 py-0.5 rounded font-mono text-[#6B7280]">
+      <code className="admin-code">
         {r.name}
       </code>
     )
@@ -37,10 +36,10 @@ const columns = [
     header: 'Tipo',
     render: (r: AdminRole) => (
       <span className={[
-        'text-xs px-2 py-0.5 rounded-full font-medium',
+        'admin-badge',
         r.isSystem
-          ? 'bg-[#1A2B4A] text-white'
-          : 'bg-[#C9A96E]/20 text-[#C9A96E]'
+          ? 'admin-badge-dark'
+          : 'admin-badge-gold'
       ].join(' ')}>
         {r.isSystem ? 'Sistema' : 'Custom'}
       </span>
@@ -53,11 +52,9 @@ export default function RolesPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [confirmTarget, setConfirmTarget] = useState<AdminRole | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [pageError, setPageError] = useState<string | null>(null)
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<CreateFormValues>({
-    resolver: zodResolver(createSchema)
-  })
+  const { register, handleSubmit, formState: { errors, isSubmitting }, reset, setError: setFormError, clearErrors } = useForm<CreateFormValues>()
 
   const loadRoles = useCallback(async () => {
     setIsLoading(true)
@@ -72,14 +69,26 @@ export default function RolesPage() {
   useEffect(() => { loadRoles() }, [loadRoles])
 
   const onSubmit = async (values: CreateFormValues) => {
+    clearErrors()
+    const result = createSchema.safeParse(values)
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const field = issue.path[0]
+        if (typeof field === 'string') {
+          setFormError(field as keyof CreateFormValues, { type: 'manual', message: issue.message })
+        }
+      }
+      return
+    }
+
     try {
-      await rolesApi.create(values)
+      await rolesApi.create(result.data)
       reset()
       setShowCreateModal(false)
       loadRoles()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(msg ?? 'Errore durante la creazione')
+      setPageError(msg ?? 'Errore durante la creazione')
     }
   }
 
@@ -91,31 +100,32 @@ export default function RolesPage() {
       loadRoles()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setError(msg ?? 'Impossibile eliminare il ruolo')
+      setPageError(msg ?? 'Impossibile eliminare il ruolo')
       setConfirmTarget(null)
     }
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h2
-          className="text-2xl text-[#1A2B4A]"
-          style={{ fontFamily: 'Playfair Display, serif' }}
-        >
-          Ruoli
-        </h2>
+      <div className="admin-page-intro">
+        <div>
+          <p className="admin-page-kicker">Permessi applicativi</p>
+          <h2 className="admin-page-title">Ruoli</h2>
+          <p className="admin-page-description">
+            Configura i profili disponibili nell&apos;area riservata mantenendo separati ruoli di sistema e ruoli personalizzati.
+          </p>
+        </div>
         <button
-          onClick={() => { setError(null); reset(); setShowCreateModal(true) }}
-          className="px-4 py-2 bg-[#1A2B4A] text-white text-sm rounded hover:bg-[#2C4A7C] transition-colors"
+          onClick={() => { setPageError(null); clearErrors(); reset(); setShowCreateModal(true) }}
+          className="admin-button-primary"
         >
           + Nuovo ruolo
         </button>
       </div>
 
-      {error && (
-        <p className="text-red-600 text-sm mb-4 bg-red-50 border border-red-200 rounded px-3 py-2">
-          {error}
+      {pageError && (
+        <p className="mb-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+          {pageError}
         </p>
       )}
 
@@ -131,7 +141,7 @@ export default function RolesPage() {
             onClick: (r) => {
               const role = r as AdminRole
               if (role.isSystem) {
-                setError('I ruoli di sistema non possono essere eliminati')
+                setPageError('I ruoli di sistema non possono essere eliminati')
                 return
               }
               setConfirmTarget(role)
@@ -149,24 +159,24 @@ export default function RolesPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-[#1A2B4A] uppercase tracking-wider mb-1">
+            <label className="admin-label">
               Identificatore (es. operatore_magazzino)
             </label>
             <input
               {...register('name')}
               placeholder="nome_ruolo"
-              className="w-full px-3 py-2 border border-[#E5E0D8] rounded text-sm focus:outline-none focus:border-[#1A2B4A]"
+              className="admin-input"
             />
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
           </div>
           <div>
-            <label className="block text-xs font-medium text-[#1A2B4A] uppercase tracking-wider mb-1">
+            <label className="admin-label">
               Nome visualizzato
             </label>
             <input
               {...register('label')}
               placeholder="Operatore Magazzino"
-              className="w-full px-3 py-2 border border-[#E5E0D8] rounded text-sm focus:outline-none focus:border-[#1A2B4A]"
+              className="admin-input"
             />
             {errors.label && <p className="text-red-500 text-xs mt-1">{errors.label.message}</p>}
           </div>

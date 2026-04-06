@@ -102,19 +102,22 @@ export default function AccessoriesPage() {
   ]
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl text-[#1A2B4A]" style={{ fontFamily: 'Playfair Display, serif' }}>Accessori</h1>
+    <div>
+      <div className="admin-page-intro">
+        <div>
+          <p className="admin-page-kicker">Catalogo accessori</p>
+          <h1 className="admin-page-title">Accessori</h1>
+        </div>
         <div className="flex gap-3">
-          <button onClick={() => setTab('import')} className="border border-[#1A2B4A] text-[#1A2B4A] px-4 py-2 text-sm font-medium rounded hover:bg-[#F8F7F4] transition-colors">Import Excel</button>
-          <button onClick={openCreate} className="bg-[#1A2B4A] text-white px-4 py-2 text-sm font-medium rounded hover:bg-[#2C4A7C] transition-colors">+ Aggiungi</button>
+          <button onClick={() => setTab('import')} className="admin-button-secondary">Import Excel</button>
+          <button onClick={openCreate} className="admin-button-primary">+ Aggiungi</button>
         </div>
       </div>
 
-      <div className="flex border-b border-[#E5E0D8] mb-6">
+      <div className="admin-tabbar">
         {(['list', 'import'] as Tab[]).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={['px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors', tab === t ? 'border-[#1A2B4A] text-[#1A2B4A]' : 'border-transparent text-[#6B7280] hover:text-[#1A2B4A]'].join(' ')}>
+            className={['admin-tab', tab === t ? 'admin-tab-active' : ''].join(' ')}>
             {t === 'list' ? 'Lista' : 'Import Excel'}
           </button>
         ))}
@@ -125,15 +128,15 @@ export default function AccessoriesPage() {
       )}
 
       {tab === 'import' && (
-        <div className="max-w-xl">
-          <p className="text-sm text-[#6B7280] mb-4">Carica un file Excel con colonne: <code className="bg-[#F8F7F4] px-1 rounded">codice, descrizione, note, categorie, pagina_pdf</code></p>
+        <div className="admin-panel max-w-xl p-6">
+          <p className="mb-4 text-sm text-[#6B7280]">Carica un file Excel con colonne: <code className="admin-code">codice, descrizione, note, categorie, pagina_pdf</code></p>
           <input type="file" accept=".xlsx,.xls" onChange={handleImport} disabled={isImporting}
-            className="block w-full text-sm text-[#6B7280] file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-medium file:bg-[#1A2B4A] file:text-white hover:file:bg-[#2C4A7C] disabled:opacity-50" />
+            className="admin-file-input disabled:opacity-50" />
           {isImporting && <p className="text-sm text-[#6B7280] mt-3">Importazione in corso…</p>}
           {importResult && (
             <div className="mt-4 text-sm">
-              <span className="text-green-600 font-medium mr-4">✓ Importati: {importResult.imported}</span>
-              <span className="text-yellow-600 font-medium">⚠ Saltati: {importResult.skipped}</span>
+              <span className="mr-4 font-medium text-green-600">Importati: {importResult.imported}</span>
+              <span className="font-medium text-yellow-600">Saltati: {importResult.skipped}</span>
             </div>
           )}
         </div>
@@ -142,22 +145,22 @@ export default function AccessoriesPage() {
       <FormModal isOpen={isCreating || !!editing} title={editing ? 'Modifica Accessorio' : 'Nuovo Accessorio'} onClose={closeModal} onSubmit={onSubmit} isSubmitting={isSubmitting}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Codice <span className="text-red-500">*</span></label>
-            <input {...register('code', { required: 'Obbligatorio' })} className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A]" />
+            <label className="admin-label">Codice <span className="text-red-500">*</span></label>
+            <input {...register('code', { required: 'Obbligatorio' })} className="admin-input" />
             {errors.code && <p className="text-red-500 text-xs mt-1">{errors.code.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Descrizione <span className="text-red-500">*</span></label>
-            <input {...register('description', { required: 'Obbligatorio' })} className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A]" />
+            <label className="admin-label">Descrizione <span className="text-red-500">*</span></label>
+            <input {...register('description', { required: 'Obbligatorio' })} className="admin-input" />
             {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Pagina PDF</label>
-            <input type="number" {...register('pdfPage')} className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A]" />
+            <label className="admin-label">Pagina PDF</label>
+            <input type="number" {...register('pdfPage')} className="admin-input" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-1">Note</label>
-            <textarea {...register('notes')} rows={2} className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A] resize-none" />
+            <label className="admin-label">Note</label>
+            <textarea {...register('notes')} rows={2} className="admin-textarea" />
           </div>
         </div>
       </FormModal>

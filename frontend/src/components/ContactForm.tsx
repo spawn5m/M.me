@@ -41,7 +41,7 @@ export default function ContactForm() {
     const result = contactSchema.safeParse(values)
     if (!result.success) {
       const errs: Record<string, string> = {}
-      result.error.errors.forEach((err) => {
+      result.error.issues.forEach((err) => {
         errs[err.path[0] as string] = err.message
       })
       setErrors(errs)

@@ -16,6 +16,7 @@ function isCoffin(
   item: CoffinItem | AccessoryItem,
   type: ModalType
 ): item is CoffinItem {
+  void item
   return type === 'coffin'
 }
 

@@ -38,7 +38,7 @@ export default function DataTable<T extends Record<string, unknown>>({
   isLoading
 }: DataTableProps<T>) {
   return (
-    <div className="bg-white rounded-lg border border-[#E5E0D8] overflow-hidden shadow-sm">
+    <div className="overflow-hidden border border-[#E5E0D8] bg-white shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
@@ -84,7 +84,7 @@ export default function DataTable<T extends Record<string, unknown>>({
               data.map((item) => (
                 <tr
                   key={String(item[keyField])}
-                  className="border-b border-[#E5E0D8] last:border-0 hover:bg-[#F8F7F4] transition-colors"
+                  className="border-b border-[#E5E0D8] last:border-0 hover:bg-[#FCFBF8] transition-colors"
                 >
                   {columns.map((col) => (
                     <td key={col.key} className="px-4 py-3 text-[#1A1A1A]">
@@ -99,10 +99,10 @@ export default function DataTable<T extends Record<string, unknown>>({
                             key={action.label}
                             onClick={() => action.onClick(item)}
                             className={[
-                              'text-xs px-3 py-1.5 rounded transition-colors',
+                              'min-h-9 border px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] transition-colors',
                               action.variant === 'danger'
-                                ? 'text-red-600 hover:bg-red-50'
-                                : 'text-[#1A2B4A] hover:bg-[#E5E0D8]'
+                                ? 'border-[#F1D3D3] text-[#B42318] hover:bg-[#FFF5F5]'
+                                : 'border-[#E5E0D8] text-[#031634] hover:border-[#C9A96E] hover:text-[#C9A96E]'
                             ].join(' ')}
                           >
                             {action.label}
@@ -127,14 +127,14 @@ export default function DataTable<T extends Record<string, unknown>>({
             <button
               onClick={() => onPageChange?.(pagination.page - 1)}
               disabled={pagination.page <= 1}
-              className="px-3 py-1.5 text-xs rounded border border-[#E5E0D8] text-[#1A2B4A] disabled:opacity-40 hover:bg-white transition-colors"
+              className="min-h-9 border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] text-[#031634] transition-colors hover:border-[#C9A96E] hover:text-[#C9A96E] disabled:opacity-40"
             >
               ← Prec
             </button>
             <button
               onClick={() => onPageChange?.(pagination.page + 1)}
               disabled={pagination.page >= pagination.totalPages}
-              className="px-3 py-1.5 text-xs rounded border border-[#E5E0D8] text-[#1A2B4A] disabled:opacity-40 hover:bg-white transition-colors"
+              className="min-h-9 border border-[#E5E0D8] px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] text-[#031634] transition-colors hover:border-[#C9A96E] hover:text-[#C9A96E] disabled:opacity-40"
             >
               Succ →
             </button>

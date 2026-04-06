@@ -1,4 +1,5 @@
-import { ReactNode, useEffect } from 'react'
+import { useEffect } from 'react'
+import type { ReactNode } from 'react'
 
 interface FormModalProps {
   isOpen: boolean
@@ -32,14 +33,13 @@ export default function FormModal({
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+      style={{ backgroundColor: 'rgba(26, 43, 74, 0.22)', backdropFilter: 'blur(6px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-        {/* Header */}
+      <div className="w-full max-w-lg border border-[#E5E0D8] bg-white shadow-[0_24px_80px_rgba(26,43,74,0.16)]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E0D8]">
           <h2
-            className="text-[#1A2B4A] font-semibold"
+            className="text-xl text-[#031634]"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
             {title}
@@ -52,17 +52,15 @@ export default function FormModal({
           </button>
         </div>
 
-        {/* Body */}
         <div className="px-6 py-4">
           {children}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#E5E0D8] bg-[#F8F7F4] rounded-b-lg">
+        <div className="flex items-center justify-end gap-3 border-t border-[#E5E0D8] bg-[#F8F7F4] px-6 py-4">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1A2B4A] transition-colors"
+            className="inline-flex min-h-11 items-center justify-center border border-[#E5E0D8] px-4 py-2 text-sm font-medium text-[#031634] transition-colors hover:border-[#C9A96E] hover:text-[#C9A96E]"
           >
             Annulla
           </button>
@@ -70,7 +68,7 @@ export default function FormModal({
             type="button"
             onClick={onSubmit}
             disabled={isSubmitting}
-            className="px-5 py-2 text-sm bg-[#1A2B4A] text-white rounded hover:bg-[#2C4A7C] disabled:opacity-50 transition-colors"
+            className="inline-flex min-h-11 items-center justify-center bg-[#031634] px-5 py-2 text-sm font-medium text-white transition-colors hover:bg-[#1A2B4A] disabled:opacity-50"
           >
             {isSubmitting ? 'Salvataggio…' : submitLabel}
           </button>

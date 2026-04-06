@@ -106,17 +106,15 @@ export default function LookupPage() {
   ]
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1
-          className="text-2xl text-[#1A2B4A]"
-          style={{ fontFamily: 'Playfair Display, serif' }}
-        >
-          {LOOKUP_LABELS[type ?? ''] ?? type}
-        </h1>
+    <div>
+      <div className="admin-page-intro">
+        <div>
+          <p className="admin-page-kicker">Vocabolari di catalogo</p>
+          <h1 className="admin-page-title">{LOOKUP_LABELS[type ?? ''] ?? type}</h1>
+        </div>
         <button
           onClick={openCreate}
-          className="bg-[#1A2B4A] text-white px-4 py-2 text-sm font-medium rounded hover:bg-[#2C4A7C] transition-colors"
+          className="admin-button-primary"
         >
           + Aggiungi
         </button>
@@ -139,23 +137,23 @@ export default function LookupPage() {
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+            <label className="admin-label">
               Codice <span className="text-red-500">*</span>
             </label>
             <input
               {...register('code', { required: 'Il codice è obbligatorio' })}
-              className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A]"
+              className="admin-input"
               placeholder="es. CAT1"
             />
             {errors.code && <p className="text-red-500 text-xs mt-1">{errors.code.message}</p>}
           </div>
           <div>
-            <label className="block text-sm font-medium text-[#1A1A1A] mb-1">
+            <label className="admin-label">
               Label <span className="text-red-500">*</span>
             </label>
             <input
               {...register('label', { required: 'La label è obbligatoria' })}
-              className="w-full border border-[#E5E0D8] rounded px-3 py-2 text-sm focus:outline-none focus:border-[#1A2B4A]"
+              className="admin-input"
               placeholder="es. Categoria 1"
             />
             {errors.label && <p className="text-red-500 text-xs mt-1">{errors.label.message}</p>}

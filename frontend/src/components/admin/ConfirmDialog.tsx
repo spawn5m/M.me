@@ -23,35 +23,35 @@ export default function ConfirmDialog({
 
   const confirmStyle =
     variant === 'danger'
-      ? 'bg-red-600 text-white hover:bg-red-700'
-      : 'bg-yellow-500 text-white hover:bg-yellow-600'
+      ? 'bg-[#B42318] text-white hover:bg-[#912018]'
+      : 'bg-[#C9A96E] text-[#031634] hover:bg-[#D9BC89]'
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+      style={{ backgroundColor: 'rgba(26, 43, 74, 0.22)', backdropFilter: 'blur(6px)' }}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-sm">
+      <div className="w-full max-w-sm border border-[#E5E0D8] bg-white shadow-[0_24px_80px_rgba(26,43,74,0.16)]">
         <div className="px-6 py-5">
           <h3
-            className="text-[#1A2B4A] font-semibold mb-2"
+            className="mb-2 text-xl text-[#031634]"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
             {title}
           </h3>
           <p className="text-[#6B7280] text-sm">{message}</p>
         </div>
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-[#E5E0D8] bg-[#F8F7F4] rounded-b-lg">
+        <div className="flex items-center justify-end gap-3 border-t border-[#E5E0D8] bg-[#F8F7F4] px-6 py-4">
           <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm text-[#6B7280] hover:text-[#1A2B4A] transition-colors"
+            className="inline-flex min-h-11 items-center justify-center border border-[#E5E0D8] px-4 py-2 text-sm font-medium text-[#031634] transition-colors hover:border-[#C9A96E] hover:text-[#C9A96E]"
           >
             Annulla
           </button>
           <button
             onClick={onConfirm}
             disabled={isConfirming}
-            className={['px-5 py-2 text-sm rounded disabled:opacity-50 transition-colors', confirmStyle].join(' ')}
+            className={['inline-flex min-h-11 items-center justify-center px-5 py-2 text-sm font-medium disabled:opacity-50 transition-colors', confirmStyle].join(' ')}
           >
             {isConfirming ? 'In corso…' : confirmLabel}
           </button>
