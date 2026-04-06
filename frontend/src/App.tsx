@@ -19,6 +19,8 @@ import LookupPage from './pages/admin/LookupPage'
 import CoffinsPage from './pages/admin/CoffinsPage'
 import AccessoriesPage from './pages/admin/AccessoriesPage'
 import MarmistaArticlesPage from './pages/admin/MarmistaArticlesPage'
+import PriceListsPage from './pages/admin/PriceListsPage'
+import PriceListDetailPage from './pages/admin/PriceListDetailPage'
 
 function PlaceholderAdmin({ name }: { name: string }) {
   return (
@@ -86,6 +88,8 @@ function AppContent() {
           <Route path="articles/marmista" element={<MarmistaArticlesPage />} />
           <Route path="catalog" element={<PlaceholderAdmin name="Catalogo PDF" />} />
           <Route path="lookups/:type" element={<LookupPage />} />
+          <Route path="pricelists" element={<PriceListsPage />} />
+          <Route path="pricelists/:id" element={<PriceListDetailPage />} />
         </Route>
       </Routes>
       {!isDark && !location.pathname.startsWith('/admin') && !location.pathname.startsWith('/login') && (
