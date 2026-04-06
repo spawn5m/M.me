@@ -3,6 +3,45 @@ import api from '../lib/api'
 import { mockMarmista } from '../lib/mock-data'
 import type { MarmistaItem, Pagination } from '../lib/types'
 
+interface LookupLike {
+  label?: string
+  code?: string
+}
+
+interface PublicMarmistaRaw {
+  id: string
+  code: string
+  description: string
+  notes?: string | null
+  publicPrice?: number | null
+  pdfPage?: number | null
+  categories?: Array<string | LookupLike>
+}
+
+function normalizeLookupList(values: Array<string | LookupLike> | undefined): string[] {
+  if (!values) return []
+  return values
+    .map((value) => {
+      if (typeof value === 'string') return value
+      if (typeof value.label === 'string' && value.label.length > 0) return value.label
+      if (typeof value.code === 'string') return value.code
+      return ''
+    })
+    .filter((value) => value.length > 0)
+}
+
+function normalizeMarmista(data: PublicMarmistaRaw[]): MarmistaItem[] {
+  return data.map((item) => ({
+    id: item.id,
+    code: item.code,
+    description: item.description,
+    notes: item.notes ?? undefined,
+    publicPrice: item.publicPrice ?? undefined,
+    pdfPage: item.pdfPage ?? undefined,
+    categories: normalizeLookupList(item.categories),
+  }))
+}
+
 interface UseMarmistaParams {
   page?: number
   limit?: number
@@ -30,7 +69,7 @@ export function useMarmista(params: UseMarmistaParams = {}): UseMarmistaResult {
       try {
         const res = await api.get('/public/marmista', { params })
         if (!cancelled) {
-          const data = res.data.data as MarmistaItem[]
+          const data = normalizeMarmista(res.data.data as PublicMarmistaRaw[])
           setItems(data.length > 0 ? data : mockMarmista)
           setPagination(res.data.pagination)
         }
