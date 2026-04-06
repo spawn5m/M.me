@@ -11,6 +11,7 @@ import authRoutes from './routes/auth'
 import publicRoutes from './routes/public'
 import usersRoutes from './routes/users'
 import rolesRoutes from './routes/roles'
+import lookupsRoutes from './routes/lookups'
 import coffinsRoutes from './routes/articles/coffins'
 import accessoriesRoutes from './routes/articles/accessories'
 import marmistaRoutes from './routes/articles/marmista'
@@ -51,6 +52,7 @@ const start = async () => {
   await app.register(publicRoutes, { prefix: '/api/public' })
   await app.register(usersRoutes, { prefix: '/api/users' })
   await app.register(rolesRoutes, { prefix: '/api/roles' })
+  await app.register(lookupsRoutes, { prefix: '/api/admin/lookups' })
   await app.register(coffinsRoutes, { prefix: '/api/articles/coffins' })
   await app.register(accessoriesRoutes, { prefix: '/api/articles/accessories' })
   await app.register(marmistaRoutes, { prefix: '/api/articles/marmista' })
