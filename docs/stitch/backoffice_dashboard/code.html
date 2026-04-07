@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html class="light" lang="it"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Mirigliani Backoffice Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Newsreader:opsz,wght@6..72,400;500;600&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            line-height: 1;
+            text-transform: none;
+            letter-spacing: normal;
+            word-wrap: normal;
+            white-space: nowrap;
+            direction: ltr;
+        }
+        .font-serif-header { font-family: 'Newsreader', serif; }
+        .font-sans-ui { font-family: 'Inter', sans-serif; }
+        .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+        
+        .shadow-warm {
+            box-shadow: 0 12px 32px rgba(26, 43, 74, 0.06), 0 2px 8px rgba(26, 43, 74, 0.04);
+        }
+        
+        /* Custom scrollbar for editorial feel */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #FAF9F6; }
+        ::-webkit-scrollbar-thumb { background: #E3E2DF; border-radius: 10px; }
+    </style>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"on-tertiary-fixed": "#261900", "surface-bright": "#faf9f6", secondary: "#415e92", "secondary-container": "#a7c4fe", "on-error-container": "#93000a", "surface-dim": "#dbdad7", "on-secondary": "#ffffff", "surface-container-highest": "#e3e2e0", "on-primary": "#ffffff", "on-error": "#ffffff", "inverse-primary": "#b6c7ed", "on-secondary-fixed": "#001b3f", "surface-container-high": "#e9e8e5", "on-surface": "#1a1c1a", "tertiary-fixed-dim": "#e4c285", "surface-tint": "#4e5e80", "secondary-fixed": "#d7e2ff", outline: "#75777e", "surface-container-low": "#f4f3f1", "inverse-surface": "#2f312f", "surface-container-lowest": "#ffffff", "on-background": "#1a1c1a", "tertiary-fixed": "#ffdea4", surface: "#faf9f6", "secondary-fixed-dim": "#abc7ff", "on-tertiary-container": "#9c8049", "on-secondary-fixed-variant": "#284678", "primary-fixed-dim": "#b6c7ed", "surface-container": "#efeeeb", primary: "#000000", "on-tertiary": "#ffffff", "on-primary-container": "#7484a7", "tertiary-container": "#261900", "primary-fixed": "#d7e2ff", "on-primary-fixed": "#081b39", "surface-variant": "#e3e2e0", "outline-variant": "#c5c6ce", "on-primary-fixed-variant": "#364767", "on-surface-variant": "#44474e", tertiary: "#000000", error: "#ba1a1a", "on-secondary-container": "#335083", "inverse-on-surface": "#f2f1ee", "primary-container": "#081b39", "error-container": "#ffdad6", background: "#faf9f6", "on-tertiary-fixed-variant": "#5a4312"}, fontFamily: {headline: ["Newsreader"], body: ["Inter"], label: ["Inter"], display: "Newsreader"}, borderRadius: {DEFAULT: "0px", lg: "0px", xl: "0px", full: "0px"}}}};</script>
+</head>
+<body class="bg-background text-on-surface font-body antialiased">
+<!-- SideNavBar Component -->
+<aside class="fixed left-0 top-0 h-screen w-64 bg-[#FAF9F6] dark:bg-slate-950 flex flex-col py-8 px-4 z-50">
+<div class="mb-12 px-4">
+<h1 class="text-2xl font-serif text-[#031634] dark:text-white antialiased">Mirigliani</h1>
+<p class="font-['Newsreader'] text-lg font-medium tracking-tight text-[#031634] dark:text-slate-100 opacity-60">Admin Portal</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Active: Dashboard -->
+<a class="flex items-center gap-3 px-4 py-3 text-[#031634] dark:text-white font-bold bg-[#E9E8E5] dark:bg-slate-800 rounded-none border-l-4 border-[#C9A96E] transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+<span class="font-['Newsreader'] text-lg">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#031634] dark:hover:text-slate-200 hover:bg-[#E9E8E5] dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-['Newsreader'] text-lg">Utenti</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#031634] dark:hover:text-slate-200 hover:bg-[#E9E8E5] dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="verified_user">verified_user</span>
+<span class="font-['Newsreader'] text-lg">Ruoli</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#031634] dark:hover:text-slate-200 hover:bg-[#E9E8E5] dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="church">church</span>
+<span class="font-['Newsreader'] text-lg">Articoli Funebri</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#031634] dark:hover:text-slate-200 hover:bg-[#E9E8E5] dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="format_paint">format_paint</span>
+<span class="font-['Newsreader'] text-lg">Articoli Marmisti</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#031634] dark:hover:text-slate-200 hover:bg-[#E9E8E5] dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+<span class="font-['Newsreader'] text-lg">Listini</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#031634] dark:hover:text-slate-200 hover:bg-[#E9E8E5] dark:hover:bg-slate-800 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="picture_as_pdf">picture_as_pdf</span>
+<span class="font-['Newsreader'] text-lg">Catalogo PDF</span>
+</a>
+</nav>
+<div class="mt-auto border-t border-[#E3E2DF]/30 pt-4">
+<a class="flex items-center gap-3 px-4 py-3 text-slate-500 dark:text-slate-400 hover:text-[#031634] dark:hover:text-slate-200 transition-colors duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-['Newsreader'] text-lg">Logout</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="ml-64 min-h-screen">
+<!-- TopAppBar Component -->
+<header class="sticky top-0 z-40 w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md flex justify-between items-center h-16 px-8 shadow-sm dark:shadow-none">
+<div class="flex items-center gap-8">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400" data-icon="search">search</span>
+<input class="bg-surface-container-low border-none rounded-lg pl-10 pr-4 py-1.5 text-sm focus:ring-1 focus:ring-[#C9A96E] w-64 font-body" placeholder="Cerca nel portale..." type="text"/>
+</div>
+<nav class="flex gap-6">
+<a class="font-['Inter'] text-sm font-semibold uppercase tracking-wider text-[#C9A96E] border-b-2 border-[#C9A96E] pb-1" href="#">Analytics</a>
+<a class="font-['Inter'] text-sm font-semibold uppercase tracking-wider text-slate-400 hover:text-[#031634] transition-all" href="#">System Status</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="material-symbols-outlined p-2 text-slate-500 hover:text-primary transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined p-2 text-slate-500 hover:text-primary transition-colors" data-icon="settings">settings</button>
+<div class="flex items-center gap-3 ml-4">
+<span class="text-xs font-bold text-primary uppercase tracking-widest text-right">Admin<br/><span class="text-[10px] text-slate-400 font-medium">Rossi, Mario</span></span>
+<img class="w-10 h-10 rounded-full object-cover border-2 border-surface-container-highest" data-alt="Close-up of a professional male administrator in a corporate setting with a warm smile" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBfdxqvh-okW0jCrY1hjdXEMxGlxPQrmR0-w9Zn_ZUvKBUydZZ3SRk1Tmb67wOh2ZIHg-BURUPr6tvCv3ZVYY4qBqCs-P8oOgjPzEt4LPy9nXfxgRw5craCrDOnrDruOuveqBNTYLv8_WWU7vLB2y4vXZc0N-HxWp05RDaBc8rlyA7knysQmJ4p4B4Pj6WjMeEagTASk5gTAGVWacUbU2PVlV5whBesKjZC309qsJR827IbCJ8mu9eYNOkp9L6w9LJ0GwgqLlZH10Mz"/>
+</div>
+</div>
+</header>
+<!-- Page Content -->
+<div class="p-12 space-y-16">
+<!-- Hero Header Section -->
+<section>
+<h2 class="font-headline text-5xl text-primary -ml-1">Panoramica Attività</h2>
+<p class="font-body text-slate-500 mt-2 max-w-2xl leading-relaxed">Bentornato nel portale Mirigliani. Qui puoi monitorare l'inventario degli articoli funebri e marmisti, gestire le utenze e generare i listini aggiornati per i partner.</p>
+</section>
+<!-- Stats Grid (Bento Style) -->
+<section class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<!-- Stat Card 1 -->
+<div class="bg-surface-container-lowest p-8 rounded-none border-b-2 border-transparent hover:border-[#C9A96E] transition-all duration-300 shadow-warm">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-[#C9A96E]" data-icon="church">church</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans-ui">Aggiornato oggi</span>
+</div>
+<p class="font-sans-ui text-sm font-semibold uppercase tracking-wider text-slate-500 mb-1">Totale Cofani</p>
+<p class="font-mono-data text-4xl text-primary">1,248</p>
+</div>
+<!-- Stat Card 2 -->
+<div class="bg-surface-container-lowest p-8 rounded-none border-b-2 border-transparent hover:border-[#C9A96E] transition-all duration-300 shadow-warm">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-[#C9A96E]" data-icon="settings_accessibility">settings_accessibility</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans-ui">+12% mese</span>
+</div>
+<p class="font-sans-ui text-sm font-semibold uppercase tracking-wider text-slate-500 mb-1">Totale Accessori</p>
+<p class="font-mono-data text-4xl text-primary">3,892</p>
+</div>
+<!-- Stat Card 3 -->
+<div class="bg-surface-container-lowest p-8 rounded-none border-b-2 border-transparent hover:border-[#C9A96E] transition-all duration-300 shadow-warm">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-[#C9A96E]" data-icon="format_paint">format_paint</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans-ui">14 in attesa</span>
+</div>
+<p class="font-sans-ui text-sm font-semibold uppercase tracking-wider text-slate-500 mb-1">Articoli Marmista</p>
+<p class="font-mono-data text-4xl text-primary">945</p>
+</div>
+<!-- Stat Card 4 -->
+<div class="bg-surface-container-lowest p-8 rounded-none border-b-2 border-transparent hover:border-[#C9A96E] transition-all duration-300 shadow-warm">
+<div class="flex justify-between items-start mb-4">
+<span class="material-symbols-outlined text-[#C9A96E]" data-icon="group">group</span>
+<span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest font-sans-ui">Online ora</span>
+</div>
+<p class="font-sans-ui text-sm font-semibold uppercase tracking-wider text-slate-500 mb-1">Utenti Attivi</p>
+<p class="font-mono-data text-4xl text-primary">156</p>
+</div>
+</section>
+<!-- Main Interactive Section -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+<!-- Activity Feed -->
+<div class="lg:col-span-2 space-y-8">
+<div class="flex items-end justify-between border-b border-outline-variant/20 pb-4">
+<h3 class="font-headline text-3xl text-primary">Attività Recente</h3>
+<a class="text-xs font-bold text-[#C9A96E] uppercase tracking-widest hover:underline decoration-2 underline-offset-4" href="#">Vedi tutte</a>
+</div>
+<div class="space-y-6">
+<!-- Activity Item 1 -->
+<div class="flex gap-6 items-start group">
+<div class="w-12 h-12 flex-shrink-0 bg-surface-container-low flex items-center justify-center rounded-full group-hover:bg-[#C9A96E]/10 transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-[#C9A96E] transition-colors" data-icon="update">update</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-semibold text-primary">Nuovo Catalogo PDF generato</p>
+<p class="text-sm text-slate-500 mt-1">L'utente <span class="font-medium text-primary">m.rossi</span> ha aggiornato il catalogo generale per il settore Nord-Ovest.</p>
+<span class="text-[10px] font-mono-data text-slate-400 uppercase mt-2 block">10:45 AM • 24 Ott 2023</span>
+</div>
+</div>
+<!-- Activity Item 2 -->
+<div class="flex gap-6 items-start group">
+<div class="w-12 h-12 flex-shrink-0 bg-surface-container-low flex items-center justify-center rounded-full group-hover:bg-[#C9A96E]/10 transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-[#C9A96E] transition-colors" data-icon="add_circle">add_circle</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-semibold text-primary">Nuovo Articolo Marmista aggiunto</p>
+<p class="text-sm text-slate-500 mt-1">Aggiunto "Vaso in Marmo Carrara Extra" (SKU: MC-102) alla categoria Listino Classico.</p>
+<span class="text-[10px] font-mono-data text-slate-400 uppercase mt-2 block">09:12 AM • 24 Ott 2023</span>
+</div>
+</div>
+<!-- Activity Item 3 -->
+<div class="flex gap-6 items-start group">
+<div class="w-12 h-12 flex-shrink-0 bg-surface-container-low flex items-center justify-center rounded-full group-hover:bg-[#C9A96E]/10 transition-colors">
+<span class="material-symbols-outlined text-primary group-hover:text-[#C9A96E] transition-colors" data-icon="login">login</span>
+</div>
+<div class="flex-1">
+<p class="text-sm font-semibold text-primary">Accesso Amministratore</p>
+<p class="text-sm text-slate-500 mt-1">Nuovo login rilevato dall'indirizzo IP 192.168.1.45 (Roma, IT).</p>
+<span class="text-[10px] font-mono-data text-slate-400 uppercase mt-2 block">08:00 AM • 24 Ott 2023</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick Actions (Stone Canvas Style) -->
+<div class="space-y-8">
+<div class="flex items-end border-b border-outline-variant/20 pb-4">
+<h3 class="font-headline text-3xl text-primary">Azioni Rapide</h3>
+</div>
+<div class="space-y-4">
+<button class="w-full group relative flex items-center justify-between p-6 bg-primary text-white rounded-lg shadow-lg hover:shadow-xl transition-all">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#C9A96E]" data-icon="add">add</span>
+<span class="font-sans-ui font-semibold tracking-wide">Nuovo Articolo</span>
+</div>
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="w-full group relative flex items-center justify-between p-6 bg-surface-container-high text-primary rounded-lg hover:bg-surface-container-highest transition-all">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#C9A96E]" data-icon="summarize">summarize</span>
+<span class="font-sans-ui font-semibold tracking-wide">Genera Listino</span>
+</div>
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" data-icon="chevron_right">chevron_right</span>
+</button>
+<button class="w-full group relative flex items-center justify-between p-6 bg-surface-container-high text-primary rounded-lg hover:bg-surface-container-highest transition-all">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-[#C9A96E]" data-icon="visibility">visibility</span>
+<span class="font-sans-ui font-semibold tracking-wide">Vedi Catalogo</span>
+</div>
+<span class="material-symbols-outlined opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" data-icon="chevron_right">chevron_right</span>
+</button>
+</div>
+<!-- Informational Stone Swatch Chip Section -->
+<div class="bg-surface-container-low p-6 rounded-none mt-12">
+<p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Materiale in primo piano</p>
+<div class="flex items-center gap-3 bg-surface-container-lowest p-2 pr-4 rounded-full w-fit">
+<img class="w-8 h-8 rounded-full object-cover" data-alt="Macro texture of premium white Carrara marble with subtle grey veins and polished surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBUAbM-5SnlORBwDsqWRO7V3mrtcjx2ZJR8LvXaAVzgdvjvHNZhwZOIbrEY1Yz-dbUxtsvZKe2TeaEyExhk20Wyt8yPIDZWNpDKpGvn-2INtb_07uL12upMQWRFSMTgeJkifKlwA9PVyBMnfhERdK1towQqX-YwH8CZgldeCEKfGpW7eebGrcZ2DY0hOVOJr0Wi-_OizaZxzt2-qlvfCfpix2npB3uJO_ofuQ5XB0KM2UFMNHFuXhZsvTKj9yDuI67A_MhPbECe8vxr"/>
+<span class="font-sans-ui text-xs font-bold text-primary">Marmo Carrara Extra</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Detailed Data Table (Minimalist Architectural style) -->
+<section class="mt-12">
+<div class="flex items-end justify-between border-b border-outline-variant/20 pb-4 mb-8">
+<h3 class="font-headline text-3xl text-primary">Ultimi Articoli Inseriti</h3>
+<div class="flex gap-4">
+<button class="p-2 border border-outline-variant/30 rounded-full hover:bg-surface-container-low"><span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span></button>
+<button class="p-2 border border-outline-variant/30 rounded-full hover:bg-surface-container-low"><span class="material-symbols-outlined text-sm" data-icon="download">download</span></button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="border-b border-outline-variant/10">
+<th class="pb-4 font-sans-ui text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Codice SKU</th>
+<th class="pb-4 font-sans-ui text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Nome Prodotto</th>
+<th class="pb-4 font-sans-ui text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Categoria</th>
+<th class="pb-4 font-sans-ui text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4">Prezzo Base</th>
+<th class="pb-4 font-sans-ui text-[10px] font-bold text-slate-400 uppercase tracking-widest px-4 text-right">Azione</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/5">
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-5 px-4 font-mono-data text-xs text-primary">M-092-A</td>
+<td class="py-5 px-4 font-sans-ui text-sm font-semibold text-primary">Urna Cineraria 'Aurora' Bronzo</td>
+<td class="py-5 px-4 font-sans-ui text-xs text-slate-500">Accessori Funebri</td>
+<td class="py-5 px-4 font-mono-data text-sm text-primary">€ 245.00</td>
+<td class="py-5 px-4 text-right">
+<button class="material-symbols-outlined text-slate-400 hover:text-primary" data-icon="edit">edit</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-5 px-4 font-mono-data text-xs text-primary">C-441-L</td>
+<td class="py-5 px-4 font-sans-ui text-sm font-semibold text-primary">Cofano Rovere Massiccio Intagliato</td>
+<td class="py-5 px-4 font-sans-ui text-xs text-slate-500">Cofani</td>
+<td class="py-5 px-4 font-mono-data text-sm text-primary">€ 1,850.00</td>
+<td class="py-5 px-4 text-right">
+<button class="material-symbols-outlined text-slate-400 hover:text-primary" data-icon="edit">edit</button>
+</td>
+</tr>
+<tr class="group hover:bg-surface-container-low transition-colors">
+<td class="py-5 px-4 font-mono-data text-xs text-primary">S-112-X</td>
+<td class="py-5 px-4 font-sans-ui text-sm font-semibold text-primary">Lastra Granite Nero Assoluto 2cm</td>
+<td class="py-5 px-4 font-sans-ui text-xs text-slate-500">Articoli Marmista</td>
+<td class="py-5 px-4 font-mono-data text-sm text-primary">€ 110.00/mq</td>
+<td class="py-5 px-4 text-right">
+<button class="material-symbols-outlined text-slate-400 hover:text-primary" data-icon="edit">edit</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+</main>
+<!-- Contextual FAB - Only for Home/Dashboard -->
+<button class="fixed bottom-12 right-12 w-16 h-16 bg-[#C9A96E] text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50">
+<span class="material-symbols-outlined text-2xl" data-icon="add">add</span>
+</button>
+</body></html>

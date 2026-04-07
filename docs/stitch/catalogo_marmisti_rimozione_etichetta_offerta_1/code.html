@@ -1,0 +1,399 @@
+<!DOCTYPE html><html class="light" lang="it"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Catalog Per i Marmisti | Mirigliani</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Newsreader:ital,wght@0,400;0,500;1,400&amp;family=JetBrains+Mono:wght@400&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"inverse-surface": "#2f312f", "surface-dim": "#dbdad7", "surface-container-lowest": "#ffffff", "secondary-container": "#a7c4fe", background: "#faf9f6", "inverse-on-surface": "#f2f1ee", tertiary: "#000000", primary: "#000000", "on-secondary": "#ffffff", error: "#ba1a1a", "on-primary-fixed-variant": "#364767", "on-tertiary": "#ffffff", "on-primary": "#ffffff", "on-background": "#1a1c1a", "secondary-fixed": "#d7e2ff", "on-primary-fixed": "#081b39", "on-tertiary-fixed": "#261900", "surface-variant": "#e3e2e0", "on-secondary-fixed": "#001b3f", "surface-container": "#efeeeb", "tertiary-fixed": "#ffdea4", "on-surface-variant": "#44474e", "primary-fixed": "#d7e2ff", "inverse-primary": "#b6c7ed", "tertiary-container": "#261900", "tertiary-fixed-dim": "#e4c285", "on-surface": "#1a1c1a", "on-error": "#ffffff", "surface-container-low": "#f4f3f1", "secondary-fixed-dim": "#abc7ff", "surface-container-highest": "#e3e2e0", "on-secondary-container": "#335083", "surface-tint": "#4e5e80", "primary-container": "#081b39", "on-error-container": "#93000a", "surface-bright": "#faf9f6", "error-container": "#ffdad6", "surface-container-high": "#e9e8e5", "primary-fixed-dim": "#b6c7ed", secondary: "#415e92", outline: "#75777e", surface: "#faf9f6", "on-tertiary-container": "#9c8049", "outline-variant": "#c5c6ce", "on-primary-container": "#7484a7", "on-tertiary-fixed-variant": "#5a4312", "on-secondary-fixed-variant": "#284678"}, fontFamily: {headline: ["Newsreader"], body: ["Inter"], label: ["Inter"], mono: ["JetBrains Mono"], display: "Newsreader"}, borderRadius: {DEFAULT: "0px", lg: "0px", xl: "0px", full: "0px"}, boxShadow: {warm: "0 12px 32px rgba(26, 43, 74, 0.06), 0 2px 8px rgba(26, 43, 74, 0.04)"}}}};</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .stone-gradient {
+            background: linear-gradient(135deg, #031634 0%, #1A2B4A 100%);
+        }
+        .pdf-shadow {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #efeeeb;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #031634;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body selection:bg-tertiary-fixed-dim selection:text-tertiary">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-[#FAF9F6]/80 backdrop-blur-md shadow-warm">
+<nav class="flex justify-between items-center px-12 py-6 max-w-screen-2xl mx-auto">
+<div class="font-['Newsreader'] text-2xl tracking-tighter font-semibold text-[#031634]" style="">
+                Mirigliani
+            </div>
+<div class="hidden md:flex items-center gap-8 font-['Newsreader'] italic text-lg leading-relaxed">
+<a class="text-[#031634]/70 hover:text-[#C9A96E] transition-colors duration-300" href="#" style="">Home</a>
+<a class="text-[#031634]/70 hover:text-[#C9A96E] transition-colors duration-300" href="#" style="">La Nostra Storia</a>
+<a class="text-[#031634]/70 hover:text-[#C9A96E] transition-colors duration-300" href="#" style="">Dove Siamo</a>
+<a class="text-[#031634]/70 hover:text-[#C9A96E] transition-colors duration-300" href="#" style="">Per le Imprese Funebri</a>
+<a class="text-[#C9A96E] border-b-2 border-[#C9A96E] pb-1 transition-colors duration-300" href="#" style="">Per i Marmisti</a>
+</div>
+<button class="bg-primary text-white px-6 py-2 rounded-lg font-label text-sm tracking-wide scale-95 active:scale-90 transition-transform shadow-warm" style="">
+                Area Riservata
+            </button>
+</nav>
+</header>
+<main class="pt-32 max-w-[1920px] mx-auto px-12">
+<!-- Hero Section -->
+<header class="mb-12">
+<div class="max-w-4xl">
+<h1 class="font-headline text-5xl md:text-6xl text-primary leading-tight mb-4 -ml-1" style="">
+                    Catalogo CEABIS</h1>
+<p class="text-on-surface-variant text-lg max-w-2xl leading-relaxed" style="">Un'unione perfetta tra maestria artigiana e visione contemporanea: invitiamo clienti e professionisti a sfogliare il nuovo Catalogo Vezzani Arte Funeraria per lasciarsi ispirare dalle ultime, esclusive novità del settore.</p>
+</div>
+</header>
+<!-- Two Column Layout -->
+<div class="flex flex-col lg:flex-row gap-12 mb-20">
+<!-- Left Column: Filters & Search (1/4) -->
+<aside class="w-full lg:w-1/4 space-y-8">
+<div class="bg-surface-container-low p-8 sticky top-32">
+<div class="mb-8">
+<label class="block text-[10px] uppercase tracking-widest font-bold mb-3 text-primary" style="">Cerca nel catalogo</label>
+<div class="relative">
+<input class="w-full bg-surface-container-lowest border-none border-b border-outline-variant focus:ring-0 focus:border-tertiary-fixed-dim py-3 px-4 text-sm font-body" placeholder="Es: Carrara, Nero..." type="text">
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-outline text-lg" data-icon="search" style="">search</span>
+</div>
+</div>
+<div class="mb-8">
+<label class="block text-[10px] uppercase tracking-widest font-bold mb-3 text-primary" style="">Categoria</label>
+<select class="w-full bg-surface-container-lowest border-none border-b border-outline-variant focus:ring-0 focus:border-tertiary-fixed-dim py-3 px-4 text-sm font-body appearance-none cursor-pointer">
+<option>Tutte le pietre</option>
+<option>Marmi</option>
+<option>Graniti</option>
+<option>Pietre Naturali</option>
+</select>
+</div>
+<div class="mb-10">
+<label class="block text-[10px] uppercase tracking-widest font-bold mb-3 text-primary" style="">Tipo Materiale</label>
+<div class="space-y-3">
+<label class="flex items-center gap-3 cursor-pointer group" style="">
+<input checked="" class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="text-sm text-on-surface-variant group-hover:text-primary transition-colors" style="">Apuano</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group" style="">
+<input class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="text-sm text-on-surface-variant group-hover:text-primary transition-colors" style="">Esotico</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group" style="">
+<input class="w-4 h-4 rounded border-outline-variant text-primary focus:ring-primary" type="checkbox">
+<span class="text-sm text-on-surface-variant group-hover:text-primary transition-colors" style="">Calcari</span>
+</label>
+</div>
+</div>
+<!-- Simulated Search Results -->
+<div class="border-t border-outline-variant/30 pt-8">
+<label class="block text-[10px] uppercase tracking-widest font-bold mb-6 text-primary" style="">Risultati Rapidi</label>
+<div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+<!-- Result 1 -->
+<button class="w-full flex gap-4 items-center group text-left hover:bg-white p-2 transition-colors" onclick="updateViewer('bianco')" style="">
+<div class="w-16 h-16 bg-surface-container-high shrink-0 overflow-hidden">
+<img alt="Carrara" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjWXxpiUce9xkTRu1hoaT2naIcvBP_O3bMqUbUMESwVseuVyNJq2z5njeZXPTKQIuJNTl43MyqbmxNCht8aRFzG1GpADB9-hjnZrPFAWsnP3BlyiwTEQfRTRq8k7odXY2s0AbeWbmsKU3RoowikpyNFOb-iFVQ1oIh5MuVNz7xx5BX0_ryP7Mqd0khnZZ-J_Mv_-OlS9VPWjEVvUUGHpMpu6at472SZrb3BVyHrXknNnn7q0NETMu4Lypb6cFTZahmjt9kkPABzvO-" style="">
+</div>
+<div>
+<p class="font-headline text-lg text-primary group-hover:text-secondary" style="">Bianco Carrara</p>
+<p class="text-[10px] text-outline uppercase tracking-tight font-mono" style="">PAG. 01</p>
+</div>
+</button>
+<!-- Result 2 -->
+<button class="w-full flex gap-4 items-center group text-left hover:bg-white p-2 transition-colors" onclick="updateViewer('nero')" style="">
+<div class="w-16 h-16 bg-surface-container-high shrink-0 overflow-hidden">
+<img alt="Nero" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1pbao0fjJZGe57tevsXJ3kblt5a-c4XUCy9clyPJ5cc4mQtA12DsWevbMMoW8VJyEt3SV-k_HVtLzOpjAirt0zt1VFna4sR1qrmkE9GUqO6uWNLhYE50tnbgc9pCuP9omqyp_MStdZoE5AW1iX2XeP5PPHk9KshAolE6zdoZ2PJ6Mc7VIM1EF_d4xah-mr26T_-ndoXcFmKETMRMQvRE5gsfoHqQsjRJN6JDAbfP-B0KhCW6USJaLV-aws3s7h1b1Yuo9oOxpsWqw" style="">
+</div>
+<div>
+<p class="font-headline text-lg text-primary group-hover:text-secondary" style="">Nero Marquina</p>
+<p class="text-[10px] text-outline uppercase tracking-tight font-mono" style="">PAG. 12</p>
+</div>
+</button>
+<!-- Result 3 -->
+<button class="w-full flex gap-4 items-center group text-left hover:bg-white p-2 transition-colors" onclick="updateViewer('calacatta')" style="">
+<div class="w-16 h-16 bg-surface-container-high shrink-0 overflow-hidden">
+<img alt="Calacatta" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyJiZOICyQ7Wl0kgUsT3KiPFiXxXnl0sUswAaPOVifj60JSKUgrKUcKSzwWjQMTcy5HkoIwFeVYM2MFwPRQ5LfX3qIUH1I-gkEf7S589WZ7M1CIrIB5PYVo8R3eIKYd97umNFWbrtE02kJmSSOiEiozxaS3QbanxX6o_XgDmWNkL75YpSc91fXZJeyEAmJzIjh-PQdijQambOBPblxqRqsUSliJevlvxPblKK5LYfrxotBRSxNWrwVjXZ0ygLlYKCRSKHRzlmOapdW" style="">
+</div>
+<div>
+<p class="font-headline text-lg text-primary group-hover:text-secondary" style="">Calacatta Gold</p>
+<p class="text-[10px] text-outline uppercase tracking-tight font-mono" style="">PAG. 05</p>
+</div>
+</button>
+</div>
+</div>
+</div>
+</aside>
+<!-- Right Column: PDF Viewer / Render Area (3/4) -->
+<section class="w-full lg:w-3/4">
+<div class="bg-surface-container p-12 lg:p-20 flex flex-col items-center min-h-[1000px] border border-outline-variant/10">
+<!-- PDF Viewer Controls -->
+<div class="w-full max-w-4xl flex justify-between items-center mb-8 px-4">
+<div class="flex items-center gap-6">
+<span class="font-mono text-xs text-outline uppercase tracking-widest" style="">Visualizzazione Catalogo v2.4</span>
+<div class="h-4 w-px bg-outline-variant"></div>
+<span class="font-mono text-xs font-bold text-primary" id="page-indicator" style="">PAGINA 01 / 84</span>
+</div>
+<div class="flex gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition-colors" style="">
+<span class="material-symbols-outlined text-primary" data-icon="zoom_in" style="">zoom_in</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition-colors" style="">
+<span class="material-symbols-outlined text-primary" data-icon="download" style="">download</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white transition-colors" style="">
+<span class="material-symbols-outlined text-primary" data-icon="print" style="">print</span>
+</button>
+</div>
+</div>
+<!-- PDF Render Area -->
+<div class="bg-white w-full max-w-4xl aspect-[1/1.41] pdf-shadow relative overflow-hidden transition-all duration-500 ease-in-out" id="pdf-container">
+<!-- Dynamic Catalog Page Content -->
+<div class="h-full w-full p-16 flex flex-col" id="catalog-page">
+<div class="flex justify-between items-start border-b border-primary/10 pb-12 mb-12">
+<div>
+<span class="font-mono text-xs text-outline uppercase tracking-[0.2em] mb-4 block" style="">Sezione Marmi Apuani</span>
+<h2 class="font-headline text-6xl text-primary mb-4" id="catalog-title" style="">Bianco Carrara</h2>
+<p class="font-mono text-sm text-outline tracking-widest" id="catalog-code" style="">REF: MR-2024-01</p>
+</div>
+<div class="text-right">
+<div class="font-['Newsreader'] italic text-2xl text-primary" style="">Mirigliani</div>
+<div class="text-[10px] text-outline mt-1 font-bold tracking-widest uppercase" style="">Est. 1954</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-12 flex-1">
+<div class="space-y-12">
+<div class="aspect-square bg-surface-container-low overflow-hidden group">
+<img alt="Product Detail" class="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-700" id="catalog-image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAjWXxpiUce9xkTRu1hoaT2naIcvBP_O3bMqUbUMESwVseuVyNJq2z5njeZXPTKQIuJNTl43MyqbmxNCht8aRFzG1GpADB9-hjnZrPFAWsnP3BlyiwTEQfRTRq8k7odXY2s0AbeWbmsKU3RoowikpyNFOb-iFVQ1oIh5MuVNz7xx5BX0_ryP7Mqd0khnZZ-J_Mv_-OlS9VPWjEVvUUGHpMpu6at472SZrb3BVyHrXknNnn7q0NETMu4Lypb6cFTZahmjt9kkPABzvO-" style="">
+</div>
+<div class="space-y-6">
+<h4 class="text-[10px] uppercase tracking-[0.3em] font-bold text-primary border-l-2 border-primary pl-4" style="">Caratteristiche Tecniche</h4>
+<table class="w-full text-sm font-body">
+<tbody><tr class="border-b border-outline-variant/30">
+<td class="py-3 text-outline" style="">Densità Massa</td>
+<td class="py-3 text-right font-mono" id="tech-dens" style="">2710 kg/m³</td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="py-3 text-outline" style="">Assorbimento H2O</td>
+<td class="py-3 text-right font-mono" id="tech-abs" style="">0.12%</td>
+</tr>
+<tr class="border-b border-outline-variant/30">
+<td class="py-3 text-outline" style="">Carico Rottura</td>
+<td class="py-3 text-right font-mono" id="tech-break" style="">112 MPa</td>
+</tr>
+</tbody></table>
+</div>
+</div>
+<div class="flex flex-col justify-between">
+<div class="space-y-8">
+<p class="text-on-surface-variant text-lg leading-relaxed italic font-headline" id="catalog-desc" style="">
+                                            "Un'icona senza tempo estratta dai bacini carraresi, caratterizzata da un fondo bianco cristallino con venature grigie sottili ed eleganti."
+                                        </p>
+<div class="space-y-4">
+<h4 class="text-[10px] uppercase tracking-[0.3em] font-bold text-primary" style="">Applicazioni Consigliate</h4>
+<ul class="text-sm text-on-surface-variant space-y-2">
+<li class="flex items-center gap-2" style=""><span class="w-1 h-1 bg-outline rounded-full"></span> Rivestimenti interni di lusso</li>
+<li class="flex items-center gap-2" style=""><span class="w-1 h-1 bg-outline rounded-full"></span> Arredi sacri e monumentali</li>
+<li class="flex items-center gap-2" style=""><span class="w-1 h-1 bg-outline rounded-full"></span> Pavimentazioni a specchio</li>
+</ul>
+</div>
+</div>
+<div class="bg-primary/5 p-8 border border-primary/10">
+<span class="block text-[10px] uppercase tracking-widest text-outline font-bold mb-4" style="">Quotazione Riservata</span>
+<div class="flex items-baseline gap-2">
+<span class="font-headline text-4xl text-primary italic" id="catalog-price" style="">€ 1.250,00</span>
+<span class="text-[10px] text-outline font-bold uppercase" style="">/ m²</span>
+</div>
+<button class="mt-8 w-full border border-primary text-primary py-4 font-label text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all duration-300" style="">
+                                            Richiedi Campione Fisico
+                                        </button>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-12 border-t border-outline-variant/30 flex justify-between items-end">
+<div class="text-[10px] font-mono text-outline leading-tight" style="">
+                                    PAGINA 01 - CATALOGO MARMI<br>
+                                    MIRIGLIANI S.R.L. | DOCUMENTO TECNICO RISERVATO
+                                </div>
+<img alt="QR" class="w-12 h-12 opacity-30" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAS_WQPAkl4N_0GNLHR6nMXD1pH1txcxgUMhps0cnuS3AcbGGGCvoNfPVznqUg8mGGLdTDVl41JSPL63lOi0oeC2kzA4y5ayW5OS0Xlqs44d_gb-dN7KxiD23CULpMlLnjLQvfr_F5APFl4sSSDFc8o-fTHx-tDa1uA2Pu_YLAyWdPD9ZDD44xNQV797T2X2aP238pNdBNqcoAttnL9dT7vlGs4a9c94fKmXco7WUwPQMTO_j91LQigEv-VIhkScOgZl574iDDqmX7V" style="">
+</div>
+</div>
+</div>
+<!-- PDF Navigation -->
+<div class="flex items-center gap-8 mt-12">
+<button class="group flex items-center gap-2 text-outline hover:text-primary transition-colors" style="">
+<span class="material-symbols-outlined" data-icon="chevron_left" style="">chevron_left</span>
+<span class="text-[10px] uppercase tracking-[0.2em] font-bold" style="">Precedente</span>
+</button>
+<div class="flex gap-2">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span class="w-2 h-2 rounded-full bg-outline/20"></span>
+<span class="w-2 h-2 rounded-full bg-outline/20"></span>
+<span class="w-2 h-2 rounded-full bg-outline/20"></span>
+</div>
+<button class="group flex items-center gap-2 text-outline hover:text-primary transition-colors" style="">
+<span class="text-[10px] uppercase tracking-[0.2em] font-bold" style="">Successiva</span>
+<span class="material-symbols-outlined" data-icon="chevron_right" style="">chevron_right</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+<!-- Offerta Section -->
+<section class="mb-20 bg-white border border-outline-variant/10 overflow-hidden">
+<div class="grid grid-cols-1 lg:grid-cols-2">
+<div class="relative min-h-[500px] overflow-hidden">
+<img alt="Statuario Venato" class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAn-pI1y0z_kFwQO1Zf5_9r6LgK4PzM9-N_Zf6zM-vY_V5zJ9M-N_Zf6zM-vY_V5zJ9M-N_Zf6zM-vY_V5zJ9M-N_Zf6zM-vY_V5zJ9M-N_Zf6zM-vY_V5zJ9M-N_Zf6zM-vY_V5zJ9M-N_Zf6zM-vY_V5zJ9M-N_Zf6zM-vY_V5zJ9M-N_Zf6zM" style="">
+<div class="absolute inset-0 bg-primary/10 mix-blend-multiply"></div>
+</div>
+<div class="p-12 lg:p-20 flex flex-col justify-center">
+<span class="font-label text-[10px] uppercase tracking-[0.4em] text-[#C9A96E] font-bold mb-6 block" style="">Offerta</span>
+<h2 class="font-headline text-5xl text-primary mb-6 leading-tight" style="">Statuario Venato Premium</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed italic font-headline mb-10" style="">
+                        "L'eccellenza assoluta dell'estrazione apuana. Un fondo bianco latte puro solcato da ampie venature grigie simmetriche, ideale per progetti a macchia aperta."
+                    </p>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-12 mb-12">
+<div class="space-y-4">
+<h4 class="text-[10px] uppercase tracking-[0.2em] font-bold text-primary opacity-60" style="">Specifiche Tecniche</h4>
+<ul class="space-y-2 text-sm font-body">
+<li class="flex justify-between border-b border-outline-variant/20 pb-2" style="">
+<span class="text-outline" style="">Densità Massa</span>
+<span class="font-mono text-primary" style="">2720 kg/m³</span>
+</li>
+<li class="flex justify-between border-b border-outline-variant/20 pb-2" style="">
+<span class="text-outline" style="">Assorbimento H2O</span>
+<span class="font-mono text-primary" style="">0.10%</span>
+</li>
+<li class="flex justify-between border-b border-outline-variant/20 pb-2" style="">
+<span class="text-outline" style="">Resistenza</span>
+<span class="font-mono text-primary" style="">125 MPa</span>
+</li>
+</ul>
+</div>
+<div class="bg-[#C9A96E]/5 p-6 border-l-2 border-[#C9A96E]">
+<h4 class="text-[10px] uppercase tracking-[0.2em] font-bold text-[#C9A96E] mb-3" style="">Accessorio Consigliato</h4>
+<p class="text-sm text-primary font-medium leading-relaxed" style="">
+<span class="block text-xs font-bold mb-1" style="">Protective Sealant S-54</span>
+                                Trattamento nanotecnologico specifico per preservare la lucentezza e l'impermeabilità delle superfici cristalline.
+                            </p>
+</div>
+</div>
+<button class="bg-primary text-white px-10 py-5 font-label text-xs uppercase tracking-[0.2em] hover:bg-[#C9A96E] transition-all duration-500 font-bold self-start" style="">
+                        Contatta l'Agente di Zona
+                    </button>
+</div>
+</div>
+</section>
+<!-- B2B CTA Section -->
+<section class="bg-[#031634] p-20 relative overflow-hidden mb-20">
+<div class="relative z-10 max-w-4xl mx-auto text-center">
+<span class="font-label text-[10px] uppercase tracking-[0.3em] text-white/50 mb-4 block" style="">Riservato ai Professionisti</span>
+<h2 class="font-headline text-5xl text-white mb-8 leading-tight" style="">Area Riservata Imprese Funerbi</h2>
+<p class="text-white/70 text-lg mb-12 max-w-2xl mx-auto font-body" style="">Scarica i file CAD/BIM e consulta i prezziari aggiornati in tempo reale</p>
+<button class="bg-white text-primary px-16 py-6 font-label text-sm uppercase tracking-[0.2em] hover:bg-[#C9A96E] hover:text-white transition-all duration-300 font-bold" style="">Accedi all'area riservata</button>
+</div>
+<!-- Texture Overlay -->
+<div class="absolute inset-0 opacity-10 pointer-events-none mix-blend-overlay">
+<img alt="Texture" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCWXoSybxDGNpAo1NyoWrvDypgyO7o_VcRw_MkeTaTEmivgOKPDw2DyGYGbv4HtLJ9D1UPupqq8Rj6P3prNlYl2QL3O6exhsn7GFCdnYbESnZ16vj-MwGG2hVDfHDVp6O6QWv1YMWzuEzVfxEBpJFQkfJhQipLo-4nBVOGxgEJssjF07ZhF9aLe-s7piGfKkQCsI5d5JqjLn-slxpLaGm5Ba7Zi7kf-UrzJEimueJSBx1Qde13VJS8CrEaBWufg69jLMQLkKfADIWpk" style="">
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-[#F4F3F0] border-t border-[#031634]/5">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-12 px-20 py-24 w-full max-w-screen-2xl mx-auto">
+<div class="space-y-6">
+<div class="font-['Newsreader'] text-xl text-[#031634]" style="">Mirigliani</div>
+<p class="font-['Inter'] text-sm tracking-wide text-[#031634]/60 leading-relaxed" style="">
+                    © Mirigliani. Eccellenza Monumentale e Arredi Funebri.<br>
+                    Partita IVA: 01234567890
+                </p>
+</div>
+<div class="flex flex-col gap-4">
+<h5 class="font-label text-xs tracking-widest uppercase text-[#031634]" style="">Contatti</h5>
+<ul class="font-['Inter'] text-sm tracking-wide leading-loose space-y-2">
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity underline decoration-[#C9A96E]" href="#" style="">Contatti</a></li>
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity" href="#" style="">info@mirigliani.it</a></li>
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity" href="#" style="">T. +39 070 930 1234</a></li>
+</ul>
+</div>
+<div class="flex flex-col gap-4">
+<h5 class="font-label text-xs tracking-widest uppercase text-[#031634]" style="">Sedi</h5>
+<ul class="font-['Inter'] text-sm tracking-wide leading-loose space-y-2">
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity underline decoration-[#C9A96E]" href="#" style="">Sede Villamar</a></li>
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity underline decoration-[#C9A96E]" href="#" style="">Sede Sassari</a></li>
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity underline decoration-[#C9A96E]" href="#" style="">Orari di Apertura</a></li>
+</ul>
+</div>
+<div class="flex flex-col gap-4">
+<h5 class="font-label text-xs tracking-widest uppercase text-[#031634]" style="">Informazioni Legali</h5>
+<ul class="font-['Inter'] text-sm tracking-wide leading-loose space-y-2">
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity underline decoration-[#C9A96E]" href="#" style="">Privacy Policy</a></li>
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity" href="#" style="">Cookies Policy</a></li>
+<li class="" style=""><a class="text-[#031634]/60 hover:text-[#031634] transition-opacity" href="#" style="">Condizioni di Vendita</a></li>
+</ul>
+</div>
+</div>
+</footer>
+<script>
+        const productData = {
+            'bianco': {
+                title: 'Bianco Carrara',
+                code: 'REF: MR-2024-01',
+                page: '01',
+                desc: '"Un\'icona senza tempo estratta dai bacini carraresi, caratterizzata da un fondo bianco cristallino con venature grigie sottili ed eleganti."',
+                img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAjWXxpiUce9xkTRu1hoaT2naIcvBP_O3bMqUbUMESwVseuVyNJq2z5njeZXPTKQIuJNTl43MyqbmxNCht8aRFzG1GpADB9-hjnZrPFAWsnP3BlyiwTEQfRTRq8k7odXY2s0AbeWbmsKU3RoowikpyNFOb-iFVQ1oIh5MuVNz7xx5BX0_ryP7Mqd0khnZZ-J_Mv_-OlS9VPWjEVvUUGHpMpu6at472SZrb3BVyHrXknNnn7q0NETMu4Lypb6cFTZahmjt9kkPABzvO-',
+                price: '€ 1.250,00',
+                tech: { dens: '2710 kg/m³', abs: '0.12%', break: '112 MPa' }
+            },
+            'nero': {
+                title: 'Nero Marquina',
+                code: 'REF: MR-2024-12',
+                page: '12',
+                desc: '"Pietra calcarea nera a grana fine con frequenti venature bianche irregolari e resti fossili. Un classico del design contemporaneo."',
+                img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD1pbao0fjJZGe57tevsXJ3kblt5a-c4XUCy9clyPJ5cc4mQtA12DsWevbMMoW8VJyEt3SV-k_HVtLzOpjAirt0zt1VFna4sR1qrmkE9GUqO6uWNLhYE50tnbgc9pCuP9omqyp_MStdZoE5AW1iX2XeP5PPHk9KshAolE6zdoZ2PJ6Mc7VIM1EF_d4xah-mr26T_-ndoXcFmKETMRMQvRE5gsfoHqQsjRJN6JDAbfP-B0KhCW6USJaLV-aws3s7h1b1Yuo9oOxpsWqw',
+                price: '€ 1.480,00',
+                tech: { dens: '2690 kg/m³', abs: '0.17%', break: '124 MPa' }
+            },
+            'calacatta': {
+                title: 'Calacatta Gold',
+                code: 'REF: MR-2024-05',
+                page: '05',
+                desc: '"Marmo di lusso estremo con base bianco crema e venature dorate/grigie di grande impatto scenico. Rarità ed esclusività assoluta."',
+                img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDyJiZOICyQ7Wl0kgUsT3KiPFiXxXnl0sUswAaPOVifj60JSKUgrKUcKSzwWjQMTcy5HkoIwFeVYM2MFwPRQ5LfX3qIUH1I-gkEf7S589WZ7M1CIrIB5PYVo8R3eIKYd97umNFWbrtE02kJmSSOiEiozxaS3QbanxX6o_XgDmWNkL75YpSc91fXZJeyEAmJzIjh-PQdijQambOBPblxqRqsUSliJevlvxPblKK5LYfrxotBRSxNWrwVjXZ0ygLlYKCRSKHRzlmOapdW',
+                price: '€ 2.100,00',
+                tech: { dens: '2725 kg/m³', abs: '0.09%', break: '108 MPa' }
+            }
+        };
+
+        function updateViewer(productId) {
+            const data = productData[productId];
+            const container = document.getElementById('pdf-container');
+            
+            container.style.opacity = '0.5';
+            container.style.transform = 'translateY(10px)';
+            
+            setTimeout(() => {
+                document.getElementById('catalog-title').innerText = data.title;
+                document.getElementById('catalog-code').innerText = data.code;
+                document.getElementById('catalog-desc').innerText = data.desc;
+                document.getElementById('catalog-image').src = data.img;
+                document.getElementById('catalog-price').innerText = data.price;
+                document.getElementById('page-indicator').innerText = `PAGINA ${data.page} / 84`;
+                document.getElementById('tech-dens').innerText = data.tech.dens;
+                document.getElementById('tech-abs').innerText = data.tech.abs;
+                document.getElementById('tech-break').innerText = data.tech.break;
+                
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+            }, 300);
+        }
+    </script>
+</body></html>

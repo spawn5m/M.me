@@ -26,6 +26,13 @@ const PriceListsPage = lazy(() => import('./pages/admin/PriceListsPage'))
 const PriceListDetailPage = lazy(() => import('./pages/admin/PriceListDetailPage'))
 const MeasuresPage = lazy(() => import('./pages/admin/MeasuresPage'))
 
+const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'))
+const FuneralCatalogPage = lazy(() => import('./pages/client/FuneralCatalogPage'))
+const FuneralDetailPage = lazy(() => import('./pages/client/FuneralDetailPage'))
+const MarmistaClientCatalogPage = lazy(() => import('./pages/client/MarmistaClientCatalogPage'))
+const MarmistaClientDetailPage = lazy(() => import('./pages/client/MarmistaClientDetailPage'))
+const ChangePasswordPage = lazy(() => import('./pages/client/ChangePasswordPage'))
+
 function PlaceholderAdmin({ name }: { name: string }) {
   return (
     <div className="border border-[#E5E0D8] bg-white p-8 shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
@@ -90,7 +97,7 @@ function RouteFallback({ isAdmin }: { isAdmin: boolean }) {
 function AppContent() {
   const location = useLocation()
   const isDark = location.pathname === '/'
-  const isAdmin = location.pathname.startsWith('/admin')
+  const isAdmin = location.pathname.startsWith('/admin') || location.pathname.startsWith('/client')
 
   return (
     <>
@@ -138,6 +145,31 @@ function AppContent() {
             <Route path="measures" element={<MeasuresPage />} />
             <Route path="pricelists" element={<PriceListsPage />} />
             <Route path="pricelists/:id" element={<PriceListDetailPage />} />
+          </Route>
+          {/* Client — protette per impresario_funebre e marmista */}
+          <Route
+            path="/client"
+            element={
+              <ProtectedRoute requiredRoles={['impresario_funebre', 'marmista']}>
+                <AdminLayout variant="client" />
+              </ProtectedRoute>
+            }
+          >
+            <Route index element={<Navigate to="/client/dashboard" replace />} />
+            <Route path="dashboard" element={<ClientDashboard />} />
+            <Route path="catalog/funeral" element={
+              <ProtectedRoute requiredRoles={['impresario_funebre']}><FuneralCatalogPage /></ProtectedRoute>
+            } />
+            <Route path="catalog/funeral/:id" element={
+              <ProtectedRoute requiredRoles={['impresario_funebre']}><FuneralDetailPage /></ProtectedRoute>
+            } />
+            <Route path="catalog/marmista" element={
+              <ProtectedRoute requiredRoles={['marmista']}><MarmistaClientCatalogPage /></ProtectedRoute>
+            } />
+            <Route path="catalog/marmista/:id" element={
+              <ProtectedRoute requiredRoles={['marmista']}><MarmistaClientDetailPage /></ProtectedRoute>
+            } />
+            <Route path="change-password" element={<ChangePasswordPage />} />
           </Route>
         </Routes>
       </Suspense>

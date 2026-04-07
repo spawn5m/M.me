@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+
+<html lang="it"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&amp;family=JetBrains+Mono:wght@400&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"on-error-container": "#93000a", "on-tertiary-fixed": "#261900", "tertiary-fixed": "#ffdea4", "on-error": "#ffffff", tertiary: "#000000", secondary: "#415e92", "surface-dim": "#dbdad7", outline: "#75777e", "on-tertiary": "#ffffff", "tertiary-container": "#261900", "surface-container-lowest": "#ffffff", "surface-variant": "#e3e2e0", "secondary-fixed-dim": "#abc7ff", "on-secondary-container": "#335083", "secondary-fixed": "#d7e2ff", "on-secondary-fixed-variant": "#284678", "surface-bright": "#faf9f6", "on-secondary": "#ffffff", error: "#ba1a1a", "primary-container": "#081b39", "on-surface-variant": "#44474e", "on-primary-fixed": "#081b39", "primary-fixed": "#d7e2ff", "surface-container-highest": "#e3e2e0", "on-tertiary-container": "#9c8049", "surface-container": "#efeeeb", "on-background": "#1a1c1a", "on-primary-container": "#7484a7", surface: "#faf9f6", "on-primary-fixed-variant": "#364767", "inverse-on-surface": "#f2f1ee", "on-tertiary-fixed-variant": "#5a4312", "on-primary": "#ffffff", "inverse-surface": "#2f312f", background: "#faf9f6", "on-surface": "#1a1c1a", "on-secondary-fixed": "#001b3f", "surface-container-high": "#e9e8e5", "surface-container-low": "#f4f3f1", "surface-tint": "#4e5e80", primary: "#000000", "error-container": "#ffdad6", "outline-variant": "#c5c6ce", "secondary-container": "#a7c4fe", "inverse-primary": "#b6c7ed", "tertiary-fixed-dim": "#e4c285", "primary-fixed-dim": "#b6c7ed"}, fontFamily: {headline: ["Newsreader"], body: ["Inter"], label: ["Inter"], mono: ["JetBrains Mono"], display: "Newsreader"}, borderRadius: {DEFAULT: "0px", lg: "0px", xl: "0px", full: "0px"}, boxShadow: {warm: "0 12px 32px rgba(26, 43, 74, 0.06), 0 2px 8px rgba(26, 43, 74, 0.04)"}}}};</script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-surface selection:bg-tertiary-fixed-dim/30">
+<!-- Background Grid Simulation (SCREEN_20 Context) -->
+<div class="fixed inset-0 z-0 overflow-hidden opacity-20 pointer-events-none">
+<div class="grid grid-cols-4 gap-8 p-12 max-w-screen-2xl mx-auto">
+<div class="aspect-[4/5] bg-surface-container-high"></div>
+<div class="aspect-[4/5] bg-surface-container-high"></div>
+<div class="aspect-[4/5] bg-surface-container-high"></div>
+<div class="aspect-[4/5] bg-surface-container-high"></div>
+</div>
+</div>
+<!-- Scrim / Backdrop -->
+<div class="fixed inset-0 bg-primary/50 backdrop-blur-sm z-40 flex items-center justify-center p-4">
+<!-- Modal Container -->
+<article class="bg-surface-container-lowest w-full max-w-[900px] rounded-xl overflow-hidden shadow-warm relative flex flex-col max-h-[921px]">
+<!-- Close Button -->
+<button class="absolute top-4 right-4 z-50 p-2 text-primary/40 hover:text-primary transition-colors focus:outline-none">
+<span class="material-symbols-outlined text-3xl">close</span>
+</button>
+<!-- Scrollable Content Area -->
+<div class="flex flex-col md:flex-row flex-1 overflow-y-auto">
+<!-- Left Column: Visuals (55%) -->
+<section class="w-full md:w-[55%] bg-[#EDE9E3] flex flex-col">
+<div class="aspect-[4/3] w-full relative overflow-hidden flex items-center justify-center">
+<img alt="Cofano Modello Roma" class="object-cover w-full h-full mix-blend-multiply" data-alt="Detailed studio shot of a high-end hand-carved solid walnut casket with polished finish on a warm neutral background with soft shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAsCpvQmCs5Ixx6_jzzgYz3eRaObR2IxYbOR8Lys7qPB1NjE7v9G19hrAS418dPl9uReqgNqj2W7OimO08B_M3Z12kT3tsm5N9p_rlmC_D4i6RUNvM6uSAM-f22RtP3ySIwTKP6syKpztMRnTY6rJGMjafL3rvF9AvtRCZP3KZu-3ohgvNHbWrdXJ2auXgTbCFD1S28R0T8wLjSqJwryMLHcE2996k-ErzewhJjckaS6jNdPYCjhGUvekyJ0ksXJ9PHHGenauxe1HRU"/>
+</div>
+<!-- Thumbnails Strip -->
+<div class="p-6 grid grid-cols-4 gap-3 bg-surface-container-low/30">
+<div class="aspect-square bg-white border-2 border-tertiary-fixed-dim p-1 overflow-hidden cursor-pointer">
+<img alt="Thumbnail 1" class="w-full h-full object-cover" data-alt="Close-up detail of polished walnut wood grain and carved corner of a funeral casket" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPdUZ4BCuH8ssm0msd1G-9t1aXfz--JYa7GpqhLMViP6F3zlZkCucdP9xRsO8_WRqKhYaHLd4DoTZxIQrVIDUxcMM-xguZ4uqgj1vRID8GSudegHmRTFx3tcwJ3t7T2EXrsbI5aIRLozG_gyhKXFK_vbra9dJA8o1LVoBTJrFdpnGB6CeyUND17IPubSBLDz8cbkVBtm4r9xEQQLeIxA4NHj65owf-Ndi5MI_qQB_3UkW36bp0rXWQUFlBAAz_uFgD8MAstzG1M7lG"/>
+</div>
+<div class="aspect-square bg-white p-1 overflow-hidden cursor-pointer hover:bg-surface-container-high transition-colors">
+<img alt="Thumbnail 2" class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0" data-alt="Interior view of a luxury casket showing white satin upholstery and elegant tufting details" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDe0uTwOEMgZmQQqV8VkW5TWui75MA-bcfZFOXv8s6Oe7YuEDtbSSxSbPNMLGwpggE0oL3N63Dt-Ij9or6Dg0HSYmEoadYIRIdHd4Q_7KlOkkUQKp6pxQ9qlXaAz9UA00R35jJUggpy0o8Rg-3yeqrnDIYLwX8VnC_3WfX1_9t4rM2Zc4LJTRSrYKARBNpAUqswaDG8c09D84gKrZakuo1_4nLvfapB8hIf4JC9YZCAVEQUF4GQpB8NnTMhfUKmV2n1SoLsg9JxpQsf"/>
+</div>
+<div class="aspect-square bg-white p-1 overflow-hidden cursor-pointer hover:bg-surface-container-high transition-colors">
+<img alt="Thumbnail 3" class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0" data-alt="Macro shot of brass handles and ornamental hardware on a luxury wooden casket" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC6n7E382dZF337CURA6K-4cU4EHbx8ffpl6VQP6T0HW74W6FNexOnF3K-8DndH61sbkqyAhMCg7E49QwuRfuBeCEQpuZ2tiCKT3uDQ-WX8YyAwj724hBi-T7fhycYB8fmQcEGv92ayn3CtqY9TYBlEwE_QB_LQtMF-yAbj3k5GMtxCcusBoAKUF4JBLGOGKb3QNd7Y-ApnuHWQ_s8H8CL2wgpLnYJs9j2NpJ0i2xezsRMNg6ZNLgrcVrEnkOhVPRYTkNuPLdm3Jtg4"/>
+</div>
+<div class="aspect-square bg-white p-1 overflow-hidden cursor-pointer hover:bg-surface-container-high transition-colors">
+<img alt="Thumbnail 4" class="w-full h-full object-cover opacity-60 grayscale hover:grayscale-0" data-alt="Profile view of a carved wooden lid with symmetrical architectural lines and high-gloss varnish" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBLGw6bL7HNkxbB2dJPTsnXkOHk5ZXjEFUzVN40yHLdgm2I378ca2PwiAv0e-LJsndzfM48p5Bdor4mCQQy-xmKKlagsJPPiqKodmYBvWdGm8OilcwcMbijeYLMngni2sRGghsA_ErvB2ZPQGuDvVpP23M2FYU18WphnYpoKAtwCMjzq6Kc1zzsXzeEzWBWhJVrEiP0vIA8s7r73I1Oeos1MH7xxgI7h_AFsEqzLKl5heLOnwDrr8igSkXov9I17GnVYGyScCOYNR8Q"/>
+</div>
+</div>
+</section>
+<!-- Right Column: Details (45%) -->
+<section class="w-full md:w-[45%] p-8 md:p-10 flex flex-col space-y-8 bg-surface-container-lowest border-l border-outline-variant/15">
+<!-- Header Info -->
+<div>
+<span class="inline-block px-3 py-1 bg-primary text-on-primary text-[10px] font-bold tracking-widest uppercase rounded-sm mb-4">
+                            COFANO
+                        </span>
+<p class="font-mono text-xs text-on-surface-variant mb-1">MRC-0042</p>
+<h2 class="font-headline text-3xl text-primary leading-tight">Cofano Modello Roma</h2>
+<p class="mt-4 text-on-surface-variant leading-relaxed font-body text-sm italic">
+                            Un'opera di alta ebanisteria che fonde la solennità della tradizione romana con una finitura contemporanea di eccezionale lucentezza.
+                        </p>
+</div>
+<!-- Caratteristiche -->
+<div class="space-y-4">
+<h3 class="text-[10px] font-bold tracking-widest uppercase text-tertiary-fixed-dim border-b border-outline-variant/15 pb-2">
+                            Caratteristiche
+                        </h3>
+<div class="grid grid-cols-2 gap-y-3 gap-x-4 text-xs">
+<div>
+<span class="block text-on-surface-variant/60 font-medium">Essenza</span>
+<span class="text-on-surface">Noce nazionale</span>
+</div>
+<div>
+<span class="block text-on-surface-variant/60 font-medium">Figura</span>
+<span class="text-on-surface">Liscia</span>
+</div>
+<div>
+<span class="block text-on-surface-variant/60 font-medium">Colorazione</span>
+<span class="text-on-surface">Testa di moro</span>
+</div>
+<div>
+<span class="block text-on-surface-variant/60 font-medium">Finitura</span>
+<span class="text-on-surface">Verniciato lucido</span>
+</div>
+</div>
+</div>
+<!-- Misure Interne -->
+<div class="space-y-4">
+<h3 class="text-[10px] font-bold tracking-widest uppercase text-tertiary-fixed-dim border-b border-outline-variant/15 pb-2">
+                            Misure Interne
+                        </h3>
+<div class="grid grid-cols-3 gap-px bg-outline-variant/20 rounded-sm overflow-hidden border border-outline-variant/20">
+<div class="bg-surface-container-low p-2">
+<span class="block text-[9px] uppercase font-bold text-on-surface-variant/50">Testa</span>
+<span class="font-mono text-xs">58cm</span>
+</div>
+<div class="bg-surface-container-low p-2">
+<span class="block text-[9px] uppercase font-bold text-on-surface-variant/50">Piedi</span>
+<span class="font-mono text-xs">44cm</span>
+</div>
+<div class="bg-surface-container-low p-2">
+<span class="block text-[9px] uppercase font-bold text-on-surface-variant/50">Spalla</span>
+<span class="font-mono text-xs">62cm</span>
+</div>
+<div class="bg-surface-container-low p-2">
+<span class="block text-[9px] uppercase font-bold text-on-surface-variant/50">Altezza</span>
+<span class="font-mono text-xs">40cm</span>
+</div>
+<div class="bg-surface-container-low p-2">
+<span class="block text-[9px] uppercase font-bold text-on-surface-variant/50">Larghezza</span>
+<span class="font-mono text-xs">62cm</span>
+</div>
+<div class="bg-surface-container-low p-2">
+<span class="block text-[9px] uppercase font-bold text-on-surface-variant/50">Profondità</span>
+<span class="font-mono text-xs">195cm</span>
+</div>
+</div>
+<p class="text-[11px] italic text-on-surface-variant/70 leading-snug">
+                            Note: Disponibile anche in dimensioni extra-large su richiesta specifica.
+                        </p>
+</div>
+<!-- Link PDF -->
+<div class="pt-2">
+<a class="inline-flex items-center text-xs font-semibold text-primary group transition-all" href="#">
+                            Pagina catalogo PDF: p. 24
+                            <span class="ml-2 text-tertiary-fixed-dim group-hover:translate-x-1 transition-transform">→</span>
+<div class="h-0.5 w-0 bg-tertiary-fixed-dim group-hover:w-full transition-all duration-300 absolute -bottom-1 left-0"></div>
+</a>
+</div>
+</section>
+</div>
+<!-- Sticky Footer -->
+<footer class="sticky bottom-0 w-full p-6 bg-surface-container-lowest border-t border-outline-variant/15 flex flex-col sm:flex-row justify-between items-center gap-6 z-10">
+<div class="flex items-center space-x-4 text-[11px] font-bold tracking-tight text-primary/60">
+<button class="hover:text-primary transition-colors flex items-center">
+<span class="material-symbols-outlined text-sm mr-1">arrow_back</span>
+                        Prodotto precedente
+                    </button>
+<span class="text-outline-variant/40">|</span>
+<button class="hover:text-primary transition-colors flex items-center">
+                        Prodotto successivo
+                        <span class="material-symbols-outlined text-sm ml-1">arrow_forward</span>
+</button>
+</div>
+<button class="bg-primary text-white px-8 py-3 rounded-lg text-sm font-semibold tracking-wide hover:bg-primary-container transition-all shadow-sm active:scale-95">
+                    Contattaci per questo prodotto
+                </button>
+</footer>
+</article>
+</div>
+</body></html>

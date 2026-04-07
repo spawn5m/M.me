@@ -237,8 +237,8 @@ Il componente `Navbar` deve accettare una prop `variant: 'dark' | 'light'` e ren
 - [x] Fase 1 — Fondamenta
 - [x] Fase 2 — Front End Pubblico
 - [x] Fase 3 — Back End Area Riservata
-- [ ] Fase 4 — Listini ← corrente
-- [ ] Fase 5 — Area Clienti
+- [x] Fase 4 — Listini
+- [ ] Fase 5 — Area Clienti ← corrente
 - [ ] Fase 6 — Deploy VPS
 
 ---
@@ -246,7 +246,7 @@ Il componente `Navbar` deve accettare una prop `variant: 'dark' | 'light'` e ren
 ## Branch attivo
 
 ```
-main → phase/3-backend (da creare)
+main → phase/5-area-clienti (da creare)
 ```
 
 > Aggiornare con il branch corrente ad ogni sessione.

@@ -18,8 +18,11 @@ export default function LoginPage() {
     setError(null)
     setIsLoading(true)
     try {
-      await login(email, password)
-      navigate(from, { replace: true })
+      const loggedUser = await login(email, password)
+      const isClient = loggedUser.roles.includes('impresario_funebre') || loggedUser.roles.includes('marmista')
+      const defaultDest = isClient ? '/client/dashboard' : '/admin/dashboard'
+      const dest = from === '/admin/dashboard' ? defaultDest : from
+      navigate(dest, { replace: true })
     } catch {
       setError('Credenziali non valide. Riprova.')
     } finally {

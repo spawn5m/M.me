@@ -15,7 +15,7 @@ interface AuthContextValue {
   roles: string[]
   isLoading: boolean
   hasRole: (role: string | string[]) => boolean
-  login: (email: string, password: string) => Promise<void>
+  login: (email: string, password: string) => Promise<AuthUser>
   logout: () => Promise<void>
   refresh: () => Promise<void>
 }
@@ -45,9 +45,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return allowed.some((r) => user.roles.includes(r))
   }
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<AuthUser> => {
     const res = await api.post<{ user: AuthUser }>('/auth/login', { email, password })
     setUser(res.data.user)
+    return res.data.user
   }
 
   const logout = async () => {
