@@ -16,6 +16,7 @@ import coffinsRoutes from './routes/articles/coffins'
 import accessoriesRoutes from './routes/articles/accessories'
 import marmistaRoutes from './routes/articles/marmista'
 import pricelistsRoutes from './routes/pricelists'
+import clientRoutes from './routes/client'
 
 export async function buildTestApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false })
@@ -45,6 +46,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
   await app.register(accessoriesRoutes, { prefix: '/api/admin/articles/accessories' })
   await app.register(marmistaRoutes, { prefix: '/api/admin/articles/marmista' })
   await app.register(pricelistsRoutes, { prefix: '/api/admin/pricelists' })
+  await app.register(clientRoutes, { prefix: '/api/client' })
 
   await app.ready()
   return app
