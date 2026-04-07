@@ -86,7 +86,11 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const roles = request.session.get('roles') ?? []
 
     const user = await fastify.prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      include: {
+        funeralPriceList: { select: { id: true, name: true } },
+        marmistaPriceList: { select: { id: true, name: true } },
+      }
     })
 
     if (!user) {
@@ -104,7 +108,9 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         firstName: user.firstName,
         lastName: user.lastName,
         roles,
-        isActive: user.isActive
+        isActive: user.isActive,
+        funeralPriceList: user.funeralPriceList ?? null,
+        marmistaPriceList: user.marmistaPriceList ?? null,
       }
     })
   })
