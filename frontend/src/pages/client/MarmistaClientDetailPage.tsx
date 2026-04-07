@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { clientApi } from '../../lib/api/client'
+import PdfViewer from '../../components/client/PdfViewer'
+
+const CATALOG_PDF_URL = '/uploads/pdf/CATALOGO CEABIS 2024.pdf'
 
 interface Accessory {
   id: string
@@ -82,18 +85,25 @@ export default function MarmistaClientDetailPage() {
             {item.accessories.map(acc => (
               <div
                 key={acc.id}
-                className="flex items-center justify-between py-2 border-b border-[#E5E0D8] last:border-0"
+                className="py-2 border-b border-[#E5E0D8] last:border-0"
               >
-                <div>
-                  <span className="font-['JetBrains_Mono'] text-sm text-[#1A2B4A] font-medium mr-3">
-                    {acc.code}
-                  </span>
-                  <span className="text-sm text-[#1A1A1A]">{acc.description}</span>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-['JetBrains_Mono'] text-sm text-[#1A2B4A] font-medium mr-3">
+                      {acc.code}
+                    </span>
+                    <span className="text-sm text-[#1A1A1A]">{acc.description}</span>
+                  </div>
+                  {acc.paginaPdf != null && (
+                    <span className="text-xs text-[#C9A96E] font-medium whitespace-nowrap ml-4">
+                      Catalogo pag. {acc.paginaPdf}
+                    </span>
+                  )}
                 </div>
                 {acc.paginaPdf != null && (
-                  <span className="text-xs text-[#C9A96E] font-medium whitespace-nowrap ml-4">
-                    Vedi catalogo pag. {acc.paginaPdf}
-                  </span>
+                  <div className="mt-4">
+                    <PdfViewer url={CATALOG_PDF_URL} initialPage={acc.paginaPdf} />
+                  </div>
                 )}
               </div>
             ))}
