@@ -16,6 +16,13 @@ interface NavGroup {
 
 type NavItem = ({ kind: 'leaf' } & NavLeaf) | ({ kind: 'group' } & NavGroup)
 
+const CLIENT_NAV: NavItem[] = [
+  { kind: 'leaf', to: '/client/dashboard', label: 'Dashboard', roles: null },
+  { kind: 'leaf', to: '/client/catalog/funeral', label: 'Catalogo Funebre', roles: ['impresario_funebre'] },
+  { kind: 'leaf', to: '/client/catalog/marmista', label: 'Catalogo Marmisti', roles: ['marmista'] },
+  { kind: 'leaf', to: '/client/change-password', label: 'Cambia Password', roles: null },
+]
+
 const NAV_ITEMS: NavItem[] = [
   { kind: 'leaf', to: '/admin/dashboard', label: 'Dashboard', roles: null },
   { kind: 'leaf', to: '/admin/users', label: 'Utenti', roles: ['manager', 'super_admin'] },
@@ -83,9 +90,11 @@ function ChevronIcon({ open }: { open: boolean }) {
   )
 }
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' | 'client' }) {
   const { hasRole } = useAuth()
   const location = useLocation()
+
+  const items = variant === 'client' ? CLIENT_NAV : NAV_ITEMS
 
   // Determina quali gruppi hanno una route figlia attiva
   function groupIsActive(children: NavLeaf[]) {
@@ -93,7 +102,7 @@ export default function AdminSidebar() {
   }
 
   // Stato open per ogni gruppo — inizializzato aperto se la route corrente è dentro
-  const initialOpen = NAV_ITEMS.reduce<Record<string, boolean>>((acc, item) => {
+  const initialOpen = items.reduce<Record<string, boolean>>((acc, item) => {
     if (item.kind === 'group') {
       acc[item.label] = groupIsActive(item.children)
     }
@@ -124,7 +133,7 @@ export default function AdminSidebar() {
       </div>
 
       <nav className="flex-1 space-y-2 p-4 md:p-6">
-        {NAV_ITEMS.map((item) => {
+        {items.map((item) => {
           if (!canSee(item.roles)) return null
 
           if (item.kind === 'leaf') {
