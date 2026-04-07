@@ -1,8 +1,13 @@
 import type { Prisma } from '@prisma/client'
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
-import { applyRules, canSeePurchaseList } from '../lib/priceEngine'
-import type { PriceListNode, ArticleContext } from '../types/shared'
+import { canSeePurchaseList } from '../lib/priceEngine'
+import {
+  buildComputedItems,
+  loadPriceListTree,
+  type ComputedPriceListItem,
+  type PrismaClientLike,
+} from '../lib/priceListUtils'
 
 const priceListBodySchema = z.object({
   name: z.string().min(1),
@@ -34,16 +39,6 @@ const priceListInclude = {
   parent: { select: { id: true, name: true } },
 }
 
-const priceListTreeSelect = {
-  id: true,
-  name: true,
-  type: true,
-  articleType: true,
-  parentId: true,
-  autoUpdate: true,
-  rules: true,
-} as const
-
 const priceListItemInclude = {
   coffinArticle: {
     select: {
@@ -74,35 +69,6 @@ const priceListItemInclude = {
 } as const
 
 type StoredPriceListItem = Prisma.PriceListItemGetPayload<{ include: typeof priceListItemInclude }>
-
-interface LoadedPriceListTree {
-  id: string
-  name: string
-  type: 'purchase' | 'sale'
-  articleType: 'funeral' | 'marmista'
-  parentId: string | null
-  autoUpdate: boolean
-  rules: Array<{
-    filterType: string | null
-    filterValue: string | null
-    discountType: 'percentage' | 'absolute'
-    discountValue: number
-  }>
-  parent?: LoadedPriceListTree
-}
-
-interface ComputedPriceListItem {
-  sourceItemId: string
-  computedPrice: number
-  categoryCode?: string
-  subcategoryCode?: string
-  coffinArticleId: string | null
-  accessoryArticleId: string | null
-  marmistaArticleId: string | null
-  coffinArticle: { code: string; description: string } | null
-  accessoryArticle: { code: string; description: string } | null
-  marmistaArticle: { code: string; description: string } | null
-}
 
 const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
@@ -358,75 +324,12 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
   })
 }
 
-function buildNode(pl: LoadedPriceListTree): PriceListNode {
-  return {
-    type: pl.type,
-    autoUpdate: pl.autoUpdate,
-    rules: pl.rules.map((rule) => ({
-      filterType: (rule.filterType as 'category' | 'subcategory' | null) ?? null,
-      filterValue: rule.filterValue,
-      discountType: rule.discountType,
-      discountValue: rule.discountValue,
-    })),
-    parent: pl.parent ? buildNode(pl.parent) : undefined,
-  }
-}
-
-async function loadPriceListTree(prisma: Prisma.TransactionClient | PrismaClientLike, id: string): Promise<LoadedPriceListTree | null> {
-  const item = await prisma.priceList.findUnique({
-    where: { id },
-    select: priceListTreeSelect,
-  })
-  if (!item) return null
-
-  const parent = item.parentId ? await loadPriceListTree(prisma, item.parentId) : undefined
-  return {
-    ...item,
-    type: item.type,
-    articleType: item.articleType,
-    parentId: item.parentId,
-    parent: parent ?? undefined,
-  }
-}
-
 async function loadStoredItems(prisma: PrismaClientLike, priceListId: string): Promise<StoredPriceListItem[]> {
   return prisma.priceListItem.findMany({
     where: { priceListId },
     include: priceListItemInclude,
     orderBy: { id: 'asc' },
   })
-}
-
-async function buildComputedItems(prisma: PrismaClientLike, list: LoadedPriceListTree): Promise<ComputedPriceListItem[]> {
-  if (!list.parent) {
-    const storedItems = await loadStoredItems(prisma, list.id)
-    return storedItems.map((item) => {
-      const context = getArticleContext(item)
-      return {
-        sourceItemId: item.id,
-        computedPrice: item.price,
-        categoryCode: context.categoryCode,
-        subcategoryCode: context.subcategoryCode,
-        coffinArticleId: item.coffinArticle?.id ?? null,
-        accessoryArticleId: item.accessoryArticle?.id ?? null,
-        marmistaArticleId: item.marmistaArticle?.id ?? null,
-        coffinArticle: item.coffinArticle ? { code: item.coffinArticle.code, description: item.coffinArticle.description } : null,
-        accessoryArticle: item.accessoryArticle ? { code: item.accessoryArticle.code, description: item.accessoryArticle.description } : null,
-        marmistaArticle: item.marmistaArticle ? { code: item.marmistaArticle.code, description: item.marmistaArticle.description } : null,
-      }
-    })
-  }
-
-  const parentItems = await buildComputedItems(prisma, list.parent)
-  const rules = buildNode(list).rules
-
-  return parentItems.map((item) => ({
-    ...item,
-    computedPrice: applyRules(item.computedPrice, rules, {
-      categoryCode: item.categoryCode,
-      subcategoryCode: item.subcategoryCode,
-    }),
-  }))
 }
 
 function serializeStoredItem(item: StoredPriceListItem) {
@@ -447,22 +350,6 @@ function serializeComputedItem(item: ComputedPriceListItem) {
     accessoryArticle: item.accessoryArticle,
     marmistaArticle: item.marmistaArticle,
   }
-}
-
-function getArticleContext(item: StoredPriceListItem): ArticleContext {
-  return {
-    basePrice: item.price,
-    categoryCode: item.coffinArticle?.categories[0]?.code
-      ?? item.accessoryArticle?.categories[0]?.code
-      ?? item.marmistaArticle?.categories[0]?.code,
-    subcategoryCode: item.coffinArticle?.subcategories[0]?.code
-      ?? item.accessoryArticle?.subcategories[0]?.code,
-  }
-}
-
-interface PrismaClientLike {
-  priceList: Prisma.TransactionClient['priceList']
-  priceListItem: Prisma.TransactionClient['priceListItem']
 }
 
 export default pricelistsRoutes
