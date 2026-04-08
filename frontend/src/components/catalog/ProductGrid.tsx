@@ -8,7 +8,7 @@ interface GridItem {
   notes?: string
   imageUrl?: string
   badge?: string
-  price?: number
+  price?: number | null
 }
 
 interface ProductGridProps {
@@ -65,7 +65,6 @@ export default function ProductGrid({
       {items.map((item) => (
         <ProductCard
           key={item.id}
-          code={item.code}
           description={item.description}
           notes={item.notes}
           imageUrl={item.imageUrl}

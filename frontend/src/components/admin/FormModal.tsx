@@ -8,6 +8,8 @@ interface FormModalProps {
   onSubmit: () => void
   isSubmitting?: boolean
   submitLabel?: string
+  panelClassName?: string
+  bodyClassName?: string
   children: ReactNode
 }
 
@@ -18,6 +20,8 @@ export default function FormModal({
   onSubmit,
   isSubmitting = false,
   submitLabel = 'Salva',
+  panelClassName,
+  bodyClassName,
   children
 }: FormModalProps) {
   useEffect(() => {
@@ -36,7 +40,7 @@ export default function FormModal({
       style={{ backgroundColor: 'rgba(26, 43, 74, 0.22)', backdropFilter: 'blur(6px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
-      <div className="w-full max-w-lg border border-[#E5E0D8] bg-white shadow-[0_24px_80px_rgba(26,43,74,0.16)]">
+      <div className={`flex max-h-[calc(100vh-2rem)] w-full flex-col overflow-hidden border border-[#E5E0D8] bg-white shadow-[0_24px_80px_rgba(26,43,74,0.16)] ${panelClassName ?? 'max-w-lg'}`}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E0D8]">
           <h2
             className="text-xl text-[#031634]"
@@ -52,7 +56,7 @@ export default function FormModal({
           </button>
         </div>
 
-        <div className="px-6 py-4">
+        <div className={`overflow-y-auto px-6 py-4 ${bodyClassName ?? ''}`}>
           {children}
         </div>
 

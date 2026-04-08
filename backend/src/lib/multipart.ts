@@ -1,0 +1,8 @@
+export const MULTIPART_MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
+export const MULTIPART_MAX_FILE_SIZE_MB = MULTIPART_MAX_FILE_SIZE_BYTES / (1024 * 1024)
+
+export const MULTIPART_OPTIONS = {
+  limits: {
+    fileSize: MULTIPART_MAX_FILE_SIZE_BYTES,
+  },
+} as const

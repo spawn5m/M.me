@@ -1,16 +1,16 @@
+import { useTranslation } from 'react-i18next'
+
 interface ProductCardProps {
-  code: string
   description: string
   notes?: string
   imageUrl?: string
   badge?: string
   showPrice?: boolean
-  price?: number
+  price?: number | null
   onClick: () => void
 }
 
 export default function ProductCard({
-  code,
   description,
   notes,
   imageUrl,
@@ -19,6 +19,8 @@ export default function ProductCard({
   price,
   onClick,
 }: ProductCardProps) {
+  const { t } = useTranslation()
+
   return (
     <div
       role="button"
@@ -35,22 +37,17 @@ export default function ProductCard({
       )}
 
       {/* Immagine */}
-      <div className="aspect-[4/3] bg-[#EDE9E3] mb-4 overflow-hidden">
+      <div className="aspect-[4/3] bg-[#F4F3F0] mb-4 overflow-hidden p-4">
         {imageUrl ? (
           <img
             src={imageUrl}
             alt={description}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
           />
         ) : (
-          <div className="w-full h-full bg-[#EDE9E3]" />
+          <div className="w-full h-full bg-[#F4F3F0]" />
         )}
       </div>
-
-      {/* Codice */}
-      <p className="font-mono text-xs text-[#44474e] mb-2 tracking-wide">
-        {code}
-      </p>
 
       {/* Titolo */}
       <h3 className="font-semibold text-lg text-[#031634] hover:text-[#C9A96E] transition-colors duration-150 leading-snug mb-1">
@@ -62,11 +59,21 @@ export default function ProductCard({
         <p className="text-sm italic text-[#44474e] line-clamp-1">{notes}</p>
       )}
 
-      {/* Prezzo */}
       {showPrice && price !== undefined && (
-        <p className="font-mono text-xl font-bold text-[#C9A96E] mt-3">
-          € {price.toFixed(2)}
-        </p>
+        <div className="mt-4">
+          <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B7280]">
+            {t('catalog.priceListPrice')}
+          </p>
+          <p className="mt-1 font-mono text-xl font-bold text-[#C9A96E]">
+            {price != null ? (
+              `€ ${price.toFixed(2)}`
+            ) : (
+              <span className="font-sans text-sm font-medium text-[#6B7280]">
+                {t('catalog.priceUnavailable')}
+              </span>
+            )}
+          </p>
+        </div>
       )}
     </div>
   )

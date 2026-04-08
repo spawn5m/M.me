@@ -67,15 +67,15 @@ export default function ProductModal({
         </button>
 
         {/* ── Immagine 2/3 altezza ─────────────────────── */}
-        <div className="flex-[2] min-h-0 bg-[#EDE9E3] overflow-hidden m-3">
+        <div className="flex-[2] min-h-0 bg-[#F4F3F0] overflow-hidden m-3 p-4">
           {item.imageUrl ? (
             <img
               src={item.imageUrl}
               alt={item.description}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
-            <div className="w-full h-full bg-[#EDE9E3]" />
+            <div className="w-full h-full bg-[#F4F3F0]" />
           )}
         </div>
 

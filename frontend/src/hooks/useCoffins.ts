@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { mockCoffins } from '../lib/mock-data'
-import type { CoffinItem, Pagination } from '../lib/types'
+import type { CoffinItem, Pagination, CoffinPriceOption } from '../lib/types'
 
 interface LookupLike {
   label?: string
@@ -20,6 +20,8 @@ interface PublicCoffinRaw {
   figures?: Array<string | LookupLike>
   colors?: Array<string | LookupLike>
   finishes?: Array<string | LookupLike>
+  price?: number | null
+  priceOptions?: CoffinPriceOption[]
   measure?: CoffinItem['measure'] | null
 }
 
@@ -36,20 +38,32 @@ function normalizeLookupList(values: Array<string | LookupLike> | undefined): st
 }
 
 function normalizeCoffins(data: PublicCoffinRaw[]): CoffinItem[] {
-  return data.map((item) => ({
-    id: item.id,
-    code: item.code,
-    description: item.description,
-    notes: item.notes ?? undefined,
-    imageUrl: item.imageUrl ?? undefined,
-    categories: normalizeLookupList(item.categories),
-    subcategories: normalizeLookupList(item.subcategories),
-    essences: normalizeLookupList(item.essences),
-    figures: normalizeLookupList(item.figures),
-    colors: normalizeLookupList(item.colors),
-    finishes: normalizeLookupList(item.finishes),
-    measure: item.measure ?? undefined,
-  }))
+  return data.map((item) => {
+    const normalized: CoffinItem = {
+      id: item.id,
+      code: item.code,
+      description: item.description,
+      notes: item.notes ?? undefined,
+      imageUrl: item.imageUrl ?? undefined,
+      categories: normalizeLookupList(item.categories),
+      subcategories: normalizeLookupList(item.subcategories),
+      essences: normalizeLookupList(item.essences),
+      figures: normalizeLookupList(item.figures),
+      colors: normalizeLookupList(item.colors),
+      finishes: normalizeLookupList(item.finishes),
+      measure: item.measure ?? undefined,
+    }
+
+    if (item.price !== undefined) {
+      normalized.price = item.price
+    }
+
+    if (item.priceOptions !== undefined) {
+      normalized.priceOptions = item.priceOptions
+    }
+
+    return normalized
+  })
 }
 
 interface UseCoffinsParams {

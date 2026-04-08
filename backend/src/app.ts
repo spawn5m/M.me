@@ -3,6 +3,8 @@ import Fastify from 'fastify'
 import fastifySecureSession from '@fastify/secure-session'
 import fastifyRateLimit from '@fastify/rate-limit'
 import multipart from '@fastify/multipart'
+import fastifyStatic from '@fastify/static'
+import path from 'path'
 
 import prismaPlugin from './plugins/prisma'
 import errorHandlerPlugin from './plugins/errorHandler'
@@ -19,6 +21,7 @@ import marmistaRoutes from './routes/articles/marmista'
 import pricelistsRoutes from './routes/pricelists'
 import catalogRoutes from './routes/catalog'
 import clientRoutes from './routes/client'
+import { MULTIPART_OPTIONS } from './lib/multipart'
 
 const app = Fastify({
   logger: {
@@ -46,7 +49,11 @@ const start = async () => {
     timeWindow: '1 minute'
   })
 
-  await app.register(multipart)
+  await app.register(multipart, MULTIPART_OPTIONS)
+  await app.register(fastifyStatic, {
+    root: path.join(process.cwd(), '..', 'uploads'),
+    prefix: '/uploads/',
+  })
   await app.register(prismaPlugin)
   await app.register(errorHandlerPlugin)
   await app.register(authPlugin)
