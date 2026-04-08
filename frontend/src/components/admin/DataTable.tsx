@@ -5,9 +5,9 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   flexRender,
-  createColumnHelper,
   type SortingState,
   type ColumnDef,
+  type CellContext,
 } from '@tanstack/react-table'
 
 // ─── Tipi ─────────────────────────────────────────────────────────────────────
@@ -60,58 +60,50 @@ export default function DataTable<T extends Record<string, unknown>>({
   const [sorting, setSorting] = useState<SortingState>([])
   const [globalFilter, setGlobalFilter] = useState('')
 
-  const columnHelper = createColumnHelper<T>()
-
   const columnDefs = useMemo<ColumnDef<T, unknown>[]>(() => {
-    const dataCols: ColumnDef<T, unknown>[] = columns.map((col) =>
-      columnHelper.display({
-        id: col.key,
-        header: col.header,
-        meta: { width: col.width },
-        enableSorting: col.sortable ?? !col.render,
-        sortingFn: 'alphanumeric',
-        cell: (info) =>
-          col.render
-            ? col.render(info.row.original)
-            : String(info.row.original[col.key] ?? ''),
-      } as ColumnDef<T, unknown>)
-    )
+    const dataCols: ColumnDef<T, unknown>[] = columns.map((col) => ({
+      id: col.key,
+      header: col.header,
+      accessorFn: (row: T) => row[col.key],
+      enableSorting: col.sortable ?? !col.render,
+      cell: col.render
+        ? (info: CellContext<T, unknown>) => col.render!(info.row.original)
+        : (info: CellContext<T, unknown>) => String(info.getValue() ?? ''),
+      meta: { width: col.width },
+    }))
 
     if (actions && actions.length > 0) {
-      dataCols.push(
-        columnHelper.display({
-          id: '__actions',
-          header: 'Azioni',
-          enableSorting: false,
-          cell: (info) => {
-            const item = info.row.original
-            const visible = actions.filter((a) => !a.hidden?.(item))
-            if (visible.length === 0) return null
-            return (
-              <div className="flex items-center justify-end gap-2">
-                {visible.map((action) => (
-                  <button
-                    key={action.label}
-                    onClick={() => action.onClick(item)}
-                    className={[
-                      'min-h-9 border px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] transition-colors',
-                      action.variant === 'danger'
-                        ? 'border-[#F1D3D3] text-[#B42318] hover:bg-[#FFF5F5]'
-                        : 'border-[#E5E0D8] text-[#031634] hover:border-[#C9A96E] hover:text-[#C9A96E]',
-                    ].join(' ')}
-                  >
-                    {action.label}
-                  </button>
-                ))}
-              </div>
-            )
-          },
-        }) as ColumnDef<T, unknown>
-      )
+      dataCols.push({
+        id: '__actions',
+        header: 'Azioni',
+        enableSorting: false,
+        cell: (info: CellContext<T, unknown>) => {
+          const item = info.row.original
+          const visible = actions.filter((a) => !a.hidden?.(item))
+          if (visible.length === 0) return null
+          return (
+            <div className="flex items-center justify-end gap-2">
+              {visible.map((action) => (
+                <button
+                  key={action.label}
+                  onClick={() => action.onClick(item)}
+                  className={[
+                    'min-h-9 border px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] transition-colors',
+                    action.variant === 'danger'
+                      ? 'border-[#F1D3D3] text-[#B42318] hover:bg-[#FFF5F5]'
+                      : 'border-[#E5E0D8] text-[#031634] hover:border-[#C9A96E] hover:text-[#C9A96E]',
+                  ].join(' ')}
+                >
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )
+        },
+      } as ColumnDef<T, unknown>)
     }
 
     return dataCols
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [columns, actions])
 
   const table = useReactTable<T>({
