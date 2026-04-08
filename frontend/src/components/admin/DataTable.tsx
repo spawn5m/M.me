@@ -69,7 +69,6 @@ export default function DataTable<T extends Record<string, unknown>>({
       cell: col.render
         ? (info: CellContext<T, unknown>) => col.render!(info.row.original)
         : (info: CellContext<T, unknown>) => String(info.getValue() ?? ''),
-      meta: { width: col.width },
     }))
 
     if (actions && actions.length > 0) {
@@ -123,8 +122,8 @@ export default function DataTable<T extends Record<string, unknown>>({
 
   return (
     <div className="overflow-hidden border border-[#E5E0D8] bg-white shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
-      {/* Ricerca globale opzionale */}
-      {searchable && (
+      {/* Ricerca globale opzionale — disabilitata se la paginazione è server-side */}
+      {searchable && !pagination && (
         <div className="border-b border-[#E5E0D8] px-4 py-3">
           <input
             type="text"
@@ -151,6 +150,14 @@ export default function DataTable<T extends Record<string, unknown>>({
                     <th
                       key={header.id}
                       style={{ width: col?.width }}
+                      tabIndex={canSort ? 0 : undefined}
+                      role={canSort ? 'button' : undefined}
+                      onKeyDown={canSort ? (e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          header.column.getToggleSortingHandler()?.(e as unknown as MouseEvent)
+                        }
+                      } : undefined}
                       className={[
                         'px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#6B7280]',
                         isActions ? 'text-right' : 'text-left',
