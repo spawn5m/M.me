@@ -19,7 +19,15 @@ const createSchema = z.object({
   roleIds: z.array(z.string()).default([])
 })
 
+const editSchema = z.object({
+  email: z.string().email('Email non valida'),
+  firstName: z.string().min(1, 'Obbligatorio'),
+  lastName: z.string().min(1, 'Obbligatorio'),
+  roleIds: z.array(z.string()).default([])
+})
+
 type CreateFormValues = z.infer<typeof createSchema>
+type EditFormValues = z.infer<typeof editSchema>
 
 // ─── Colonne tabella ──────────────────────────────────────────────────────────
 
@@ -88,6 +96,7 @@ export default function UsersPage() {
   const [allPriceLists, setAllPriceLists] = useState<AdminPriceList[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editTarget, setEditTarget] = useState<AdminUser | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<AdminUser | null>(null)
   const [assignTarget, setAssignTarget] = useState<AdminUser | null>(null)
   const [assignFuneralId, setAssignFuneralId] = useState('')
@@ -98,8 +107,12 @@ export default function UsersPage() {
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, setValue, watch, setError: setFormError, clearErrors } = useForm<CreateFormValues>({
     defaultValues: { roleIds: [] }
   })
-
   const selectedRoleIds = watch('roleIds')
+
+  const { register: registerEdit, handleSubmit: handleSubmitEdit, formState: { errors: errorsEdit, isSubmitting: isSubmittingEdit }, reset: resetEdit, setValue: setValueEdit, watch: watchEdit, setError: setFormErrorEdit, clearErrors: clearErrorsEdit } = useForm<EditFormValues>({
+    defaultValues: { roleIds: [] }
+  })
+  const selectedEditRoleIds = watchEdit('roleIds')
 
   const loadUsers = useCallback(async () => {
     setIsLoading(true)
@@ -116,6 +129,47 @@ export default function UsersPage() {
     rolesApi.list().then((res) => setAllRoles(res.data))
     pricelistsApi.list().then((res) => setAllPriceLists(res.data))
   }, [loadUsers])
+
+  const openEdit = (user: AdminUser) => {
+    setEditTarget(user)
+    resetEdit({
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      roleIds: user.roles.map(r => r.id),
+    })
+  }
+
+  const onEditSubmit = async (values: EditFormValues) => {
+    if (!editTarget) return
+    clearErrorsEdit()
+    const result = editSchema.safeParse(values)
+    if (!result.success) {
+      for (const issue of result.error.issues) {
+        const field = issue.path[0]
+        if (typeof field === 'string') {
+          setFormErrorEdit(field as keyof EditFormValues, { type: 'manual', message: issue.message })
+        }
+      }
+      return
+    }
+    try {
+      await usersApi.update(editTarget.id, result.data)
+      setEditTarget(null)
+      loadUsers()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setPageError(msg ?? 'Errore durante la modifica')
+    }
+  }
+
+  const toggleEditRole = (roleId: string) => {
+    const current = selectedEditRoleIds ?? []
+    const next = current.includes(roleId)
+      ? current.filter((id) => id !== roleId)
+      : [...current, roleId]
+    setValueEdit('roleIds', next)
+  }
 
   const openAssign = (user: AdminUser) => {
     setAssignTarget(user)
@@ -214,6 +268,10 @@ export default function UsersPage() {
         searchable
         actions={[
           {
+            label: 'Modifica',
+            onClick: (u) => openEdit(u as AdminUser)
+          },
+          {
             label: 'Listino',
             onClick: (u) => openAssign(u as AdminUser),
             hidden: (u) => {
@@ -300,6 +358,54 @@ export default function UsersPage() {
                     selectedRoleIds?.includes(role.id)
                       ? 'admin-inline-chip-active'
                       : ''
+                  ].join(' ')}
+                >
+                  {role.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </FormModal>
+
+      {/* Modal modifica utente */}
+      <FormModal
+        isOpen={!!editTarget}
+        title={`Modifica — ${editTarget?.firstName} ${editTarget?.lastName}`}
+        onClose={() => setEditTarget(null)}
+        onSubmit={handleSubmitEdit(onEditSubmit)}
+        isSubmitting={isSubmittingEdit}
+        submitLabel="Salva modifiche"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="admin-label">Nome</label>
+              <input {...registerEdit('firstName')} className="admin-input" />
+              {errorsEdit.firstName && <p className="text-red-500 text-xs mt-1">{errorsEdit.firstName.message}</p>}
+            </div>
+            <div>
+              <label className="admin-label">Cognome</label>
+              <input {...registerEdit('lastName')} className="admin-input" />
+              {errorsEdit.lastName && <p className="text-red-500 text-xs mt-1">{errorsEdit.lastName.message}</p>}
+            </div>
+          </div>
+          <div>
+            <label className="admin-label">Email</label>
+            <input {...registerEdit('email')} type="email" className="admin-input" />
+            {errorsEdit.email && <p className="text-red-500 text-xs mt-1">{errorsEdit.email.message}</p>}
+          </div>
+          <div>
+            <label className="admin-label">Ruoli</label>
+            <div className="flex flex-wrap gap-2">
+              {allRoles.map((role) => (
+                <button
+                  key={role.id}
+                  type="button"
+                  onClick={() => toggleEditRole(role.id)}
+                  className={[
+                    'admin-inline-chip',
+                    selectedEditRoleIds?.includes(role.id) ? 'admin-inline-chip-active' : ''
                   ].join(' ')}
                 >
                   {role.label}
