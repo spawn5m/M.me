@@ -5,64 +5,61 @@ import { useAuth } from '../../context/AuthContext'
 interface NavLeaf {
   to: string
   label: string
-  roles: string[] | null
+  permissions: string[] | null
+  match?: 'any' | 'all'
 }
 
 interface NavGroup {
   label: string
-  roles: string[] | null
   children: NavLeaf[]
 }
 
 type NavItem = ({ kind: 'leaf' } & NavLeaf) | ({ kind: 'group' } & NavGroup)
 
 const CLIENT_NAV: NavItem[] = [
-  { kind: 'leaf', to: '/client/dashboard', label: 'Dashboard', roles: null },
-  { kind: 'leaf', to: '/client/catalog/funeral', label: 'Catalogo Funebre', roles: ['impresario_funebre'] },
-  { kind: 'leaf', to: '/client/catalog/marmista', label: 'Catalogo Marmisti', roles: ['marmista'] },
-  { kind: 'leaf', to: '/client/change-password', label: 'Cambia Password', roles: null },
+  { kind: 'leaf', to: '/client/dashboard', label: 'Dashboard', permissions: ['dashboard.client.read'] },
+  { kind: 'leaf', to: '/client/catalog/funeral', label: 'Catalogo Funebre', permissions: ['client.catalog.funeral.read'] },
+  { kind: 'leaf', to: '/client/catalog/marmista', label: 'Catalogo Marmisti', permissions: ['client.catalog.marmista.read'] },
+  { kind: 'leaf', to: '/client/change-password', label: 'Cambia Password', permissions: ['client.password.change'] },
 ]
 
 const NAV_ITEMS: NavItem[] = [
-  { kind: 'leaf', to: '/admin/dashboard', label: 'Dashboard', roles: null },
-  { kind: 'leaf', to: '/admin/users', label: 'Utenti', roles: ['manager', 'super_admin'] },
-  { kind: 'leaf', to: '/admin/roles', label: 'Ruoli', roles: ['super_admin'] },
+  { kind: 'leaf', to: '/admin/dashboard', label: 'Dashboard', permissions: ['dashboard.admin.read'] },
+  { kind: 'leaf', to: '/admin/users', label: 'Utenti', permissions: ['users.read.team', 'users.read.all'] },
+  { kind: 'leaf', to: '/admin/roles', label: 'Ruoli', permissions: ['roles.read'] },
   {
     kind: 'group',
     label: 'Cofani',
-    roles: ['manager', 'super_admin', 'collaboratore'],
     children: [
-      { to: '/admin/articles/coffins', label: 'Articoli', roles: ['manager', 'super_admin', 'collaboratore'] },
-      { to: '/admin/measures', label: 'Misure', roles: ['manager', 'super_admin'] },
-      { to: '/admin/lookups/coffin-categories', label: 'Categorie', roles: ['manager', 'super_admin'] },
-      { to: '/admin/lookups/coffin-subcategories', label: 'Sottocategorie', roles: ['manager', 'super_admin'] },
-      { to: '/admin/lookups/essences', label: 'Essenze', roles: ['manager', 'super_admin'] },
-      { to: '/admin/lookups/colors', label: 'Colori', roles: ['manager', 'super_admin'] },
-      { to: '/admin/lookups/finishes', label: 'Finiture', roles: ['manager', 'super_admin'] },
-      { to: '/admin/lookups/figures', label: 'Figure', roles: ['manager', 'super_admin'] },
+      { to: '/admin/articles/coffins', label: 'Articoli', permissions: ['articles.coffins.read'] },
+      { to: '/admin/measures', label: 'Misure', permissions: ['measures.read'] },
+      { to: '/admin/lookups/coffin-categories', label: 'Categorie', permissions: ['lookups.read'] },
+      { to: '/admin/lookups/coffin-subcategories', label: 'Sottocategorie', permissions: ['lookups.read'] },
+      { to: '/admin/lookups/essences', label: 'Essenze', permissions: ['lookups.read'] },
+      { to: '/admin/lookups/colors', label: 'Colori', permissions: ['lookups.read'] },
+      { to: '/admin/lookups/finishes', label: 'Finiture', permissions: ['lookups.read'] },
+      { to: '/admin/lookups/figures', label: 'Figure', permissions: ['lookups.read'] },
     ],
   },
   {
     kind: 'group',
     label: 'Accessori',
-    roles: ['manager', 'super_admin', 'collaboratore'],
     children: [
-      { to: '/admin/articles/accessories', label: 'Articoli', roles: ['manager', 'super_admin', 'collaboratore'] },
-      { to: '/admin/lookups/accessory-categories', label: 'Categorie', roles: ['manager', 'super_admin'] },
-      { to: '/admin/lookups/accessory-subcategories', label: 'Sottocategorie', roles: ['manager', 'super_admin'] },
+      { to: '/admin/articles/accessories', label: 'Articoli', permissions: ['articles.accessories.read'] },
+      { to: '/admin/lookups/accessory-categories', label: 'Categorie', permissions: ['lookups.read'] },
+      { to: '/admin/lookups/accessory-subcategories', label: 'Sottocategorie', permissions: ['lookups.read'] },
     ],
   },
   {
     kind: 'group',
     label: 'Art. Marmisti',
-    roles: ['manager', 'super_admin', 'collaboratore'],
     children: [
-      { to: '/admin/articles/marmista', label: 'Articoli', roles: ['manager', 'super_admin', 'collaboratore'] },
-      { to: '/admin/lookups/marmista-categories', label: 'Categorie', roles: ['manager', 'super_admin'] },
+      { to: '/admin/articles/marmista', label: 'Articoli', permissions: ['articles.marmista.read'] },
+      { to: '/admin/lookups/marmista-categories', label: 'Categorie', permissions: ['lookups.read'] },
     ],
   },
-  { kind: 'leaf', to: '/admin/pricelists', label: 'Listini', roles: ['manager', 'super_admin'] },
-  { kind: 'leaf', to: '/admin/catalog', label: 'Catalogo PDF', roles: ['manager', 'super_admin'] },
+  { kind: 'leaf', to: '/admin/pricelists', label: 'Listini', permissions: ['pricelists.sale.read', 'pricelists.purchase.read'] },
+  { kind: 'leaf', to: '/admin/catalog', label: 'Catalogo PDF', permissions: ['catalog.pdf.read'] },
 ]
 
 const LEAF_STYLE = 'block border px-4 py-3 text-sm font-medium transition-colors'
@@ -91,7 +88,7 @@ function ChevronIcon({ open }: { open: boolean }) {
 }
 
 export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' | 'client' }) {
-  const { hasRole } = useAuth()
+  const { hasPermission, hasAnyPermission } = useAuth()
   const location = useLocation()
 
   const items = variant === 'client' ? CLIENT_NAV : NAV_ITEMS
@@ -115,8 +112,10 @@ export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' 
     setOpenGroups((prev) => ({ ...prev, [label]: !prev[label] }))
   }
 
-  function canSee(roles: string[] | null) {
-    return roles === null || hasRole(roles)
+  function canSee(permissions: string[] | null, match: 'any' | 'all' = 'any') {
+    if (permissions === null) return true
+    if (match === 'all') return permissions.every((permission) => hasPermission(permission))
+    return hasAnyPermission(permissions)
   }
 
   return (
@@ -134,9 +133,9 @@ export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' 
 
       <nav className="flex-1 space-y-2 p-4 md:p-6">
         {items.map((item) => {
-          if (!canSee(item.roles)) return null
-
           if (item.kind === 'leaf') {
+            if (!canSee(item.permissions, item.match)) return null
+
             return (
               <NavLink
                 key={item.to}
@@ -151,7 +150,7 @@ export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' 
           }
 
           // kind === 'group'
-          const visibleChildren = item.children.filter((c) => canSee(c.roles))
+          const visibleChildren = item.children.filter((child) => canSee(child.permissions, child.match))
           if (visibleChildren.length === 0) return null
 
           const isOpen = openGroups[item.label] ?? false

@@ -1,7 +1,7 @@
 import type { Prisma } from '@prisma/client'
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
-import { canSeePurchaseList } from '../lib/priceEngine'
+import { hasAnyPermission, hasPermission } from '../lib/authorization/checks'
 import {
   buildComputedItems,
   loadPriceListTree,
@@ -70,14 +70,51 @@ const priceListItemInclude = {
 
 type StoredPriceListItem = Prisma.PriceListItemGetPayload<{ include: typeof priceListItemInclude }>
 
+function sendForbidden() {
+  return {
+    error: 'Forbidden',
+    message: 'Permessi insufficienti per questa operazione',
+    statusCode: 403,
+  }
+}
+
+function canReadPriceList(permissions: readonly string[], type: 'sale' | 'purchase') {
+  return hasPermission(permissions, `pricelists.${type}.read`)
+}
+
+function canWritePriceList(permissions: readonly string[], type: 'sale' | 'purchase') {
+  return hasPermission(permissions, `pricelists.${type}.write`)
+}
+
+function canDeletePriceList(permissions: readonly string[], type: 'sale' | 'purchase') {
+  return hasPermission(permissions, `pricelists.${type}.delete`)
+}
+
+function canPreviewPriceList(permissions: readonly string[], type: 'sale' | 'purchase') {
+  return hasPermission(permissions, `pricelists.${type}.preview`)
+}
+
+function canRecalculatePriceList(permissions: readonly string[], type: 'sale' | 'purchase') {
+  return hasPermission(permissions, `pricelists.${type}.recalculate`)
+}
+
+function canAssignPriceList(permissions: readonly string[], type: 'sale' | 'purchase') {
+  if (type === 'sale') {
+    return hasPermission(permissions, 'pricelists.sale.assign')
+  }
+
+  return hasPermission(permissions, 'pricelists.purchase.write')
+}
+
 const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
-  fastify.addHook('preHandler', fastify.checkRole(['manager', 'super_admin', 'collaboratore']))
+  fastify.addHook('preHandler', fastify.loadAuthorizationContext)
 
   // GET / — lista listini (filtra acquisto per ruoli non autorizzati)
-  fastify.get('/', async (req) => {
-    const roles: string[] = req.session.get('roles') ?? []
-    const canSeePurchase = canSeePurchaseList(roles)
+  fastify.get('/', {
+    preHandler: [fastify.checkAnyPermission(['pricelists.sale.read', 'pricelists.purchase.read'])]
+  }, async (req) => {
+    const canSeePurchase = canReadPriceList(req.auth.permissions, 'purchase')
 
     const where = canSeePurchase ? {} : { type: { not: 'purchase' as const } }
 
@@ -93,6 +130,10 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post<{ Body: z.infer<typeof priceListBodySchema> }>('/', async (req, reply) => {
     const body = priceListBodySchema.parse(req.body)
 
+    if (!canWritePriceList(req.auth.permissions, body.type)) {
+      return reply.status(403).send(sendForbidden())
+    }
+
     if (body.parentId) {
       const parent = await fastify.prisma.priceList.findUnique({ where: { id: body.parentId } })
       if (!parent) {
@@ -100,6 +141,9 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
       }
       if (parent.articleType !== body.articleType) {
         return reply.status(400).send({ error: 'BadRequest', message: 'Il dominio del listino padre non corrisponde', statusCode: 400 })
+      }
+      if (parent.type !== body.type) {
+        return reply.status(400).send({ error: 'BadRequest', message: 'Il tipo del listino padre non corrisponde', statusCode: 400 })
       }
     }
 
@@ -117,17 +161,16 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // GET /:id
-  fastify.get<{ Params: { id: string } }>('/:id', async (req, reply) => {
-    const roles: string[] = req.session.get('roles') ?? []
-    const canSeePurchase = canSeePurchaseList(roles)
-
+  fastify.get<{ Params: { id: string } }>('/:id', {
+    preHandler: [fastify.checkAnyPermission(['pricelists.sale.read', 'pricelists.purchase.read'])]
+  }, async (req, reply) => {
     const item = await fastify.prisma.priceList.findUnique({
       where: { id: req.params.id },
       include: { ...priceListInclude, items: true },
     })
     if (!item) return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
-    if (item.type === 'purchase' && !canSeePurchase) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'Non autorizzato', statusCode: 403 })
+    if (!canReadPriceList(req.auth.permissions, item.type)) {
+      return reply.status(403).send(sendForbidden())
     }
 
     const tree = await loadPriceListTree(fastify.prisma, req.params.id)
@@ -151,6 +194,14 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
   // PUT /:id
   fastify.put<{ Params: { id: string }; Body: z.infer<typeof priceListBodySchema> }>('/:id', async (req, reply) => {
     const body = priceListBodySchema.parse(req.body)
+    const existing = await fastify.prisma.priceList.findUnique({ where: { id: req.params.id } })
+    if (!existing) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
+    }
+
+    if (!canWritePriceList(req.auth.permissions, existing.type) || !canWritePriceList(req.auth.permissions, body.type)) {
+      return reply.status(403).send(sendForbidden())
+    }
 
     if (body.parentId === req.params.id) {
       return reply.status(400).send({ error: 'BadRequest', message: 'Un listino non può avere se stesso come padre', statusCode: 400 })
@@ -163,6 +214,9 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
       }
       if (parent.articleType !== body.articleType) {
         return reply.status(400).send({ error: 'BadRequest', message: 'Il dominio del listino padre non corrisponde', statusCode: 400 })
+      }
+      if (parent.type !== body.type) {
+        return reply.status(400).send({ error: 'BadRequest', message: 'Il tipo del listino padre non corrisponde', statusCode: 400 })
       }
     }
 
@@ -185,6 +239,9 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
     const item = await fastify.prisma.priceList.findUnique({ where: { id: req.params.id } })
     if (!item) {
       return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
+    }
+    if (!canDeletePriceList(req.auth.permissions, item.type)) {
+      return reply.status(403).send(sendForbidden())
     }
 
     const [childrenCount, assignedUsersCount] = await Promise.all([
@@ -212,6 +269,14 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /:id/rules — aggiunge regola
   fastify.post<{ Params: { id: string }; Body: z.infer<typeof ruleSchema> }>('/:id/rules', async (req, reply) => {
+    const list = await fastify.prisma.priceList.findUnique({ where: { id: req.params.id } })
+    if (!list) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
+    }
+    if (!canWritePriceList(req.auth.permissions, list.type)) {
+      return reply.status(403).send(sendForbidden())
+    }
+
     const body = ruleSchema.parse(req.body)
     const rule = await fastify.prisma.priceRule.create({
       data: { ...body, priceListId: req.params.id },
@@ -221,6 +286,24 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // DELETE /:id/rules/:ruleId
   fastify.delete<{ Params: { id: string; ruleId: string } }>('/:id/rules/:ruleId', async (req, reply) => {
+    const list = await fastify.prisma.priceList.findUnique({ where: { id: req.params.id } })
+    if (!list) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
+    }
+    if (!canWritePriceList(req.auth.permissions, list.type)) {
+      return reply.status(403).send(sendForbidden())
+    }
+
+    const rule = await fastify.prisma.priceRule.findFirst({
+      where: {
+        id: req.params.ruleId,
+        priceListId: req.params.id,
+      },
+    })
+    if (!rule) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Regola non trovata', statusCode: 404 })
+    }
+
     await fastify.prisma.priceRule.delete({ where: { id: req.params.ruleId } })
     return reply.status(204).send()
   })
@@ -231,6 +314,9 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
     const list = await fastify.prisma.priceList.findUnique({ where: { id: req.params.id } })
     if (!list) {
       return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
+    }
+    if (!canWritePriceList(req.auth.permissions, list.type)) {
+      return reply.status(403).send(sendForbidden())
     }
     if (list.parentId) {
       return reply.status(400).send({ error: 'BadRequest', message: 'I prezzi manuali sono disponibili solo sui listini base', statusCode: 400 })
@@ -247,12 +333,10 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /:id/preview — calcola prezzi senza salvare
   fastify.get<{ Params: { id: string } }>('/:id/preview', async (req, reply) => {
-    const roles: string[] = req.session.get('roles') ?? []
-    const canSeePurchase = canSeePurchaseList(roles)
     const tree = await loadPriceListTree(fastify.prisma, req.params.id)
     if (!tree) return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
-    if (tree.type === 'purchase' && !canSeePurchase) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'Non autorizzato', statusCode: 403 })
+    if (!canPreviewPriceList(req.auth.permissions, tree.type)) {
+      return reply.status(403).send(sendForbidden())
     }
 
     const previews = await buildComputedItems(fastify.prisma, tree)
@@ -269,12 +353,10 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
 
   // POST /:id/recalculate — ricalcola snapshot
   fastify.post<{ Params: { id: string } }>('/:id/recalculate', async (req, reply) => {
-    const roles: string[] = req.session.get('roles') ?? []
-    const canSeePurchase = canSeePurchaseList(roles)
     const tree = await loadPriceListTree(fastify.prisma, req.params.id)
     if (!tree) return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
-    if (tree.type === 'purchase' && !canSeePurchase) {
-      return reply.status(403).send({ error: 'Forbidden', message: 'Non autorizzato', statusCode: 403 })
+    if (!canRecalculatePriceList(req.auth.permissions, tree.type)) {
+      return reply.status(403).send(sendForbidden())
     }
     if (tree.autoUpdate) {
       return reply.status(400).send({ error: 'BadRequest', message: 'Il listino è in autoUpdate — il ricalcolo non si applica', statusCode: 400 })
@@ -301,6 +383,9 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.put<{ Params: { id: string; userId: string } }>('/:id/assign/:userId', async (req, reply) => {
     const pl = await fastify.prisma.priceList.findUnique({ where: { id: req.params.id } })
     if (!pl) return reply.status(404).send({ error: 'NotFound', message: 'Listino non trovato', statusCode: 404 })
+    if (!canAssignPriceList(req.auth.permissions, pl.type)) {
+      return reply.status(403).send(sendForbidden())
+    }
 
     const user = await fastify.prisma.user.findUnique({
       where: { id: req.params.userId },
@@ -310,9 +395,13 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
 
     const userRoleNames = user.userRoles.map(ur => ur.role.name)
     const isMarmista = userRoleNames.includes('marmista')
+    const isFuneralClient = userRoleNames.includes('impresario_funebre')
 
     if (isMarmista && pl.articleType === 'funeral') {
       return reply.status(400).send({ error: 'BadRequest', message: 'Non si può assegnare un listino funebre a un marmista', statusCode: 400 })
+    }
+    if (isFuneralClient && pl.articleType === 'marmista') {
+      return reply.status(400).send({ error: 'BadRequest', message: 'Non si può assegnare un listino marmista a un impresario funebre', statusCode: 400 })
     }
 
     const field = pl.articleType === 'funeral' ? 'funeralPriceListId' : 'marmistaPriceListId'

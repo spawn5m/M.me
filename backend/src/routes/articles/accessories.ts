@@ -23,9 +23,11 @@ const INCLUDE = {
 
 const accessoriesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
-  fastify.addHook('preHandler', fastify.checkRole(['manager', 'super_admin']))
+  fastify.addHook('preHandler', fastify.loadAuthorizationContext)
 
-  fastify.get<{ Querystring: { page?: string; pageSize?: string; search?: string } }>('/', async (req) => {
+  fastify.get<{ Querystring: { page?: string; pageSize?: string; search?: string } }>('/', {
+    preHandler: [fastify.checkPermission('articles.accessories.read')]
+  }, async (req) => {
     const page = Math.max(1, parseInt(req.query.page ?? '1', 10))
     const pageSize = Math.min(500, Math.max(1, parseInt(req.query.pageSize ?? '50', 10)))
     const where = req.query.search
@@ -47,7 +49,9 @@ const accessoriesRoutes: FastifyPluginAsync = async (fastify) => {
     return { data, pagination: { page, pageSize, total, totalPages: Math.ceil(total / pageSize) } }
   })
 
-  fastify.post<{ Body: z.infer<typeof bodySchema> }>('/', async (req, reply) => {
+  fastify.post<{ Body: z.infer<typeof bodySchema> }>('/', {
+    preHandler: [fastify.checkPermission('articles.accessories.write')]
+  }, async (req, reply) => {
     const { categoryIds, subcategoryIds, ...rest } = bodySchema.parse(req.body)
     const item = await fastify.prisma.accessoryArticle.create({
       data: {
@@ -60,13 +64,17 @@ const accessoriesRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.status(201).send(item)
   })
 
-  fastify.get<{ Params: { id: string } }>('/:id', async (req, reply) => {
+  fastify.get<{ Params: { id: string } }>('/:id', {
+    preHandler: [fastify.checkPermission('articles.accessories.read')]
+  }, async (req, reply) => {
     const item = await fastify.prisma.accessoryArticle.findUnique({ where: { id: req.params.id }, include: INCLUDE })
     if (!item) return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
     return item
   })
 
-  fastify.put<{ Params: { id: string }; Body: z.infer<typeof bodySchema> }>('/:id', async (req, reply) => {
+  fastify.put<{ Params: { id: string }; Body: z.infer<typeof bodySchema> }>('/:id', {
+    preHandler: [fastify.checkPermission('articles.accessories.write')]
+  }, async (req, reply) => {
     const { categoryIds, subcategoryIds, ...rest } = bodySchema.parse(req.body)
     const item = await fastify.prisma.accessoryArticle.update({
       where: { id: req.params.id },
@@ -80,12 +88,16 @@ const accessoriesRoutes: FastifyPluginAsync = async (fastify) => {
     return item
   })
 
-  fastify.delete<{ Params: { id: string } }>('/:id', async (req, reply) => {
+  fastify.delete<{ Params: { id: string } }>('/:id', {
+    preHandler: [fastify.checkPermission('articles.accessories.delete')]
+  }, async (req, reply) => {
     await fastify.prisma.accessoryArticle.delete({ where: { id: req.params.id } })
     return reply.status(204).send()
   })
 
-  fastify.post('/import', async (req, reply) => {
+  fastify.post('/import', {
+    preHandler: [fastify.checkPermission('articles.accessories.import')]
+  }, async (req, reply) => {
     const data = await req.file()
     if (!data) {
       return reply.status(400).send({ error: 'BadRequest', message: 'File mancante', statusCode: 400 })

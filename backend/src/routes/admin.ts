@@ -2,9 +2,11 @@ import { FastifyPluginAsync } from 'fastify'
 
 const adminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
-  fastify.addHook('preHandler', fastify.checkRole(['manager', 'super_admin', 'collaboratore']))
+  fastify.addHook('preHandler', fastify.loadAuthorizationContext)
 
-  fastify.get('/stats', async (_req, reply) => {
+  fastify.get('/stats', {
+    preHandler: [fastify.checkPermission('dashboard.admin.read')]
+  }, async (_req, reply) => {
     const [users, coffins, accessories, marmista] = await Promise.all([
       fastify.prisma.user.count({ where: { isActive: true } }),
       fastify.prisma.coffinArticle.count(),

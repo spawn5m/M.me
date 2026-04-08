@@ -1,14 +1,25 @@
+import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../../context/AuthContext'
+import { getDefaultRoute, type RouteScope, useAuth } from '../../context/AuthContext'
 
 interface ProtectedRouteProps {
-  children: React.ReactNode
-  requiredRoles?: string[]
+  children: ReactNode
+  requiredPermissions?: string[]
+  match?: 'any' | 'all'
 }
 
-export default function ProtectedRoute({ children, requiredRoles }: ProtectedRouteProps) {
-  const { user, isLoading, hasRole } = useAuth()
+export default function ProtectedRoute({
+  children,
+  requiredPermissions,
+  match = 'any'
+}: ProtectedRouteProps) {
+  const { user, permissions, isLoading, hasPermission, hasAnyPermission } = useAuth()
   const location = useLocation()
+  const fallbackScope: RouteScope = location.pathname.startsWith('/client')
+    ? 'client'
+    : location.pathname.startsWith('/admin')
+      ? 'admin'
+      : 'global'
 
   if (isLoading) {
     return (
@@ -22,8 +33,14 @@ export default function ProtectedRoute({ children, requiredRoles }: ProtectedRou
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  if (requiredRoles && !hasRole(requiredRoles)) {
-    return <Navigate to="/admin/dashboard" replace />
+  const isAllowed = !requiredPermissions || requiredPermissions.length === 0
+    ? true
+    : match === 'all'
+      ? requiredPermissions.every((permission) => hasPermission(permission))
+      : hasAnyPermission(requiredPermissions)
+
+  if (!isAllowed) {
+    return <Navigate to={getDefaultRoute(user, permissions, fallbackScope)} replace />
   }
 
   return <>{children}</>

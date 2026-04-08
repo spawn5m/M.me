@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import Navbar from './components/layout/Navbar'
 import FooterLight from './components/layout/FooterLight'
 
-import { AuthProvider } from './context/AuthContext'
+import { ADMIN_ROUTE_PERMISSIONS, AuthProvider, CLIENT_ROUTE_PERMISSIONS, getDefaultRoute, useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -33,6 +33,16 @@ const FuneralDetailPage = lazy(() => import('./pages/client/FuneralDetailPage'))
 const MarmistaClientCatalogPage = lazy(() => import('./pages/client/MarmistaClientCatalogPage'))
 const MarmistaClientDetailPage = lazy(() => import('./pages/client/MarmistaClientDetailPage'))
 const ChangePasswordPage = lazy(() => import('./pages/client/ChangePasswordPage'))
+
+const ADMIN_SHELL_PERMISSIONS = ADMIN_ROUTE_PERMISSIONS
+
+const CLIENT_SHELL_PERMISSIONS = CLIENT_ROUTE_PERMISSIONS
+
+function DefaultProtectedIndex({ scope }: { scope: 'admin' | 'client' }) {
+  const { user, permissions } = useAuth()
+
+  return <Navigate to={getDefaultRoute(user, permissions, scope)} replace />
+}
 
 function PlaceholderPage({ name }: { name: string }) {
   const { t } = useTranslation()
@@ -108,55 +118,55 @@ function AppContent() {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredPermissions={ADMIN_SHELL_PERMISSIONS}>
                 <AdminLayout />
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/admin/dashboard" replace />} />
-            <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="users" element={<UsersPage />} />
+            <Route index element={<DefaultProtectedIndex scope="admin" />} />
+            <Route path="dashboard" element={<ProtectedRoute requiredPermissions={['dashboard.admin.read']}><DashboardPage /></ProtectedRoute>} />
+            <Route path="users" element={<ProtectedRoute requiredPermissions={['users.read.team', 'users.read.all']}><UsersPage /></ProtectedRoute>} />
             <Route
               path="roles"
               element={
-                <ProtectedRoute requiredRoles={['super_admin']}>
+                <ProtectedRoute requiredPermissions={['roles.read']}>
                   <RolesPage />
                 </ProtectedRoute>
               }
             />
-            <Route path="articles/coffins" element={<CoffinsPage />} />
-            <Route path="articles/accessories" element={<AccessoriesPage />} />
-            <Route path="articles/marmista" element={<MarmistaArticlesPage />} />
-            <Route path="catalog" element={<CatalogPdfPage />} />
-            <Route path="lookups/:type" element={<LookupPage />} />
-            <Route path="measures" element={<MeasuresPage />} />
-            <Route path="pricelists" element={<PriceListsPage />} />
-            <Route path="pricelists/:id" element={<PriceListDetailPage />} />
+            <Route path="articles/coffins" element={<ProtectedRoute requiredPermissions={['articles.coffins.read']}><CoffinsPage /></ProtectedRoute>} />
+            <Route path="articles/accessories" element={<ProtectedRoute requiredPermissions={['articles.accessories.read']}><AccessoriesPage /></ProtectedRoute>} />
+            <Route path="articles/marmista" element={<ProtectedRoute requiredPermissions={['articles.marmista.read']}><MarmistaArticlesPage /></ProtectedRoute>} />
+            <Route path="catalog" element={<ProtectedRoute requiredPermissions={['catalog.pdf.read']}><CatalogPdfPage /></ProtectedRoute>} />
+            <Route path="lookups/:type" element={<ProtectedRoute requiredPermissions={['lookups.read']}><LookupPage /></ProtectedRoute>} />
+            <Route path="measures" element={<ProtectedRoute requiredPermissions={['measures.read']}><MeasuresPage /></ProtectedRoute>} />
+            <Route path="pricelists" element={<ProtectedRoute requiredPermissions={['pricelists.sale.read', 'pricelists.purchase.read']}><PriceListsPage /></ProtectedRoute>} />
+            <Route path="pricelists/:id" element={<ProtectedRoute requiredPermissions={['pricelists.sale.read', 'pricelists.purchase.read']}><PriceListDetailPage /></ProtectedRoute>} />
           </Route>
           {/* Client — protette per impresario_funebre e marmista */}
           <Route
             path="/client"
             element={
-              <ProtectedRoute requiredRoles={['impresario_funebre', 'marmista']}>
+              <ProtectedRoute requiredPermissions={CLIENT_SHELL_PERMISSIONS}>
                 <AdminLayout variant="client" />
               </ProtectedRoute>
             }
           >
-            <Route index element={<Navigate to="/client/dashboard" replace />} />
-            <Route path="dashboard" element={<ClientDashboard />} />
+            <Route index element={<DefaultProtectedIndex scope="client" />} />
+            <Route path="dashboard" element={<ProtectedRoute requiredPermissions={['dashboard.client.read']}><ClientDashboard /></ProtectedRoute>} />
             <Route path="catalog/funeral" element={
-              <ProtectedRoute requiredRoles={['impresario_funebre']}><FuneralCatalogPage /></ProtectedRoute>
+              <ProtectedRoute requiredPermissions={['client.catalog.funeral.read']}><FuneralCatalogPage /></ProtectedRoute>
             } />
             <Route path="catalog/funeral/:id" element={
-              <ProtectedRoute requiredRoles={['impresario_funebre']}><FuneralDetailPage /></ProtectedRoute>
+              <ProtectedRoute requiredPermissions={['client.catalog.funeral.read']}><FuneralDetailPage /></ProtectedRoute>
             } />
             <Route path="catalog/marmista" element={
-              <ProtectedRoute requiredRoles={['marmista']}><MarmistaClientCatalogPage /></ProtectedRoute>
+              <ProtectedRoute requiredPermissions={['client.catalog.marmista.read']}><MarmistaClientCatalogPage /></ProtectedRoute>
             } />
             <Route path="catalog/marmista/:id" element={
-              <ProtectedRoute requiredRoles={['marmista']}><MarmistaClientDetailPage /></ProtectedRoute>
+              <ProtectedRoute requiredPermissions={['client.catalog.marmista.read']}><MarmistaClientDetailPage /></ProtectedRoute>
             } />
-            <Route path="change-password" element={<ChangePasswordPage />} />
+            <Route path="change-password" element={<ProtectedRoute requiredPermissions={['client.password.change']}><ChangePasswordPage /></ProtectedRoute>} />
           </Route>
         </Routes>
       </Suspense>

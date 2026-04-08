@@ -21,6 +21,8 @@ model User {
   funeralPriceList    PriceList?    @relation("UserFuneralPL", fields: [funeralPriceListId], references: [id])
   marmistaPriceList   PriceList?    @relation("UserMarmistaPL", fields: [marmistaPriceListId], references: [id])
   userRoles           UserRole[]
+  userPermissions     UserPermission[] @relation("UserPermissionGrantee")
+  grantedPermissions  UserPermission[] @relation("UserPermissionGrantor")
   managers            UserManager[] @relation("UserManaged")
   managing            UserManager[] @relation("UserManager")
   createdAt           DateTime      @default(now())
@@ -47,11 +49,29 @@ model Role {
 
 model Permission {
   id              String           @id @default(cuid())
+  code            String           @unique
   resource        String
   action          String
+  scope           String?
+  label           String
+  description     String
+  isSystem        Boolean          @default(true)
   rolePermissions RolePermission[]
+  userPermissions UserPermission[]
 
-  @@unique([resource, action])
+  @@unique([resource, action, scope])
+}
+
+model UserPermission {
+  userId          String
+  permissionId    String
+  grantedByUserId String?
+  createdAt       DateTime   @default(now())
+  user            User       @relation("UserPermissionGrantee", fields: [userId], references: [id], onDelete: Cascade)
+  permission      Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  grantedByUser   User?      @relation("UserPermissionGrantor", fields: [grantedByUserId], references: [id], onDelete: SetNull)
+
+  @@id([userId, permissionId])
 }
 
 model UserRole {

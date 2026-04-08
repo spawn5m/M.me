@@ -33,9 +33,11 @@ const measureBodySchema = z.object({
 
 const lookupsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
-  fastify.addHook('preHandler', fastify.checkRole(['manager', 'super_admin']))
+  fastify.addHook('preHandler', fastify.loadAuthorizationContext)
 
-  fastify.get<{ Params: { type: string } }>('/:type', async (req, reply) => {
+  fastify.get<{ Params: { type: string } }>('/:type', {
+    preHandler: [fastify.checkPermission('lookups.read')]
+  }, async (req, reply) => {
     const model = LOOKUP_MAP[req.params.type as LookupType]
     if (!model) {
       return reply.status(404).send({ error: 'NotFound', message: 'Tipo lookup non valido', statusCode: 404 })
@@ -45,7 +47,9 @@ const lookupsRoutes: FastifyPluginAsync = async (fastify) => {
     return { data, pagination: { page: 1, pageSize: data.length, total: data.length, totalPages: 1 } }
   })
 
-  fastify.post<{ Params: { type: string }; Body: z.infer<typeof bodySchema> }>('/:type', async (req, reply) => {
+  fastify.post<{ Params: { type: string }; Body: z.infer<typeof bodySchema> }>('/:type', {
+    preHandler: [fastify.checkPermission('lookups.manage')]
+  }, async (req, reply) => {
     const model = LOOKUP_MAP[req.params.type as LookupType]
     if (!model) {
       return reply.status(404).send({ error: 'NotFound', message: 'Tipo lookup non valido', statusCode: 404 })
@@ -56,7 +60,9 @@ const lookupsRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.status(201).send(item)
   })
 
-  fastify.put<{ Params: { type: string; id: string }; Body: z.infer<typeof bodySchema> }>('/:type/:id', async (req, reply) => {
+  fastify.put<{ Params: { type: string; id: string }; Body: z.infer<typeof bodySchema> }>('/:type/:id', {
+    preHandler: [fastify.checkPermission('lookups.manage')]
+  }, async (req, reply) => {
     const model = LOOKUP_MAP[req.params.type as LookupType]
     if (!model) {
       return reply.status(404).send({ error: 'NotFound', message: 'Tipo lookup non valido', statusCode: 404 })
@@ -67,7 +73,9 @@ const lookupsRoutes: FastifyPluginAsync = async (fastify) => {
     return item
   })
 
-  fastify.delete<{ Params: { type: string; id: string } }>('/:type/:id', async (req, reply) => {
+  fastify.delete<{ Params: { type: string; id: string } }>('/:type/:id', {
+    preHandler: [fastify.checkPermission('lookups.manage')]
+  }, async (req, reply) => {
     const model = LOOKUP_MAP[req.params.type as LookupType]
     if (!model) {
       return reply.status(404).send({ error: 'NotFound', message: 'Tipo lookup non valido', statusCode: 404 })
@@ -77,24 +85,32 @@ const lookupsRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.status(204).send()
   })
 
-  fastify.get('/coffin-measures', async (_req, reply) => {
+  fastify.get('/coffin-measures', {
+    preHandler: [fastify.checkPermission('measures.read')]
+  }, async (_req, reply) => {
     const data = await fastify.prisma.coffinMeasure.findMany({ orderBy: { code: 'asc' } })
     return reply.send({ data, pagination: { page: 1, pageSize: data.length, total: data.length, totalPages: 1 } })
   })
 
-  fastify.post<{ Body: z.infer<typeof measureBodySchema> }>('/coffin-measures', async (req, reply) => {
+  fastify.post<{ Body: z.infer<typeof measureBodySchema> }>('/coffin-measures', {
+    preHandler: [fastify.checkPermission('measures.manage')]
+  }, async (req, reply) => {
     const body = measureBodySchema.parse(req.body)
     const item = await fastify.prisma.coffinMeasure.create({ data: body })
     return reply.status(201).send(item)
   })
 
-  fastify.put<{ Params: { id: string }; Body: z.infer<typeof measureBodySchema> }>('/coffin-measures/:id', async (req, reply) => {
+  fastify.put<{ Params: { id: string }; Body: z.infer<typeof measureBodySchema> }>('/coffin-measures/:id', {
+    preHandler: [fastify.checkPermission('measures.manage')]
+  }, async (req, reply) => {
     const body = measureBodySchema.parse(req.body)
     const item = await fastify.prisma.coffinMeasure.update({ where: { id: req.params.id }, data: body })
     return item
   })
 
-  fastify.delete<{ Params: { id: string } }>('/coffin-measures/:id', async (req, reply) => {
+  fastify.delete<{ Params: { id: string } }>('/coffin-measures/:id', {
+    preHandler: [fastify.checkPermission('measures.manage')]
+  }, async (req, reply) => {
     await fastify.prisma.coffinMeasure.delete({ where: { id: req.params.id } })
     return reply.status(204).send()
   })

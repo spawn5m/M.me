@@ -1,6 +1,99 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
 import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb } from '../../test-helper'
+import { SYSTEM_PERMISSIONS, type PermissionCode } from '../../lib/authorization/permissions'
+
+interface AuthorizationPermissionRecord {
+  id: string
+  code: string
+}
+
+interface AuthorizationPrismaClient {
+  permission: {
+    upsert(args: {
+      where: { code: string }
+      update: {
+        resource?: string
+        action?: string
+        scope?: string | null
+        label?: string
+        description?: string
+        isSystem?: boolean
+      }
+      create: {
+        code: string
+        resource: string
+        action: string
+        scope?: string | null
+        label: string
+        description: string
+        isSystem: boolean
+      }
+    }): Promise<AuthorizationPermissionRecord>
+  }
+  rolePermission: {
+    create(args: {
+      data: {
+        roleId: string
+        permissionId: string
+      }
+    }): Promise<unknown>
+  }
+  userPermission: {
+    create(args: {
+      data: {
+        userId: string
+        permissionId: string
+      }
+    }): Promise<unknown>
+  }
+}
+
+function getAuthorizationPrisma(app: FastifyInstance): AuthorizationPrismaClient {
+  return app.prisma as unknown as AuthorizationPrismaClient
+}
+
+async function ensurePermission(app: FastifyInstance, code: PermissionCode): Promise<AuthorizationPermissionRecord> {
+  const definition = SYSTEM_PERMISSIONS.find((permission) => permission.code === code)
+  if (!definition) {
+    throw new Error(`Permission ${code} non trovata`)
+  }
+
+  return getAuthorizationPrisma(app).permission.upsert({
+    where: { code },
+    update: definition,
+    create: definition,
+  })
+}
+
+async function grantRolePermissions(app: FastifyInstance, roleName: string, permissionCodes: PermissionCode[]) {
+  const role = await app.prisma.role.findUnique({ where: { name: roleName } })
+  if (!role) {
+    throw new Error(`Ruolo ${roleName} non trovato`)
+  }
+
+  for (const code of permissionCodes) {
+    const permission = await ensurePermission(app, code)
+    await getAuthorizationPrisma(app).rolePermission.create({
+      data: {
+        roleId: role.id,
+        permissionId: permission.id,
+      }
+    })
+  }
+}
+
+async function grantUserPermissions(app: FastifyInstance, userId: string, permissionCodes: PermissionCode[]) {
+  for (const code of permissionCodes) {
+    const permission = await ensurePermission(app, code)
+    await getAuthorizationPrisma(app).userPermission.create({
+      data: {
+        userId,
+        permissionId: permission.id,
+      }
+    })
+  }
+}
 
 describe('Roles API', () => {
   let app: FastifyInstance
@@ -30,6 +123,8 @@ describe('Roles API', () => {
       roles: ['manager']
     })
 
+    await grantRolePermissions(app, 'super_admin', ['roles.read', 'roles.manage'])
+
     superAdminCookie = await getAuthCookie(app, 'superadmin@test.com', 'password123')
     managerCookie = await getAuthCookie(app, 'manager@test.com', 'password123')
   })
@@ -53,6 +148,25 @@ describe('Roles API', () => {
         headers: { cookie: managerCookie }
       })
       expect(res.statusCode).toBe(403)
+    })
+
+    it('consente a un manager con grant diretto roles.read di leggere i ruoli', async () => {
+      const manager = await app.prisma.user.findUnique({ where: { email: 'manager@test.com' } })
+      expect(manager).not.toBeNull()
+
+      await grantUserPermissions(app, manager!.id, ['roles.read'])
+
+      const refreshedCookie = await getAuthCookie(app, 'manager@test.com', 'password123')
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/roles',
+        headers: { cookie: refreshedCookie }
+      })
+
+      expect(res.statusCode).toBe(200)
+      expect(JSON.parse(res.body)).toMatchObject({
+        data: expect.any(Array),
+      })
     })
   })
 
