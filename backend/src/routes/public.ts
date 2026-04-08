@@ -47,6 +47,53 @@ interface PublicPricePrisma extends PrismaClientLike {
   }
 }
 
+interface PublicRolePrisma extends PrismaClientLike {
+  user: {
+    findUnique: (args: {
+      where: { id: string }
+      select: {
+        userRoles: {
+          select: {
+            role: {
+              select: {
+                name: true
+              }
+            }
+          }
+        }
+      }
+    }) => Promise<{ userRoles: Array<{ role: { name: string } }> } | null>
+  }
+}
+
+interface SessionLike {
+  get: (key: string) => unknown
+}
+
+function getSessionUserId(request: { session?: SessionLike }) {
+  const userId = request.session?.get('userId')
+  return typeof userId === 'string' ? userId : null
+}
+
+async function loadSessionRoles(prisma: PublicRolePrisma, userId: string) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      userRoles: {
+        select: {
+          role: {
+            select: {
+              name: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  return user?.userRoles.map((entry: { role: { name: string } }) => entry.role.name) ?? []
+}
+
 function canSeeAdminFuneralPrices(roles: string[]) {
   return roles.some((role) => role === 'manager' || role === 'super_admin')
 }
@@ -198,9 +245,9 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
       }),
     ])
 
-    const roles = (request.session.get('roles') as string[] | undefined) ?? []
-    const userId = request.session.get('userId') as string | undefined
+    const userId = getSessionUserId(request as { session?: SessionLike })
     const articleIds = articles.map((article) => article.id)
+    const roles = userId ? await loadSessionRoles(fastify.prisma as unknown as PublicRolePrisma, userId) : []
 
     let assignedPriceMap = new Map<string, number>()
     let adminPriceOptionsMap = new Map<string, PublicCoffinPriceOption[]>()
