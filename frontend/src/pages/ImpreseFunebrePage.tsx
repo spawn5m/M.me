@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCoffins } from '../hooks/useCoffins'
 import { useAccessories } from '../hooks/useAccessories'
@@ -6,6 +6,7 @@ import FilterBar from '../components/catalog/FilterBar'
 import ProductGrid from '../components/catalog/ProductGrid'
 import ProductModal from '../components/catalog/ProductModal'
 import AccessoriesView from '../components/catalog/AccessoriesView'
+import type { CoffinPriceOption } from '../lib/types'
 type ActiveTab = 'coffins' | 'accessories'
 type ModalType = 'coffin' | 'accessory'
 
@@ -13,6 +14,16 @@ interface Filters {
   category: string
   subcategory: string
   search: string
+}
+
+function mergePriceLists(current: CoffinPriceOption[], next: CoffinPriceOption[]) {
+  const merged = new Map(current.map((option) => [option.priceListId, option]))
+
+  for (const option of next) {
+    merged.set(option.priceListId, option)
+  }
+
+  return Array.from(merged.values()).sort((a, b) => a.priceListName.localeCompare(b.priceListName, 'it'))
 }
 
 export default function ImpreseFunebrePage() {
@@ -92,7 +103,71 @@ const coffinCategories = useMemo(
     })
   }, [accessories, filters])
 
-  const activeItems = activeTab === 'coffins' ? filteredCoffins : filteredAccessories
+  const pagePriceLists = useMemo(() => {
+    const seen = new Set<string>()
+    const options: CoffinPriceOption[] = []
+
+    for (const coffin of coffins) {
+      for (const option of coffin.priceOptions ?? []) {
+        if (seen.has(option.priceListId)) continue
+        seen.add(option.priceListId)
+        options.push(option)
+      }
+    }
+
+    return options.sort((a, b) => a.priceListName.localeCompare(b.priceListName, 'it'))
+  }, [coffins])
+
+  const [knownPriceLists, setKnownPriceLists] = useState<CoffinPriceOption[]>([])
+
+  useEffect(() => {
+    if (pagePriceLists.length === 0) return
+    setKnownPriceLists((current) => mergePriceLists(current, pagePriceLists))
+  }, [pagePriceLists])
+
+  const availablePriceLists = knownPriceLists.length > 0 ? knownPriceLists : pagePriceLists
+
+  const [selectedPriceListId, setSelectedPriceListId] = useState('')
+
+  useEffect(() => {
+    if (availablePriceLists.length === 0) {
+      setSelectedPriceListId('')
+      return
+    }
+
+    setSelectedPriceListId((current) => {
+      if (availablePriceLists.some((option) => option.priceListId === current)) {
+        return current
+      }
+
+      return availablePriceLists[0].priceListId
+    })
+  }, [availablePriceLists])
+
+  const visibleCoffins = useMemo(() => {
+    if (availablePriceLists.length === 0) {
+      return filteredCoffins
+    }
+
+    return filteredCoffins.map((coffin) => ({
+      ...coffin,
+      price:
+        coffin.priceOptions?.find((option) => option.priceListId === selectedPriceListId)?.price ?? null,
+    }))
+  }, [availablePriceLists.length, filteredCoffins, selectedPriceListId])
+
+  const selectedPriceListLabel = useMemo(() => {
+    const selectedPriceList = availablePriceLists.find((option) => option.priceListId === selectedPriceListId)
+    if (!selectedPriceList) return null
+
+    const typeLabel = selectedPriceList.priceListType === 'purchase'
+      ? t('catalog.priceListTypePurchase')
+      : t('catalog.priceListTypeSale')
+
+    return `${selectedPriceList.priceListName} - ${typeLabel}`
+  }, [availablePriceLists, selectedPriceListId, t])
+
+  const activeItems = activeTab === 'coffins' ? visibleCoffins : filteredAccessories
   const activeLoading = activeTab === 'coffins' ? loadingCoffins : loadingAccessories
   const activeOnClick = activeTab === 'coffins' ? handleCoffinClick : handleAccessoryClick
   const modalItems = selectedType === 'coffin' ? filteredCoffins : filteredAccessories
@@ -152,10 +227,37 @@ const coffinCategories = useMemo(
               onFilter={handleFilter}
               totalCount={activeItems.length}
             />
+            {availablePriceLists.length > 0 && (
+              <div className="mt-6 flex flex-col gap-2 md:max-w-sm">
+                <label
+                  htmlFor="funeral-price-list"
+                  className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B7280]"
+                >
+                  {t('catalog.activePriceList')}
+                </label>
+                <select
+                  id="funeral-price-list"
+                  value={selectedPriceListId}
+                  onChange={(event) => setSelectedPriceListId(event.target.value)}
+                  className="min-h-11 rounded-[6px] border border-[#E5E0D8] bg-white px-3 py-2 text-sm text-[#1A2B4A] focus:border-[#C9A96E] focus:outline-none"
+                >
+                  {availablePriceLists.map((option) => (
+                    <option key={option.priceListId} value={option.priceListId}>
+                      {option.priceListName} - {option.priceListType === 'purchase'
+                        ? t('catalog.priceListTypePurchase')
+                        : t('catalog.priceListTypeSale')}
+                    </option>
+                  ))}
+                </select>
+                {selectedPriceListLabel && (
+                  <p className="text-sm text-[#6B7280]">{selectedPriceListLabel}</p>
+                )}
+              </div>
+            )}
             <div className="mt-6">
               <ProductGrid
                 items={activeItems}
-                showPrice={false}
+                showPrice
                 onItemClick={activeOnClick}
                 loading={activeLoading}
                 columns={4}

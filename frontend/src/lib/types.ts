@@ -10,6 +10,13 @@ export interface ApiListResponse<T> {
   pagination: Pagination
 }
 
+export interface CoffinPriceOption {
+  priceListId: string
+  priceListName: string
+  priceListType: 'purchase' | 'sale'
+  price: number
+}
+
 // Cofano (senza purchasePrice)
 export interface CoffinItem {
   id: string
@@ -23,6 +30,8 @@ export interface CoffinItem {
   figures: string[]
   colors: string[]
   finishes: string[]
+  price?: number | null
+  priceOptions?: CoffinPriceOption[]
   measure?: {
     id: string
     code: string

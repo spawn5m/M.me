@@ -29,12 +29,12 @@ export default function OffertaMeseCard({ item }: OffertaMeseCardProps) {
       <div className="grid grid-cols-2">
 
         {/* 1/2 — Immagine */}
-        <div className="bg-[#F4F3F0] flex items-center justify-center min-h-[280px]">
+        <div className="bg-[#F4F3F0] flex items-center justify-center min-h-[280px] p-5">
           {item.imageUrl ? (
             <img
               src={item.imageUrl}
               alt={item.description}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
           ) : (
             <div className="flex flex-col items-center gap-2 text-[#6B7280]">

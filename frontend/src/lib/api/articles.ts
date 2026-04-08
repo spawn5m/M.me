@@ -33,12 +33,16 @@ export const articlesApi = {
     remove: (id: string) =>
       api.delete(`${base}/coffins/${id}`),
 
+    uploadImage: (id: string, file: File) => {
+      const form = new FormData()
+      form.append('file', file)
+      return api.post<AdminCoffinArticle>(`${base}/coffins/${id}/image`, form).then(r => r.data)
+    },
+
     import: (file: File) => {
       const form = new FormData()
       form.append('file', file)
-      return api.post<ImportResult>(`${base}/coffins/import`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }).then(r => r.data)
+      return api.post<ImportResult>(`${base}/coffins/import`, form).then(r => r.data)
     },
   },
 
@@ -61,9 +65,7 @@ export const articlesApi = {
     import: (file: File) => {
       const form = new FormData()
       form.append('file', file)
-      return api.post<ImportResult>(`${base}/accessories/import`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }).then(r => r.data)
+      return api.post<ImportResult>(`${base}/accessories/import`, form).then(r => r.data)
     },
   },
 
@@ -86,9 +88,7 @@ export const articlesApi = {
     import: (file: File) => {
       const form = new FormData()
       form.append('file', file)
-      return api.post<ImportResult>(`${base}/marmista/import`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }).then(r => r.data)
+      return api.post<ImportResult>(`${base}/marmista/import`, form).then(r => r.data)
     },
   },
 }

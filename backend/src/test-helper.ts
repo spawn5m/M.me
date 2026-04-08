@@ -8,6 +8,7 @@ import errorHandlerPlugin from './plugins/errorHandler'
 import authPlugin from './plugins/auth'
 
 import authRoutes from './routes/auth'
+import publicRoutes from './routes/public'
 import usersRoutes from './routes/users'
 import rolesRoutes from './routes/roles'
 import adminRoutes from './routes/admin'
@@ -17,6 +18,7 @@ import accessoriesRoutes from './routes/articles/accessories'
 import marmistaRoutes from './routes/articles/marmista'
 import pricelistsRoutes from './routes/pricelists'
 import clientRoutes from './routes/client'
+import { MULTIPART_OPTIONS } from './lib/multipart'
 
 export async function buildTestApp(): Promise<FastifyInstance> {
   const app = Fastify({ logger: false })
@@ -32,12 +34,13 @@ export async function buildTestApp(): Promise<FastifyInstance> {
     }
   })
 
-  await app.register(multipart)
+  await app.register(multipart, MULTIPART_OPTIONS)
   await app.register(prismaPlugin)
   await app.register(errorHandlerPlugin)
   await app.register(authPlugin)
 
   await app.register(authRoutes, { prefix: '/api/auth' })
+  await app.register(publicRoutes, { prefix: '/api/public' })
   await app.register(usersRoutes, { prefix: '/api/users' })
   await app.register(rolesRoutes, { prefix: '/api/roles' })
   await app.register(adminRoutes, { prefix: '/api/admin' })

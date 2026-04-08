@@ -4,6 +4,16 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 import fs from 'fs'
 
+const UPLOAD_MIME_TYPES: Record<string, string> = {
+  '.pdf': 'application/pdf',
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.webp': 'image/webp',
+  '.gif': 'image/gif',
+  '.svg': 'image/svg+xml',
+}
+
 export default defineConfig({
   plugins: [
     react(),
@@ -16,7 +26,7 @@ export default defineConfig({
           const filePath = path.resolve(__dirname, '../uploads', decoded)
           if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
             const ext = path.extname(filePath).toLowerCase()
-            const mime = ext === '.pdf' ? 'application/pdf' : 'application/octet-stream'
+            const mime = UPLOAD_MIME_TYPES[ext] ?? 'application/octet-stream'
             res.setHeader('Content-Type', mime)
             res.setHeader('Content-Disposition', 'inline')
             fs.createReadStream(filePath).pipe(res)

@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
+import * as fs from 'fs'
+import * as path from 'path'
 import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb } from '../../test-helper'
 import { SYSTEM_PERMISSIONS, type PermissionCode } from '../../lib/authorization/permissions'
 import * as XLSX from 'xlsx'
@@ -75,6 +77,12 @@ async function grantRolePermissions(app: FastifyInstance, roleName: string, perm
   }
 }
 
+const PNG_BUFFER = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO2WlpQAAAAASUVORK5CYII=',
+  'base64'
+)
+const LARGE_IMAGE_BUFFER = Buffer.concat([PNG_BUFFER, Buffer.alloc(1_500_000, 1)])
+
 function createExcelBuffer(rows: Record<string, string | number>[]): Buffer {
   const workbook = XLSX.utils.book_new()
   const sheet = XLSX.utils.json_to_sheet(rows)
@@ -82,10 +90,18 @@ function createExcelBuffer(rows: Record<string, string | number>[]): Buffer {
   return XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' }) as Buffer
 }
 
-function createMultipartPayload(fileName: string, fileBuffer: Buffer) {
+function createMultipartPayload(
+  fileName: string,
+  fileBuffer: Buffer,
+  options: {
+    contentType?: string
+    fieldName?: string
+  } = {}
+) {
+  const { contentType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', fieldName = 'file' } = options
   const boundary = `----mirigliani-${Date.now()}`
   const body = Buffer.concat([
-    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${fileName}"\r\nContent-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n\r\n`),
+    Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="${fieldName}"; filename="${fileName}"\r\nContent-Type: ${contentType}\r\n\r\n`),
     fileBuffer,
     Buffer.from(`\r\n--${boundary}--\r\n`),
   ])
@@ -197,6 +213,125 @@ describe('Articles API', () => {
       })
       expect(updated.statusCode).toBe(200)
       expect(updated.json()).toMatchObject({ description: 'Bara aggiornata' })
+    })
+
+    it('carica un\'immagine per un cofano', async () => {
+      const created = await app.inject({
+        method: 'POST',
+        url: '/api/admin/articles/coffins',
+        headers: { cookie: managerCookie },
+        payload: { code: 'COF004', description: 'Bara con immagine' },
+      })
+      const { id } = created.json()
+
+      const payload = createMultipartPayload('cofano.png', PNG_BUFFER, { contentType: 'image/png' })
+      const response = await app.inject({
+        method: 'POST',
+        url: `/api/admin/articles/coffins/${id}/image`,
+        headers: { cookie: managerCookie, ...payload.headers },
+        payload: payload.body,
+      })
+
+      const responseBody = response.json() as { imageUrl?: string }
+      const uploadedImageUrl = responseBody.imageUrl
+      const uploadedFilePath = uploadedImageUrl
+        ? path.join(process.cwd(), '..', uploadedImageUrl.replace(/^\//, ''))
+        : null
+
+      try {
+        expect(response.statusCode).toBe(200)
+        expect(uploadedImageUrl).toMatch(new RegExp(`^/uploads/images/coffins/${id}-\\d+\\.png$`))
+        expect(uploadedFilePath && fs.existsSync(uploadedFilePath)).toBe(true)
+      } finally {
+        if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
+          fs.unlinkSync(uploadedFilePath)
+        }
+      }
+    })
+
+    it('salva integralmente file immagine oltre 1 MB senza troncarli', async () => {
+      const created = await app.inject({
+        method: 'POST',
+        url: '/api/admin/articles/coffins',
+        headers: { cookie: managerCookie },
+        payload: { code: 'COF004B', description: 'Bara con immagine grande' },
+      })
+      const { id } = created.json()
+
+      const payload = createMultipartPayload('cofano-large.png', LARGE_IMAGE_BUFFER, { contentType: 'image/png' })
+      const response = await app.inject({
+        method: 'POST',
+        url: `/api/admin/articles/coffins/${id}/image`,
+        headers: { cookie: managerCookie, ...payload.headers },
+        payload: payload.body,
+      })
+
+      const responseBody = response.json() as { imageUrl?: string }
+      const uploadedImageUrl = responseBody.imageUrl
+      const uploadedFilePath = uploadedImageUrl
+        ? path.join(process.cwd(), '..', uploadedImageUrl.replace(/^\//, ''))
+        : null
+
+      try {
+        expect(response.statusCode).toBe(200)
+        expect(uploadedFilePath && fs.existsSync(uploadedFilePath)).toBe(true)
+        expect(uploadedFilePath && fs.statSync(uploadedFilePath).size).toBe(LARGE_IMAGE_BUFFER.length)
+        expect(uploadedFilePath && fs.readFileSync(uploadedFilePath).equals(LARGE_IMAGE_BUFFER)).toBe(true)
+      } finally {
+        if (uploadedFilePath && fs.existsSync(uploadedFilePath)) {
+          fs.unlinkSync(uploadedFilePath)
+        }
+      }
+    })
+
+    it('sostituisce un\'immagine con un URL nuovo e rimuove il file precedente', async () => {
+      const created = await app.inject({
+        method: 'POST',
+        url: '/api/admin/articles/coffins',
+        headers: { cookie: managerCookie },
+        payload: { code: 'COF005', description: 'Bara con immagine aggiornata' },
+      })
+      const { id } = created.json()
+
+      const firstPayload = createMultipartPayload('cofano-1.png', PNG_BUFFER, { contentType: 'image/png' })
+      const firstResponse = await app.inject({
+        method: 'POST',
+        url: `/api/admin/articles/coffins/${id}/image`,
+        headers: { cookie: managerCookie, ...firstPayload.headers },
+        payload: firstPayload.body,
+      })
+
+      const firstImageUrl = (firstResponse.json() as { imageUrl?: string }).imageUrl
+      const firstImagePath = firstImageUrl
+        ? path.join(process.cwd(), '..', firstImageUrl.replace(/^\//, ''))
+        : null
+
+      await new Promise(resolve => setTimeout(resolve, 5))
+
+      const secondPayload = createMultipartPayload('cofano-2.png', PNG_BUFFER, { contentType: 'image/png' })
+      const secondResponse = await app.inject({
+        method: 'POST',
+        url: `/api/admin/articles/coffins/${id}/image`,
+        headers: { cookie: managerCookie, ...secondPayload.headers },
+        payload: secondPayload.body,
+      })
+
+      const secondImageUrl = (secondResponse.json() as { imageUrl?: string }).imageUrl
+      const secondImagePath = secondImageUrl
+        ? path.join(process.cwd(), '..', secondImageUrl.replace(/^\//, ''))
+        : null
+
+      try {
+        expect(firstResponse.statusCode).toBe(200)
+        expect(secondResponse.statusCode).toBe(200)
+        expect(firstImageUrl).not.toBe(secondImageUrl)
+        expect(firstImagePath && fs.existsSync(firstImagePath)).toBe(false)
+        expect(secondImagePath && fs.existsSync(secondImagePath)).toBe(true)
+      } finally {
+        if (secondImagePath && fs.existsSync(secondImagePath)) {
+          fs.unlinkSync(secondImagePath)
+        }
+      }
     })
 
     it('elimina un cofano', async () => {

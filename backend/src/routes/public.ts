@@ -1,6 +1,11 @@
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { sendContactEmail } from '../lib/mailer'
+import {
+  buildComputedItems,
+  loadPriceListTree,
+  type PrismaClientLike,
+} from '../lib/priceListUtils'
 
 // ─── Zod Schemas ─────────────────────────────────────────────────────────────
 
@@ -24,6 +29,107 @@ function buildPagination(page: number, limit: number, total: number) {
     total,
     totalPages: Math.ceil(total / limit),
   }
+}
+
+interface PublicCoffinPriceOption {
+  priceListId: string
+  priceListName: string
+  priceListType: 'purchase' | 'sale'
+  price: number
+}
+
+interface PublicPricePrisma extends PrismaClientLike {
+  user: {
+    findUnique: (args: {
+      where: { id: string }
+      select: { funeralPriceListId: true }
+    }) => Promise<{ funeralPriceListId: string | null } | null>
+  }
+}
+
+function canSeeAdminFuneralPrices(roles: string[]) {
+  return roles.some((role) => role === 'manager' || role === 'super_admin')
+}
+
+async function loadAssignedFuneralPriceMap(
+  prisma: PublicPricePrisma,
+  userId: string,
+  articleIds: string[],
+): Promise<Map<string, number>> {
+  const articleIdSet = new Set(articleIds)
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { funeralPriceListId: true },
+  })
+
+  if (!user?.funeralPriceListId) {
+    return new Map<string, number>()
+  }
+
+  const tree = await loadPriceListTree(prisma, user.funeralPriceListId)
+  if (!tree) {
+    return new Map<string, number>()
+  }
+
+  const computedItems = await buildComputedItems(prisma, tree)
+  const priceMap = new Map<string, number>()
+
+  for (const item of computedItems) {
+    if (!item.coffinArticleId || !articleIdSet.has(item.coffinArticleId)) continue
+    priceMap.set(item.coffinArticleId, item.computedPrice)
+  }
+
+  return priceMap
+}
+
+async function loadAdminFuneralPriceOptions(
+  prisma: PrismaClientLike,
+  articleIds: string[],
+): Promise<Map<string, PublicCoffinPriceOption[]>> {
+  const articleIdSet = new Set(articleIds)
+  const priceLists = await prisma.priceList.findMany({
+    where: {
+      articleType: 'funeral',
+      type: 'sale',
+    },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+    },
+    orderBy: { name: 'asc' },
+  })
+
+  const computedByList = await Promise.all(
+    priceLists.map(async (priceList) => {
+      const tree = await loadPriceListTree(prisma, priceList.id)
+      if (!tree) return null
+
+      const computedItems = await buildComputedItems(prisma, tree)
+      return { priceList, computedItems }
+    }),
+  )
+
+  const priceMap = new Map<string, PublicCoffinPriceOption[]>()
+
+  for (const result of computedByList) {
+    if (!result) continue
+
+    for (const item of result.computedItems) {
+      if (!item.coffinArticleId || !articleIdSet.has(item.coffinArticleId)) continue
+
+      const options = priceMap.get(item.coffinArticleId) ?? []
+      options.push({
+        priceListId: result.priceList.id,
+        priceListName: result.priceList.name,
+        priceListType: result.priceList.type,
+        price: item.computedPrice,
+      })
+      priceMap.set(item.coffinArticleId, options)
+    }
+  }
+
+  return priceMap
 }
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
@@ -92,8 +198,38 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
       }),
     ])
 
+    const roles = (request.session.get('roles') as string[] | undefined) ?? []
+    const userId = request.session.get('userId') as string | undefined
+    const articleIds = articles.map((article) => article.id)
+
+    let assignedPriceMap = new Map<string, number>()
+    let adminPriceOptionsMap = new Map<string, PublicCoffinPriceOption[]>()
+
+    if (articleIds.length > 0) {
+      if (canSeeAdminFuneralPrices(roles)) {
+        adminPriceOptionsMap = await loadAdminFuneralPriceOptions(
+          fastify.prisma as unknown as PublicPricePrisma,
+          articleIds,
+        )
+      } else if (roles.includes('impresario_funebre') && userId) {
+        assignedPriceMap = await loadAssignedFuneralPriceMap(
+          fastify.prisma as unknown as PublicPricePrisma,
+          userId,
+          articleIds,
+        )
+      }
+    }
+
     return reply.send({
-      data: articles,
+      data: articles.map((article) => ({
+        ...article,
+        ...(roles.includes('impresario_funebre')
+          ? { price: assignedPriceMap.get(article.id) ?? null }
+          : {}),
+        ...(canSeeAdminFuneralPrices(roles)
+          ? { priceOptions: adminPriceOptionsMap.get(article.id) ?? [] }
+          : {}),
+      })),
       pagination: buildPagination(page, limit, total),
     })
   })

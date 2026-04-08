@@ -1,9 +1,10 @@
-import { FastifyPluginAsync } from 'fastify'
+import { FastifyPluginAsync, FastifyReply } from 'fastify'
 import { z } from 'zod'
 import { pipeline } from 'stream/promises'
 import * as fs from 'fs'
 import * as path from 'path'
 import { parseExcelFile, splitCodes, validateImagePath } from '../../lib/excelImporter'
+import { MULTIPART_MAX_FILE_SIZE_MB } from '../../lib/multipart'
 import type { ImportResult } from '../../types/shared'
 
 const coffinBodySchema = z.object({
@@ -18,6 +19,28 @@ const coffinBodySchema = z.object({
   colorIds: z.array(z.string()).optional().default([]),
   finishIds: z.array(z.string()).optional().default([]),
 })
+
+const IMAGE_MIME_TYPES = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+} as const
+
+function isStoredImageForArticle(fileName: string, articleId: string) {
+  return fileName.startsWith(`${articleId}.`) || fileName.startsWith(`${articleId}-`)
+}
+
+function isRequestFileTooLargeError(error: unknown): error is Error & { code: string } {
+  return error instanceof Error && 'code' in error && error.code === 'FST_REQ_FILE_TOO_LARGE'
+}
+
+function sendFileTooLarge(reply: FastifyReply) {
+  return reply.status(413).send({
+    error: 'PayloadTooLarge',
+    message: `File troppo grande. Dimensione massima ${MULTIPART_MAX_FILE_SIZE_MB} MB.`,
+    statusCode: 413,
+  })
+}
 
 const COFFIN_INCLUDE = {
   measure: { select: { id: true, code: true, label: true } },
@@ -94,6 +117,85 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
       include: COFFIN_INCLUDE,
     })
     if (!item) return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
+    return item
+  })
+
+  // POST /:id/image
+  fastify.post<{ Params: { id: string } }>('/:id/image', async (req, reply) => {
+    const existing = await fastify.prisma.coffinArticle.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, imageUrl: true },
+    })
+    if (!existing) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
+    }
+
+    let data
+    try {
+      data = await req.file()
+    } catch (error) {
+      if (isRequestFileTooLargeError(error)) {
+        return sendFileTooLarge(reply)
+      }
+      throw error
+    }
+    if (!data) {
+      return reply.status(400).send({ error: 'BadRequest', message: 'File mancante', statusCode: 400 })
+    }
+
+    const extension = IMAGE_MIME_TYPES[data.mimetype as keyof typeof IMAGE_MIME_TYPES]
+    if (!extension) {
+      data.file.resume()
+      return reply.status(400).send({
+        error: 'BadRequest',
+        message: 'Formato immagine non supportato. Usa JPEG, PNG o WEBP.',
+        statusCode: 400,
+      })
+    }
+
+    const uploadDir = path.join(process.cwd(), '..', 'uploads', 'images', 'coffins')
+    fs.mkdirSync(uploadDir, { recursive: true })
+
+    // Use a unique filename on every upload to avoid stale browser caches after replacements.
+    const storedFileName = `${req.params.id}-${Date.now()}${extension}`
+    const targetPath = path.join(uploadDir, storedFileName)
+    const imageUrl = `/uploads/images/coffins/${storedFileName}`
+
+    try {
+      await pipeline(data.file, fs.createWriteStream(targetPath))
+    } catch (error) {
+      fs.rmSync(targetPath, { force: true })
+
+      if (isRequestFileTooLargeError(error)) {
+        return sendFileTooLarge(reply)
+      }
+
+      throw error
+    }
+
+    if (data.file.truncated) {
+      fs.rmSync(targetPath, { force: true })
+      return sendFileTooLarge(reply)
+    }
+
+    let item
+    try {
+      item = await fastify.prisma.coffinArticle.update({
+        where: { id: req.params.id },
+        data: { imageUrl },
+        include: COFFIN_INCLUDE,
+      })
+    } catch (error) {
+      fs.rmSync(targetPath, { force: true })
+      throw error
+    }
+
+    for (const fileName of fs.readdirSync(uploadDir)) {
+      if (fileName !== storedFileName && isStoredImageForArticle(fileName, req.params.id)) {
+        fs.rmSync(path.join(uploadDir, fileName), { force: true })
+      }
+    }
+
     return item
   })
 
