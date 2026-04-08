@@ -126,6 +126,7 @@ export default function LookupPage() {
         keyField="id"
         actions={actions}
         isLoading={isLoading}
+        searchable
       />
 
       <FormModal

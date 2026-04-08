@@ -136,7 +136,7 @@ export default function MarmistaArticlesPage() {
       </div>
 
       {tab === 'list' && (
-        <DataTable columns={columns} data={items as unknown as Record<string, unknown>[]} keyField="id" actions={actions} isLoading={isLoading} />
+        <DataTable columns={columns} data={items as unknown as Record<string, unknown>[]} keyField="id" actions={actions} isLoading={isLoading} searchable />
       )}
 
       {tab === 'import' && (

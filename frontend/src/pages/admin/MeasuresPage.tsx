@@ -150,6 +150,7 @@ export default function MeasuresPage() {
         keyField="id"
         actions={actions}
         isLoading={isLoading}
+        searchable
       />
 
       <FormModal

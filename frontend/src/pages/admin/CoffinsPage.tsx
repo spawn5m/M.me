@@ -341,6 +341,7 @@ export default function CoffinsPage() {
           keyField="id"
           actions={actions}
           isLoading={isLoading}
+          searchable
         />
       )}
 
