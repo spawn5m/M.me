@@ -22,6 +22,7 @@ interface Column<T> {
 
 interface Action<T> {
   label: string
+  icon?: React.ReactNode
   onClick: (item: T) => void
   variant?: 'default' | 'danger'
   hidden?: (item: T) => boolean
@@ -85,15 +86,17 @@ export default function DataTable<T extends Record<string, unknown>>({
               {visible.map((action) => (
                 <button
                   key={action.label}
+                  title={action.label}
                   onClick={() => action.onClick(item)}
                   className={[
-                    'min-h-9 border px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] transition-colors',
+                    'flex items-center justify-center border transition-colors',
+                    action.icon ? 'h-9 w-9' : 'min-h-9 px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em]',
                     action.variant === 'danger'
                       ? 'border-[#F1D3D3] text-[#B42318] hover:bg-[#FFF5F5]'
                       : 'border-[#E5E0D8] text-[#031634] hover:border-[#C9A96E] hover:text-[#C9A96E]',
                   ].join(' ')}
                 >
-                  {action.label}
+                  {action.icon ?? action.label}
                 </button>
               ))}
             </div>

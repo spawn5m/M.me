@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { Pencil, Tag, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import DataTable from '../../components/admin/DataTable'
@@ -269,10 +270,12 @@ export default function UsersPage() {
         actions={[
           {
             label: 'Modifica',
+            icon: <Pencil size={15} />,
             onClick: (u) => openEdit(u as AdminUser)
           },
           {
             label: 'Listino',
+            icon: <Tag size={15} />,
             onClick: (u) => openAssign(u as AdminUser),
             hidden: (u) => {
               const user = u as AdminUser
@@ -281,6 +284,7 @@ export default function UsersPage() {
           },
           {
             label: 'Disattiva',
+            icon: <Trash2 size={15} />,
             variant: 'danger',
             onClick: (u) => setConfirmTarget(u as AdminUser)
           }
