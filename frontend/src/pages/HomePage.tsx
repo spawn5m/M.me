@@ -4,9 +4,9 @@ import { useAuth, getDefaultRoute } from '../context/AuthContext'
 
 export default function HomePage() {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, permissions } = useAuth()
 
-  const reservedAreaHref = getDefaultRoute(user)
+  const reservedAreaHref = getDefaultRoute(user, permissions)
 
   return (
     <div style={{ backgroundColor: '#071325' }}>

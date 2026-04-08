@@ -2,6 +2,8 @@ import { FastifyPluginAsync } from 'fastify'
 import bcrypt from 'bcrypt'
 import { z } from 'zod'
 
+import { getEffectivePermissions } from '../lib/authorization/get-effective-permissions'
+
 const loginSchema = z.object({
   email: z.string().email('Email non valida'),
   password: z.string().min(1, 'Password obbligatoria')
@@ -29,12 +31,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     const { email, password } = parsed.data
 
     const user = await fastify.prisma.user.findUnique({
-      where: { email },
-      include: {
-        userRoles: {
-          include: { role: true }
-        }
-      }
+      where: { email }
     })
 
     if (!user || !user.isActive) {
@@ -54,9 +51,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    const roles = user.userRoles.map((ur) => ur.role.name)
+    const { roles, permissions } = await getEffectivePermissions(fastify.prisma, user.id)
     request.session.set('userId', user.id)
-    request.session.set('roles', roles)
 
     return reply.send({
       user: {
@@ -66,7 +62,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         lastName: user.lastName,
         roles,
         isActive: user.isActive
-      }
+      },
+      permissions
     })
   })
 
@@ -83,7 +80,6 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
     preHandler: [fastify.authenticate]
   }, async (request, reply) => {
     const userId = request.session.get('userId')!
-    const roles = request.session.get('roles') ?? []
 
     const user = await fastify.prisma.user.findUnique({
       where: { id: userId },
@@ -101,6 +97,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
+    const { roles, permissions } = await getEffectivePermissions(fastify.prisma, user.id)
+
     return reply.send({
       user: {
         id: user.id,
@@ -111,7 +109,8 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         isActive: user.isActive,
         funeralPriceList: user.funeralPriceList ?? null,
         marmistaPriceList: user.marmistaPriceList ?? null,
-      }
+      },
+      permissions
     })
   })
 }

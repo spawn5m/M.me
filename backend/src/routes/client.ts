@@ -48,11 +48,13 @@ async function getPriceForArticle(
 
 const clientRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
-  fastify.addHook('preHandler', fastify.checkRole(['impresario_funebre', 'marmista']))
+  fastify.addHook('preHandler', fastify.loadAuthorizationContext)
 
   // GET /api/client/me
-  fastify.get('/me', async (req, reply) => {
-    const userId = req.session.get('userId')!
+  fastify.get('/me', {
+    preHandler: [fastify.checkPermission('client.profile.read')]
+  }, async (req, reply) => {
+    const userId = req.auth.userId
 
     const user = await fastify.prisma.user.findUnique({
       where: { id: userId },
@@ -84,9 +86,9 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/client/catalog/funeral — solo impresario_funebre
   fastify.get('/catalog/funeral', {
-    preHandler: [fastify.checkRole(['impresario_funebre'])],
+    preHandler: [fastify.checkPermission('client.catalog.funeral.read')],
   }, async (req, reply) => {
-    const userId = req.session.get('userId')!
+    const userId = req.auth.userId
 
     const user = await fastify.prisma.user.findUnique({
       where: { id: userId },
@@ -104,7 +106,12 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
     const query = funeralCatalogQuerySchema.parse(req.query)
     const { page, pageSize, category, subcategory, essence, finish, color } = query
 
+    const tree = await loadPriceListTree(fastify.prisma as PrismaClientLike, user.funeralPriceListId)
+    const computedItems = tree ? await buildComputedItems(fastify.prisma as PrismaClientLike, tree) : []
+    const allowedArticleIds = computedItems.flatMap((item) => item.coffinArticleId ? [item.coffinArticleId] : [])
+
     const where = {
+      id: { in: allowedArticleIds },
       ...(category ? { categories: { some: { code: category } } } : {}),
       ...(subcategory ? { subcategories: { some: { code: subcategory } } } : {}),
       ...(essence ? { essences: { some: { code: essence } } } : {}),
@@ -121,12 +128,6 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
         orderBy: { code: 'asc' },
       }),
     ])
-
-    const tree = user.funeralPriceListId
-      ? await loadPriceListTree(fastify.prisma as PrismaClientLike, user.funeralPriceListId)
-      : null
-
-    const computedItems = tree ? await buildComputedItems(fastify.prisma as PrismaClientLike, tree) : []
 
     const data = articles.map((article) => {
       const match = computedItems.find((item) => item.coffinArticleId === article.id)
@@ -151,33 +152,35 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/client/catalog/funeral/:id — solo impresario_funebre
   fastify.get<{ Params: { id: string } }>('/catalog/funeral/:id', {
-    preHandler: [fastify.checkRole(['impresario_funebre'])],
+    preHandler: [fastify.checkPermission('client.catalog.funeral.read')],
   }, async (req, reply) => {
-    const userId = req.session.get('userId')!
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: req.auth.userId },
+      select: { funeralPriceListId: true },
+    })
 
-    const [user, article] = await Promise.all([
-      fastify.prisma.user.findUnique({
-        where: { id: userId },
-        select: { funeralPriceListId: true },
-      }),
-      fastify.prisma.coffinArticle.findUnique({
-        where: { id: req.params.id },
-        include: { measure: true, categories: true, subcategories: true, essences: true, finishes: true, colors: true },
-      }),
-    ])
-
-    if (!article) {
+    if (!user?.funeralPriceListId) {
       return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
     }
 
-    let price: number | null = null
-    if (user?.funeralPriceListId) {
-      price = await getPriceForArticle(
-        fastify.prisma as PrismaClientLike,
-        user.funeralPriceListId,
-        article.id,
-        'coffin',
-      )
+    const price = await getPriceForArticle(
+      fastify.prisma as PrismaClientLike,
+      user.funeralPriceListId,
+      req.params.id,
+      'coffin',
+    )
+
+    if (price === null) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
+    }
+
+    const article = await fastify.prisma.coffinArticle.findUnique({
+      where: { id: req.params.id },
+      include: { measure: true, categories: true, subcategories: true, essences: true, finishes: true, colors: true },
+    })
+
+    if (!article) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
     }
 
     return { ...article, price }
@@ -185,9 +188,9 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/client/catalog/marmista — solo marmista
   fastify.get('/catalog/marmista', {
-    preHandler: [fastify.checkRole(['marmista'])],
+    preHandler: [fastify.checkPermission('client.catalog.marmista.read')],
   }, async (req, reply) => {
-    const userId = req.session.get('userId')!
+    const userId = req.auth.userId
 
     const user = await fastify.prisma.user.findUnique({
       where: { id: userId },
@@ -205,7 +208,12 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
     const query = marmistaCatalogQuerySchema.parse(req.query)
     const { page, pageSize, category } = query
 
+    const tree = await loadPriceListTree(fastify.prisma as PrismaClientLike, user.marmistaPriceListId)
+    const computedItems = tree ? await buildComputedItems(fastify.prisma as PrismaClientLike, tree) : []
+    const allowedArticleIds = computedItems.flatMap((item) => item.marmistaArticleId ? [item.marmistaArticleId] : [])
+
     const where = {
+      id: { in: allowedArticleIds },
       ...(category ? { categories: { some: { code: category } } } : {}),
     }
 
@@ -218,12 +226,6 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
         orderBy: { code: 'asc' },
       }),
     ])
-
-    const tree = user.marmistaPriceListId
-      ? await loadPriceListTree(fastify.prisma as PrismaClientLike, user.marmistaPriceListId)
-      : null
-
-    const computedItems = tree ? await buildComputedItems(fastify.prisma as PrismaClientLike, tree) : []
 
     const data = articles.map((article) => {
       const match = computedItems.find((item) => item.marmistaArticleId === article.id)
@@ -248,42 +250,46 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
 
   // GET /api/client/catalog/marmista/:id — solo marmista
   fastify.get<{ Params: { id: string } }>('/catalog/marmista/:id', {
-    preHandler: [fastify.checkRole(['marmista'])],
+    preHandler: [fastify.checkPermission('client.catalog.marmista.read')],
   }, async (req, reply) => {
-    const userId = req.session.get('userId')!
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: req.auth.userId },
+      select: { marmistaPriceListId: true },
+    })
 
-    const [user, article] = await Promise.all([
-      fastify.prisma.user.findUnique({
-        where: { id: userId },
-        select: { marmistaPriceListId: true },
-      }),
-      fastify.prisma.marmistaArticle.findUnique({
-        where: { id: req.params.id },
-        include: { accessories: true, categories: true },
-      }),
-    ])
-
-    if (!article) {
+    if (!user?.marmistaPriceListId) {
       return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
     }
 
-    let price: number | null = null
-    if (user?.marmistaPriceListId) {
-      price = await getPriceForArticle(
-        fastify.prisma as PrismaClientLike,
-        user.marmistaPriceListId,
-        article.id,
-        'marmista',
-      )
+    const price = await getPriceForArticle(
+      fastify.prisma as PrismaClientLike,
+      user.marmistaPriceListId,
+      req.params.id,
+      'marmista',
+    )
+
+    if (price === null) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
+    }
+
+    const article = await fastify.prisma.marmistaArticle.findUnique({
+      where: { id: req.params.id },
+      include: { accessories: true, categories: true },
+    })
+
+    if (!article) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Articolo non trovato', statusCode: 404 })
     }
 
     return { ...article, price }
   })
 
   // POST /api/client/change-password
-  fastify.post<{ Body: z.infer<typeof changePasswordSchema> }>('/change-password', async (req, reply) => {
+  fastify.post<{ Body: z.infer<typeof changePasswordSchema> }>('/change-password', {
+    preHandler: [fastify.checkPermission('client.password.change')]
+  }, async (req, reply) => {
     const body = changePasswordSchema.parse(req.body)
-    const userId = req.session.get('userId')!
+    const userId = req.auth.userId
 
     const user = await fastify.prisma.user.findUnique({ where: { id: userId } })
     if (!user) {

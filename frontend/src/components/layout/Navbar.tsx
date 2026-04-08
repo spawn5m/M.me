@@ -22,11 +22,11 @@ const NAV_LINKS: NavLink[] = [
 
 export default function Navbar({ variant }: NavbarProps) {
   const { t } = useTranslation()
-  const { user } = useAuth()
+  const { user, permissions } = useAuth()
   const location = useLocation()
   const isDark = variant === 'dark'
 
-  const reservedAreaHref = getDefaultRoute(user)
+   const reservedAreaHref = getDefaultRoute(user, permissions)
 
   // Outer nav styles
   const navBase = 'w-full z-50'

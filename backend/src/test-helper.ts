@@ -124,6 +124,7 @@ export async function getAuthCookie(
 }
 
 export async function cleanupTestDb(app: FastifyInstance): Promise<void> {
+  await app.prisma.userPermission.deleteMany()
   await app.prisma.userRole.deleteMany()
   await app.prisma.userManager.deleteMany()
   await app.prisma.rolePermission.deleteMany()

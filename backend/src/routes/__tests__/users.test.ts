@@ -1,6 +1,87 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
 import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb } from '../../test-helper'
+import { SYSTEM_PERMISSIONS, type PermissionCode } from '../../lib/authorization/permissions'
+
+interface AuthorizationPermissionRecord {
+  id: string
+  code: string
+}
+
+interface AuthorizationPrismaClient {
+  permission: {
+    upsert(args: {
+      where: { code: string }
+      update: {
+        resource?: string
+        action?: string
+        scope?: string | null
+        label?: string
+        description?: string
+        isSystem?: boolean
+      }
+      create: {
+        code: string
+        resource: string
+        action: string
+        scope?: string | null
+        label: string
+        description: string
+        isSystem: boolean
+      }
+    }): Promise<AuthorizationPermissionRecord>
+  }
+  rolePermission: {
+    create(args: {
+      data: {
+        roleId: string
+        permissionId: string
+      }
+    }): Promise<unknown>
+  }
+  userPermission: {
+    create(args: {
+      data: {
+        userId: string
+        permissionId: string
+      }
+    }): Promise<unknown>
+  }
+}
+
+function getAuthorizationPrisma(app: FastifyInstance): AuthorizationPrismaClient {
+  return app.prisma as unknown as AuthorizationPrismaClient
+}
+
+async function ensurePermission(app: FastifyInstance, code: PermissionCode): Promise<AuthorizationPermissionRecord> {
+  const definition = SYSTEM_PERMISSIONS.find((permission) => permission.code === code)
+  if (!definition) {
+    throw new Error(`Permission ${code} non trovata`)
+  }
+
+  return getAuthorizationPrisma(app).permission.upsert({
+    where: { code },
+    update: definition,
+    create: definition,
+  })
+}
+
+async function grantRolePermissions(app: FastifyInstance, roleName: string, permissionCodes: PermissionCode[]) {
+  const role = await app.prisma.role.findUnique({ where: { name: roleName } })
+  if (!role) {
+    throw new Error(`Ruolo ${roleName} non trovato`)
+  }
+
+  for (const code of permissionCodes) {
+    const permission = await ensurePermission(app, code)
+    await getAuthorizationPrisma(app).rolePermission.create({
+      data: {
+        roleId: role.id,
+        permissionId: permission.id,
+      }
+    })
+  }
+}
 
 describe('Users API', () => {
   let app: FastifyInstance
@@ -43,6 +124,29 @@ describe('Users API', () => {
       password: 'password123',
       roles: ['collaboratore']
     })
+
+    await grantRolePermissions(app, 'super_admin', [
+      'users.read.team',
+      'users.read.all',
+      'users.create',
+      'users.update.team',
+      'users.update.all',
+      'users.disable',
+      'users.super_admin.read',
+      'users.super_admin.manage',
+    ])
+    await grantRolePermissions(app, 'manager', [
+      'users.read.team',
+      'users.read.all',
+      'users.create',
+      'users.update.team',
+      'users.update.all',
+      'users.disable',
+    ])
+    await grantRolePermissions(app, 'collaboratore', [
+      'users.read.team',
+      'users.update.team',
+    ])
 
     superAdminCookie = await getAuthCookie(app, 'superadmin@test.com', 'password123')
     managerCookie = await getAuthCookie(app, 'manager@test.com', 'password123')
@@ -91,6 +195,44 @@ describe('Users API', () => {
       expect(body.data.every((u: { roles: { name: string }[] }) =>
         u.roles.some((r) => r.name === 'manager')
       )).toBe(true)
+    })
+
+    it('nasconde gli utenti super_admin a manager senza users.super_admin.read', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/users',
+        headers: { cookie: managerCookie }
+      })
+
+      expect(res.statusCode).toBe(200)
+
+      const body = JSON.parse(res.body) as {
+        data: Array<{ email: string; roles: Array<{ name: string }> }>
+      }
+
+      expect(body.data.some((user) => user.email === 'superadmin@test.com')).toBe(false)
+      expect(body.data.some((user) => user.roles.some((role) => role.name === 'super_admin'))).toBe(false)
+    })
+
+    it('usa fallback sicuri per page e pageSize non numerici', async () => {
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/users?page=abc&pageSize=xyz',
+        headers: { cookie: superAdminCookie }
+      })
+
+      expect(res.statusCode).toBe(200)
+
+      const body = JSON.parse(res.body) as {
+        data: unknown[]
+        pagination: { page: number; pageSize: number }
+      }
+
+      expect(Array.isArray(body.data)).toBe(true)
+      expect(body.pagination).toMatchObject({
+        page: 1,
+        pageSize: 20,
+      })
     })
   })
 
@@ -144,6 +286,75 @@ describe('Users API', () => {
         }
       })
       expect(res.statusCode).toBe(409)
+    })
+
+    it('restituisce 403 a collaboratore senza users.create', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/users',
+        headers: { cookie: collaboratoreCookie },
+        payload: {
+          email: 'vietato@test.com',
+          password: 'password123',
+          firstName: 'No',
+          lastName: 'Create',
+          roleIds: []
+        }
+      })
+
+      expect(res.statusCode).toBe(403)
+      expect(JSON.parse(res.body)).toMatchObject({
+        error: 'Forbidden',
+        statusCode: 403,
+      })
+    })
+
+    it('restituisce 400 con roleIds non validi', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/users',
+        headers: { cookie: superAdminCookie },
+        payload: {
+          email: 'ruolo-invalido@test.com',
+          password: 'password123',
+          firstName: 'Ruolo',
+          lastName: 'Invalido',
+          roleIds: ['role-id-non-esiste']
+        }
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(JSON.parse(res.body)).toMatchObject({
+        error: 'ValidationError',
+        statusCode: 400,
+      })
+    })
+
+    it('richiede users.assign_manager quando managerId viene impostato in creazione', async () => {
+      const managerUser = await app.prisma.user.findUnique({ where: { email: 'manager@test.com' } })
+      if (!managerUser) {
+        throw new Error('Manager non trovato')
+      }
+
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/users',
+        headers: { cookie: managerCookie },
+        payload: {
+          email: 'assegnato@test.com',
+          password: 'password123',
+          firstName: 'Assegnato',
+          lastName: 'Manager',
+          roleIds: [],
+          managerId: managerUser.id,
+        }
+      })
+
+      expect(res.statusCode).toBe(403)
+      expect(JSON.parse(res.body)).toMatchObject({
+        error: 'Forbidden',
+        statusCode: 403,
+      })
     })
   })
 
@@ -231,6 +442,91 @@ describe('Users API', () => {
       expect(res.statusCode).toBe(200)
       expect(JSON.parse(res.body).firstName).toBe('Aggiornato')
     })
+
+    it('restituisce 400 con managerId non valido', async () => {
+      const list = await app.inject({
+        method: 'GET',
+        url: '/api/users',
+        headers: { cookie: superAdminCookie }
+      })
+      const { data } = JSON.parse(list.body)
+      const target = data.find((user: { roles: { name: string }[] }) =>
+        user.roles.some((role) => role.name === 'collaboratore')
+      )
+
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/api/users/${target.id}`,
+        headers: { cookie: superAdminCookie },
+        payload: { managerId: 'manager-id-non-esiste' }
+      })
+
+      expect(res.statusCode).toBe(400)
+      expect(JSON.parse(res.body)).toMatchObject({
+        error: 'ValidationError',
+        statusCode: 400,
+      })
+    })
+
+    it('richiede users.assign_manager quando managerId viene cambiato', async () => {
+      const users = await app.prisma.user.findMany({
+        where: { email: { in: ['superadmin@test.com', 'manager@test.com', 'collaboratore@test.com'] } },
+        include: { userRoles: { include: { role: true } } },
+      })
+
+      const collaboratore = users.find((user) => user.email === 'collaboratore@test.com')
+      const superAdmin = users.find((user) => user.email === 'superadmin@test.com')
+
+      if (!collaboratore || !superAdmin) {
+        throw new Error('Utenti di test non trovati')
+      }
+
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/api/users/${collaboratore.id}`,
+        headers: { cookie: managerCookie },
+        payload: { managerId: superAdmin.id }
+      })
+
+      expect(res.statusCode).toBe(403)
+      expect(JSON.parse(res.body)).toMatchObject({
+        error: 'Forbidden',
+        statusCode: 403,
+      })
+    })
+
+    it('richiede users.assign_manager quando managerId viene rimosso', async () => {
+      const users = await app.prisma.user.findMany({
+        where: { email: { in: ['manager@test.com', 'collaboratore@test.com'] } },
+      })
+
+      const manager = users.find((user) => user.email === 'manager@test.com')
+      const collaboratore = users.find((user) => user.email === 'collaboratore@test.com')
+
+      if (!manager || !collaboratore) {
+        throw new Error('Utenti di test non trovati')
+      }
+
+      await app.prisma.userManager.create({
+        data: {
+          managerId: manager.id,
+          userId: collaboratore.id,
+        },
+      })
+
+      const res = await app.inject({
+        method: 'PUT',
+        url: `/api/users/${collaboratore.id}`,
+        headers: { cookie: managerCookie },
+        payload: { managerId: null }
+      })
+
+      expect(res.statusCode).toBe(403)
+      expect(JSON.parse(res.body)).toMatchObject({
+        error: 'Forbidden',
+        statusCode: 403,
+      })
+    })
   })
 
   describe('DELETE /api/users/:id', () => {
@@ -270,6 +566,35 @@ describe('Users API', () => {
         headers: { cookie: collaboratoreCookie }
       })
       expect(res.statusCode).toBe(200)
+    })
+
+    it('nasconde i subordinati super_admin senza users.super_admin.read', async () => {
+      const users = await app.prisma.user.findMany({
+        where: { email: { in: ['manager@test.com', 'superadmin@test.com'] } },
+      })
+
+      const manager = users.find((user) => user.email === 'manager@test.com')
+      const superAdmin = users.find((user) => user.email === 'superadmin@test.com')
+
+      if (!manager || !superAdmin) {
+        throw new Error('Utenti di test non trovati')
+      }
+
+      await app.prisma.userManager.create({
+        data: {
+          managerId: manager.id,
+          userId: superAdmin.id,
+        },
+      })
+
+      const res = await app.inject({
+        method: 'GET',
+        url: '/api/users/me/subordinates',
+        headers: { cookie: managerCookie }
+      })
+
+      expect(res.statusCode).toBe(200)
+      expect(JSON.parse(res.body)).toEqual([])
     })
   })
 })

@@ -8,10 +8,12 @@ const createRoleSchema = z.object({
 
 const rolesRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
-  fastify.addHook('preHandler', fastify.checkRole(['super_admin']))
+  fastify.addHook('preHandler', fastify.loadAuthorizationContext)
 
   // GET /api/roles
-  fastify.get('/', async (_req, reply) => {
+  fastify.get('/', {
+    preHandler: [fastify.checkPermission('roles.read')]
+  }, async (_req, reply) => {
     const roles = await fastify.prisma.role.findMany({
       orderBy: { name: 'asc' }
     })
@@ -27,7 +29,9 @@ const rolesRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // POST /api/roles
-  fastify.post('/', async (req, reply) => {
+  fastify.post('/', {
+    preHandler: [fastify.checkPermission('roles.manage')]
+  }, async (req, reply) => {
     const parsed = createRoleSchema.safeParse(req.body)
     if (!parsed.success) {
       return reply.status(400).send({
@@ -56,7 +60,9 @@ const rolesRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // DELETE /api/roles/:id
-  fastify.delete('/:id', async (req, reply) => {
+  fastify.delete('/:id', {
+    preHandler: [fastify.checkPermission('roles.manage')]
+  }, async (req, reply) => {
     const { id } = req.params as { id: string }
 
     const role = await fastify.prisma.role.findUnique({ where: { id } })

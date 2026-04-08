@@ -1,7 +1,79 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
 import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb } from '../../test-helper'
+import { SYSTEM_PERMISSIONS, type PermissionCode } from '../../lib/authorization/permissions'
 import * as XLSX from 'xlsx'
+
+interface AuthorizationPermissionRecord {
+  id: string
+}
+
+interface AuthorizationPrismaClient {
+  permission: {
+    upsert(args: {
+      where: { code: string }
+      update: {
+        resource?: string
+        action?: string
+        scope?: string | null
+        label?: string
+        description?: string
+        isSystem?: boolean
+      }
+      create: {
+        code: string
+        resource: string
+        action: string
+        scope?: string | null
+        label: string
+        description: string
+        isSystem: boolean
+      }
+    }): Promise<AuthorizationPermissionRecord>
+  }
+  rolePermission: {
+    create(args: {
+      data: {
+        roleId: string
+        permissionId: string
+      }
+    }): Promise<unknown>
+  }
+}
+
+function getAuthorizationPrisma(app: FastifyInstance): AuthorizationPrismaClient {
+  return app.prisma as unknown as AuthorizationPrismaClient
+}
+
+async function ensurePermission(app: FastifyInstance, code: PermissionCode): Promise<AuthorizationPermissionRecord> {
+  const definition = SYSTEM_PERMISSIONS.find((permission) => permission.code === code)
+  if (!definition) {
+    throw new Error(`Permission ${code} non trovata`)
+  }
+
+  return getAuthorizationPrisma(app).permission.upsert({
+    where: { code },
+    update: definition,
+    create: definition,
+  })
+}
+
+async function grantRolePermissions(app: FastifyInstance, roleName: string, permissionCodes: PermissionCode[]) {
+  const role = await app.prisma.role.findUnique({ where: { name: roleName } })
+  if (!role) {
+    throw new Error(`Ruolo ${roleName} non trovato`)
+  }
+
+  for (const code of permissionCodes) {
+    const permission = await ensurePermission(app, code)
+    await getAuthorizationPrisma(app).rolePermission.create({
+      data: {
+        roleId: role.id,
+        permissionId: permission.id,
+      },
+    })
+  }
+}
 
 function createExcelBuffer(rows: Record<string, string | number>[]): Buffer {
   const workbook = XLSX.utils.book_new()
@@ -30,6 +102,7 @@ function createMultipartPayload(fileName: string, fileBuffer: Buffer) {
 describe('Articles API', () => {
   let app: FastifyInstance
   let managerCookie: string
+  let impresarioCookie: string
 
   beforeAll(async () => {
     app = await buildTestApp()
@@ -56,7 +129,22 @@ describe('Articles API', () => {
     await cleanupTestDb(app)
 
     await seedTestUser(app, { email: 'manager@test.com', password: 'password123', roles: ['manager'] })
+    await seedTestUser(app, { email: 'imp@test.com', password: 'password123', roles: ['impresario_funebre'] })
+
+    await grantRolePermissions(app, 'manager', [
+      'articles.coffins.read',
+      'articles.coffins.write',
+      'articles.coffins.delete',
+      'articles.accessories.read',
+      'articles.accessories.write',
+      'articles.accessories.import',
+      'articles.marmista.read',
+      'articles.marmista.write',
+      'articles.marmista.import',
+    ])
+
     managerCookie = await getAuthCookie(app, 'manager@test.com', 'password123')
+    impresarioCookie = await getAuthCookie(app, 'imp@test.com', 'password123')
   })
 
   describe('Cofani', () => {
@@ -79,6 +167,17 @@ describe('Articles API', () => {
         headers: { cookie: managerCookie },
       })
       expect(list.json().data).toHaveLength(1)
+    })
+
+    it('nega la creazione di un cofano a chi non ha articles.coffins.write', async () => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/api/admin/articles/coffins',
+        headers: { cookie: impresarioCookie },
+        payload: { code: 'COF403', description: 'Bara negata' },
+      })
+
+      expect(res.statusCode).toBe(403)
     })
 
     it('aggiorna un cofano', async () => {

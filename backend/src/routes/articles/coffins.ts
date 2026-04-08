@@ -31,10 +31,12 @@ const COFFIN_INCLUDE = {
 
 const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
-  fastify.addHook('preHandler', fastify.checkRole(['manager', 'super_admin']))
+  fastify.addHook('preHandler', fastify.loadAuthorizationContext)
 
   // GET / — lista paginata
-  fastify.get<{ Querystring: { page?: string; pageSize?: string; search?: string; category?: string } }>('/', async (req) => {
+  fastify.get<{ Querystring: { page?: string; pageSize?: string; search?: string; category?: string } }>('/', {
+    preHandler: [fastify.checkPermission('articles.coffins.read')]
+  }, async (req) => {
     const page = Math.max(1, parseInt(req.query.page ?? '1', 10))
     const pageSize = Math.min(500, Math.max(1, parseInt(req.query.pageSize ?? '50', 10)))
     const where = req.query.search
@@ -61,7 +63,9 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // POST / — crea
-  fastify.post<{ Body: z.infer<typeof coffinBodySchema> }>('/', async (req, reply) => {
+  fastify.post<{ Body: z.infer<typeof coffinBodySchema> }>('/', {
+    preHandler: [fastify.checkPermission('articles.coffins.write')]
+  }, async (req, reply) => {
     const body = coffinBodySchema.parse(req.body)
     const { categoryIds, subcategoryIds, essenceIds, figureIds, colorIds, finishIds, measureId, ...rest } = body
 
@@ -82,7 +86,9 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // GET /:id
-  fastify.get<{ Params: { id: string } }>('/:id', async (req, reply) => {
+  fastify.get<{ Params: { id: string } }>('/:id', {
+    preHandler: [fastify.checkPermission('articles.coffins.read')]
+  }, async (req, reply) => {
     const item = await fastify.prisma.coffinArticle.findUnique({
       where: { id: req.params.id },
       include: COFFIN_INCLUDE,
@@ -92,7 +98,9 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // PUT /:id
-  fastify.put<{ Params: { id: string }; Body: z.infer<typeof coffinBodySchema> }>('/:id', async (req, reply) => {
+  fastify.put<{ Params: { id: string }; Body: z.infer<typeof coffinBodySchema> }>('/:id', {
+    preHandler: [fastify.checkPermission('articles.coffins.write')]
+  }, async (req, reply) => {
     const body = coffinBodySchema.parse(req.body)
     const { categoryIds, subcategoryIds, essenceIds, figureIds, colorIds, finishIds, measureId, ...rest } = body
 
@@ -114,13 +122,17 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
   })
 
   // DELETE /:id
-  fastify.delete<{ Params: { id: string } }>('/:id', async (req, reply) => {
+  fastify.delete<{ Params: { id: string } }>('/:id', {
+    preHandler: [fastify.checkPermission('articles.coffins.delete')]
+  }, async (req, reply) => {
     await fastify.prisma.coffinArticle.delete({ where: { id: req.params.id } })
     return reply.status(204).send()
   })
 
   // POST /import — importa da Excel
-  fastify.post('/import', async (req, reply) => {
+  fastify.post('/import', {
+    preHandler: [fastify.checkPermission('articles.coffins.import')]
+  }, async (req, reply) => {
     const data = await req.file()
     if (!data) {
       return reply.status(400).send({ error: 'BadRequest', message: 'File mancante', statusCode: 400 })
