@@ -1,3 +1,6 @@
+// Task 1 intentionally targets the post-migration authorization data shape.
+// The current generated Prisma client does not expose `Permission.code` or
+// `userPermissions` yet; Task 2 wires this contract to the real schema.
 interface AuthorizationRolePermissionRecord {
   permission: {
     code: string
@@ -22,75 +25,49 @@ interface AuthorizationUserRecord {
   userPermissions: AuthorizationUserPermissionRecord[]
 }
 
-export interface AuthorizationPrismaClient {
-  user: {
-    findUnique(args: {
-      where: { id: string }
-      select: {
-        userRoles: {
-          select: {
-            role: {
-              select: {
-                name: true
-                rolePermissions: {
-                  select: {
-                    permission: {
-                      select: {
-                        code: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-        userPermissions: {
-          select: {
-            permission: {
-              select: {
-                code: true
-              }
-            }
-          }
-        }
-      }
-    }): Promise<AuthorizationUserRecord | null>
-  }
-}
-
-export async function getEffectivePermissions(prisma: AuthorizationPrismaClient, userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
+export const EFFECTIVE_PERMISSIONS_USER_SELECT = {
+  userRoles: {
     select: {
-      userRoles: {
+      role: {
         select: {
-          role: {
+          name: true,
+          rolePermissions: {
             select: {
-              name: true,
-              rolePermissions: {
+              permission: {
                 select: {
-                  permission: {
-                    select: {
-                      code: true,
-                    },
-                  },
+                  code: true,
                 },
               },
             },
           },
         },
       },
-      userPermissions: {
+    },
+  },
+  userPermissions: {
+    select: {
+      permission: {
         select: {
-          permission: {
-            select: {
-              code: true,
-            },
-          },
+          code: true,
         },
       },
     },
+  },
+} as const
+
+export interface EffectivePermissionsDataSource {
+  user: {
+    findUnique(args: {
+      where: { id: string }
+      select: typeof EFFECTIVE_PERMISSIONS_USER_SELECT
+    }): Promise<AuthorizationUserRecord | null>
+  }
+}
+
+export async function getEffectivePermissions(dataSource: EffectivePermissionsDataSource, userId: string) {
+  const user = await dataSource.user.findUnique({
+    where: { id: userId },
+    select: EFFECTIVE_PERMISSIONS_USER_SELECT,
   })
 
   if (!user) {

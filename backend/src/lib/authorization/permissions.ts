@@ -1,3 +1,6 @@
+// Task 1 defines the target-state permission catalog in TypeScript first.
+// These entries are not persisted by the current schema yet; Task 2 adds the
+// Prisma fields and seed synchronization required to store them in the DB.
 export const SYSTEM_PERMISSION_CODES = [
   'dashboard.admin.read',
   'dashboard.client.read',
