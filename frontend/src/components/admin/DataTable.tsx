@@ -1,8 +1,30 @@
+import React, { useMemo, useState } from 'react'
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  flexRender,
+  createColumnHelper,
+  type SortingState,
+  type ColumnDef,
+} from '@tanstack/react-table'
+
+// ─── Tipi ─────────────────────────────────────────────────────────────────────
+
 interface Column<T> {
   key: string
   header: string
   render?: (item: T) => React.ReactNode
   width?: string
+  sortable?: boolean
+}
+
+interface Action<T> {
+  label: string
+  onClick: (item: T) => void
+  variant?: 'default' | 'danger'
+  hidden?: (item: T) => boolean
 }
 
 interface PaginationInfo {
@@ -10,12 +32,6 @@ interface PaginationInfo {
   pageSize: number
   total: number
   totalPages: number
-}
-
-interface Action<T> {
-  label: string
-  onClick: (item: T) => void
-  variant?: 'default' | 'danger'
 }
 
 interface DataTableProps<T extends Record<string, unknown>> {
@@ -26,7 +42,10 @@ interface DataTableProps<T extends Record<string, unknown>> {
   onPageChange?: (page: number) => void
   actions?: Action<T>[]
   isLoading?: boolean
+  searchable?: boolean
 }
+
+// ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function DataTable<T extends Record<string, unknown>>({
   columns,
@@ -35,82 +54,164 @@ export default function DataTable<T extends Record<string, unknown>>({
   pagination,
   onPageChange,
   actions,
-  isLoading
+  isLoading,
+  searchable,
 }: DataTableProps<T>) {
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [globalFilter, setGlobalFilter] = useState('')
+
+  const columnHelper = createColumnHelper<T>()
+
+  const columnDefs = useMemo<ColumnDef<T, unknown>[]>(() => {
+    const dataCols: ColumnDef<T, unknown>[] = columns.map((col) =>
+      columnHelper.display({
+        id: col.key,
+        header: col.header,
+        meta: { width: col.width },
+        enableSorting: col.sortable ?? !col.render,
+        sortingFn: 'alphanumeric',
+        cell: (info) =>
+          col.render
+            ? col.render(info.row.original)
+            : String(info.row.original[col.key] ?? ''),
+      } as ColumnDef<T, unknown>)
+    )
+
+    if (actions && actions.length > 0) {
+      dataCols.push(
+        columnHelper.display({
+          id: '__actions',
+          header: 'Azioni',
+          enableSorting: false,
+          cell: (info) => {
+            const item = info.row.original
+            const visible = actions.filter((a) => !a.hidden?.(item))
+            if (visible.length === 0) return null
+            return (
+              <div className="flex items-center justify-end gap-2">
+                {visible.map((action) => (
+                  <button
+                    key={action.label}
+                    onClick={() => action.onClick(item)}
+                    className={[
+                      'min-h-9 border px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] transition-colors',
+                      action.variant === 'danger'
+                        ? 'border-[#F1D3D3] text-[#B42318] hover:bg-[#FFF5F5]'
+                        : 'border-[#E5E0D8] text-[#031634] hover:border-[#C9A96E] hover:text-[#C9A96E]',
+                    ].join(' ')}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            )
+          },
+        }) as ColumnDef<T, unknown>
+      )
+    }
+
+    return dataCols
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [columns, actions])
+
+  const table = useReactTable<T>({
+    data,
+    columns: columnDefs,
+    state: { sorting, globalFilter },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    manualPagination: !!pagination,
+    enableSortingRemoval: true,
+  })
+
+  const totalCols = columns.length + (actions && actions.length > 0 ? 1 : 0)
+
   return (
     <div className="overflow-hidden border border-[#E5E0D8] bg-white shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
+      {/* Ricerca globale opzionale */}
+      {searchable && (
+        <div className="border-b border-[#E5E0D8] px-4 py-3">
+          <input
+            type="text"
+            value={globalFilter}
+            onChange={(e) => setGlobalFilter(e.target.value)}
+            placeholder="Cerca…"
+            className="admin-input w-64"
+          />
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-[#E5E0D8] bg-[#F8F7F4]">
-              {columns.map((col) => (
-                <th
-                  key={col.key}
-                  className="text-left px-4 py-3 text-[#6B7280] font-medium text-xs uppercase tracking-wider"
-                  style={{ width: col.width }}
-                >
-                  {col.header}
-                </th>
-              ))}
-              {actions && actions.length > 0 && (
-                <th className="text-right px-4 py-3 text-[#6B7280] font-medium text-xs uppercase tracking-wider">
-                  Azioni
-                </th>
-              )}
-            </tr>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id} className="border-b border-[#E5E0D8] bg-[#F8F7F4]">
+                {headerGroup.headers.map((header) => {
+                  const col = columns.find((c) => c.key === header.id)
+                  const canSort = header.column.getCanSort()
+                  const sorted = header.column.getIsSorted()
+                  const isActions = header.id === '__actions'
+
+                  return (
+                    <th
+                      key={header.id}
+                      style={{ width: col?.width }}
+                      className={[
+                        'px-4 py-3 text-xs font-medium uppercase tracking-wider text-[#6B7280]',
+                        isActions ? 'text-right' : 'text-left',
+                        canSort ? 'cursor-pointer select-none hover:text-[#1A2B4A]' : '',
+                      ].join(' ')}
+                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                    >
+                      <span className="inline-flex items-center gap-1">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {canSort && (
+                          <span className="text-[10px] opacity-50">
+                            {sorted === 'asc' ? '▲' : sorted === 'desc' ? '▼' : '⇅'}
+                          </span>
+                        )}
+                      </span>
+                    </th>
+                  )
+                })}
+              </tr>
+            ))}
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td
-                  colSpan={columns.length + (actions ? 1 : 0)}
-                  className="text-center py-12 text-[#6B7280]"
-                >
+                <td colSpan={totalCols} className="py-12 text-center text-[#6B7280]">
                   <div className="flex justify-center">
-                    <div className="w-6 h-6 border-2 border-[#1A2B4A] border-t-transparent rounded-full animate-spin" />
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#1A2B4A] border-t-transparent" />
                   </div>
                 </td>
               </tr>
-            ) : data.length === 0 ? (
+            ) : table.getRowModel().rows.length === 0 ? (
               <tr>
-                <td
-                  colSpan={columns.length + (actions ? 1 : 0)}
-                  className="text-center py-12 text-[#6B7280]"
-                >
+                <td colSpan={totalCols} className="py-12 text-center text-[#6B7280]">
                   Nessun risultato
                 </td>
               </tr>
             ) : (
-              data.map((item) => (
+              table.getRowModel().rows.map((row) => (
                 <tr
-                  key={String(item[keyField])}
-                  className="border-b border-[#E5E0D8] last:border-0 hover:bg-[#FCFBF8] transition-colors"
+                  key={String(row.original[keyField])}
+                  className="border-b border-[#E5E0D8] last:border-0 transition-colors hover:bg-[#FCFBF8]"
                 >
-                  {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 text-[#1A1A1A]">
-                      {col.render ? col.render(item) : String(item[col.key] ?? '')}
+                  {row.getVisibleCells().map((cell) => (
+                    <td
+                      key={cell.id}
+                      className={[
+                        'px-4 py-3 text-[#1A1A1A]',
+                        cell.column.id === '__actions' ? 'text-right' : '',
+                      ].join(' ')}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
-                  {actions && actions.length > 0 && (
-                    <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {actions.map((action) => (
-                          <button
-                            key={action.label}
-                            onClick={() => action.onClick(item)}
-                            className={[
-                              'min-h-9 border px-3 py-1.5 text-xs font-medium uppercase tracking-[0.14em] transition-colors',
-                              action.variant === 'danger'
-                                ? 'border-[#F1D3D3] text-[#B42318] hover:bg-[#FFF5F5]'
-                                : 'border-[#E5E0D8] text-[#031634] hover:border-[#C9A96E] hover:text-[#C9A96E]'
-                            ].join(' ')}
-                          >
-                            {action.label}
-                          </button>
-                        ))}
-                      </div>
-                    </td>
-                  )}
                 </tr>
               ))
             )}
@@ -118,8 +219,9 @@ export default function DataTable<T extends Record<string, unknown>>({
         </table>
       </div>
 
+      {/* Paginazione server-side */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-[#E5E0D8] bg-[#F8F7F4]">
+        <div className="flex items-center justify-between border-t border-[#E5E0D8] bg-[#F8F7F4] px-4 py-3">
           <span className="text-xs text-[#6B7280]">
             {pagination.total} risultati — pagina {pagination.page} di {pagination.totalPages}
           </span>
