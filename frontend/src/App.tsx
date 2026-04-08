@@ -25,6 +25,7 @@ const MarmistaArticlesPage = lazy(() => import('./pages/admin/MarmistaArticlesPa
 const PriceListsPage = lazy(() => import('./pages/admin/PriceListsPage'))
 const PriceListDetailPage = lazy(() => import('./pages/admin/PriceListDetailPage'))
 const MeasuresPage = lazy(() => import('./pages/admin/MeasuresPage'))
+const CatalogPdfPage = lazy(() => import('./pages/admin/CatalogPdfPage'))
 
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'))
 const FuneralCatalogPage = lazy(() => import('./pages/client/FuneralCatalogPage'))
@@ -32,20 +33,6 @@ const FuneralDetailPage = lazy(() => import('./pages/client/FuneralDetailPage'))
 const MarmistaClientCatalogPage = lazy(() => import('./pages/client/MarmistaClientCatalogPage'))
 const MarmistaClientDetailPage = lazy(() => import('./pages/client/MarmistaClientDetailPage'))
 const ChangePasswordPage = lazy(() => import('./pages/client/ChangePasswordPage'))
-
-function PlaceholderAdmin({ name }: { name: string }) {
-  return (
-    <div className="border border-[#E5E0D8] bg-white p-8 shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
-      <p className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-[#C9A96E]">
-        Area riservata
-      </p>
-      <h3 className="mb-3 text-3xl text-[#031634]" style={{ fontFamily: 'Playfair Display, serif' }}>
-        {name}
-      </h3>
-      <p className="text-sm leading-relaxed text-[#6B7280]">Disponibile nelle prossime fasi.</p>
-    </div>
-  )
-}
 
 function PlaceholderPage({ name }: { name: string }) {
   const { t } = useTranslation()
@@ -140,7 +127,7 @@ function AppContent() {
             <Route path="articles/coffins" element={<CoffinsPage />} />
             <Route path="articles/accessories" element={<AccessoriesPage />} />
             <Route path="articles/marmista" element={<MarmistaArticlesPage />} />
-            <Route path="catalog" element={<PlaceholderAdmin name="Catalogo PDF" />} />
+            <Route path="catalog" element={<CatalogPdfPage />} />
             <Route path="lookups/:type" element={<LookupPage />} />
             <Route path="measures" element={<MeasuresPage />} />
             <Route path="pricelists" element={<PriceListsPage />} />

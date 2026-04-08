@@ -1,8 +1,12 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useAuth, getDefaultRoute } from '../context/AuthContext'
 
 export default function HomePage() {
   const { t } = useTranslation()
+  const { user } = useAuth()
+
+  const reservedAreaHref = getDefaultRoute(user)
 
   return (
     <div style={{ backgroundColor: '#071325' }}>
@@ -39,7 +43,7 @@ export default function HomePage() {
 
         {/* Area Riservata */}
         <Link
-          to="/login"
+          to={reservedAreaHref}
           className="btn-home-gold font-['Inter'] font-medium text-sm uppercase tracking-[0.15em] px-8 py-4"
         >
           {t('nav.reservedArea')}

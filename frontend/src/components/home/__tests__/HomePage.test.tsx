@@ -5,6 +5,7 @@ import i18n from 'i18next'
 import { initReactI18next, I18nextProvider } from 'react-i18next'
 import it_translation from '../../../locales/it.json'
 import HomePage from '../../../pages/HomePage'
+import { AuthProvider } from '../../../context/AuthContext'
 
 // Bootstrap i18n for tests
 if (!i18n.isInitialized) {
@@ -19,9 +20,11 @@ if (!i18n.isInitialized) {
 function renderHomePage() {
   return render(
     <MemoryRouter>
-      <I18nextProvider i18n={i18n}>
-        <HomePage />
-      </I18nextProvider>
+      <AuthProvider>
+        <I18nextProvider i18n={i18n}>
+          <HomePage />
+        </I18nextProvider>
+      </AuthProvider>
     </MemoryRouter>
   )
 }

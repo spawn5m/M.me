@@ -8,56 +8,46 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   import.meta.url
 ).toString()
 
+/**
+ * Converte l'URL del PDF intero nell'URL della singola pagina pre-splittata.
+ * /uploads/pdf/CATALOGO CEABIS 2024.pdf + page 42
+ * → /uploads/pdf/pages/catalogo-ceabis-2024/42.pdf
+ */
+function pageUrl(catalogUrl: string, page: number): string {
+  const filename = catalogUrl.split('/').pop() ?? ''
+  const slug = filename
+    .replace(/\.pdf$/i, '')
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9-]/g, '')
+  return `/uploads/pdf/pages/${slug}/${page}.pdf`
+}
+
 interface PdfViewerProps {
   url: string
   initialPage?: number
 }
 
 export default function PdfViewer({ url, initialPage = 1 }: PdfViewerProps) {
-  const [page, setPage] = useState(initialPage)
-  const [total, setTotal] = useState(0)
   const [error, setError] = useState(false)
+
+  const src = pageUrl(url, initialPage)
 
   if (error) {
     return (
       <div className="flex items-center justify-center border border-[#E5E0D8] bg-white p-8 text-sm text-[#6B7280]">
-        PDF non disponibile
+        Pagina catalogo non disponibile
       </div>
     )
   }
 
   return (
-    <div className="flex flex-col items-center gap-4">
-      <Document
-        file={url}
-        onLoadSuccess={({ numPages }) => setTotal(numPages)}
-        onLoadError={() => setError(true)}
-        className="border border-[#E5E0D8] shadow-[0_2px_8px_rgba(26,43,74,0.08)]"
-      >
-        <Page pageNumber={page} width={600} renderTextLayer renderAnnotationLayer />
-      </Document>
-
-      {total > 0 && (
-        <div className="flex items-center gap-4 text-sm text-[#6B7280]">
-          <button
-            onClick={() => setPage(p => Math.max(1, p - 1))}
-            disabled={page <= 1}
-            className="border border-[#E5E0D8] px-3 py-1 transition-colors hover:border-[#1A2B4A] disabled:opacity-40"
-          >
-            ‹
-          </button>
-          <span style={{ fontFamily: 'JetBrains Mono, monospace' }}>
-            {page} / {total}
-          </span>
-          <button
-            onClick={() => setPage(p => Math.min(total, p + 1))}
-            disabled={page >= total}
-            className="border border-[#E5E0D8] px-3 py-1 transition-colors hover:border-[#1A2B4A] disabled:opacity-40"
-          >
-            ›
-          </button>
-        </div>
-      )}
-    </div>
+    <Document
+      file={src}
+      onLoadError={() => setError(true)}
+      className="border border-[#E5E0D8] shadow-[0_2px_8px_rgba(26,43,74,0.08)]"
+    >
+      <Page pageNumber={1} width={600} renderTextLayer renderAnnotationLayer />
+    </Document>
   )
 }

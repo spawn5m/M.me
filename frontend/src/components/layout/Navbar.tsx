@@ -1,5 +1,6 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { useAuth, getDefaultRoute } from '../../context/AuthContext'
 
 export interface NavbarProps {
   variant: 'dark' | 'light'
@@ -21,8 +22,11 @@ const NAV_LINKS: NavLink[] = [
 
 export default function Navbar({ variant }: NavbarProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const location = useLocation()
   const isDark = variant === 'dark'
+
+  const reservedAreaHref = getDefaultRoute(user)
 
   // Outer nav styles
   const navBase = 'w-full z-50'
@@ -78,7 +82,7 @@ export default function Navbar({ variant }: NavbarProps) {
 
         {/* CTA */}
         <Link
-          to="/login"
+          to={reservedAreaHref}
           data-testid="navbar-cta"
           className={`${ctaBase} ${ctaStyle}`}
         >

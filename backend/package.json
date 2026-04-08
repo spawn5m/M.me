@@ -26,6 +26,7 @@
     "fastify": "^5.0.0",
     "fastify-plugin": "^5.0.0",
     "nodemailer": "^8.0.4",
+    "pdf-lib": "^1.17.1",
     "xlsx": "^0.18.5",
     "zod": "^3.22.0"
   },

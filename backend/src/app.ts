@@ -64,8 +64,8 @@ const start = async () => {
   await app.register(clientRoutes, { prefix: '/api/client' })
 
   const port = Number(process.env.PORT) || 3001
-  await app.listen({ port, host: '127.0.0.1' })
-  app.log.info(`Backend in ascolto su http://127.0.0.1:${port}`)
+  await app.listen({ port, host: '0.0.0.0' })
+  app.log.info(`Backend in ascolto su http://0.0.0.0:${port}`)
 }
 
 start().catch((err) => {

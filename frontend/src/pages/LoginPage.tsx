@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuth, getDefaultRoute } from '../context/AuthContext'
 
 export default function LoginPage() {
   const { user, isLoading: isAuthLoading, login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? '/admin/dashboard'
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? null
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -19,9 +19,7 @@ export default function LoginPage() {
     setIsLoading(true)
     try {
       const loggedUser = await login(email, password)
-      const isClient = loggedUser.roles.includes('impresario_funebre') || loggedUser.roles.includes('marmista')
-      const defaultDest = isClient ? '/client/dashboard' : '/admin/dashboard'
-      const dest = from === '/admin/dashboard' ? defaultDest : from
+      const dest = from ?? getDefaultRoute(loggedUser)
       navigate(dest, { replace: true })
     } catch {
       setError('Credenziali non valide. Riprova.')
@@ -39,7 +37,7 @@ export default function LoginPage() {
   }
 
   if (user) {
-    return <Navigate to={from} replace />
+    return <Navigate to={from || getDefaultRoute(user)} replace />
   }
 
   return (

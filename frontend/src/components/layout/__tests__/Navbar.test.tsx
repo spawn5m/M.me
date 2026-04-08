@@ -5,6 +5,7 @@ import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import it_translation from '../../../locales/it.json'
 import Navbar from '../Navbar'
+import { AuthProvider } from '../../../context/AuthContext'
 
 // Bootstrap i18n for tests
 if (!i18n.isInitialized) {
@@ -19,7 +20,9 @@ if (!i18n.isInitialized) {
 function renderNavbar(variant: 'dark' | 'light') {
   return render(
     <MemoryRouter>
-      <Navbar variant={variant} />
+      <AuthProvider>
+        <Navbar variant={variant} />
+      </AuthProvider>
     </MemoryRouter>
   )
 }

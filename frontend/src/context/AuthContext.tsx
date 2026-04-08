@@ -10,6 +10,14 @@ interface AuthUser {
   isActive: boolean
 }
 
+export function getDefaultRoute(user: AuthUser | null): string {
+  if (!user) return '/login'
+  if (user.roles.includes('impresario_funebre') || user.roles.includes('marmista')) {
+    return '/client/dashboard'
+  }
+  return '/admin/dashboard'
+}
+
 interface AuthContextValue {
   user: AuthUser | null
   roles: string[]

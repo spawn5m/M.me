@@ -25,6 +25,7 @@ export default function PriceListsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<WizardStep1>({
     defaultValues: { type: 'sale', articleType: 'funeral', isDerivato: false, autoUpdate: false },
@@ -90,10 +91,14 @@ export default function PriceListsPage() {
   const handleDelete = async () => {
     if (!deletingId) return
     setIsDeleting(true)
+    setDeleteError(null)
     try {
       await pricelistsApi.remove(deletingId)
       setDeletingId(null)
       load()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setDeleteError(msg ?? 'Errore durante l\'eliminazione')
     } finally {
       setIsDeleting(false)
     }
@@ -199,7 +204,16 @@ export default function PriceListsPage() {
         </div>
       </FormModal>
 
-      <ConfirmDialog isOpen={!!deletingId} title="Elimina Listino" message="Eliminare questo listino? Tutti gli articoli e le regole associate verranno rimossi." onConfirm={handleDelete} onCancel={() => setDeletingId(null)} isConfirming={isDeleting} confirmLabel="Elimina" />
+      <ConfirmDialog
+        isOpen={!!deletingId}
+        title="Elimina Listino"
+        message={deleteError ?? "Eliminare questo listino? Tutti gli articoli e le regole associate verranno rimossi."}
+        variant={deleteError ? 'warning' : 'danger'}
+        onConfirm={deleteError ? () => { setDeletingId(null); setDeleteError(null) } : handleDelete}
+        onCancel={() => { setDeletingId(null); setDeleteError(null) }}
+        isConfirming={isDeleting}
+        confirmLabel={deleteError ? 'Chiudi' : 'Elimina'}
+      />
     </div>
   )
 }

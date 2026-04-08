@@ -80,6 +80,7 @@ model CoffinArticle {
   description    String
   notes          String?
   imageUrl       String?
+  pdfPage        Int?
   measureId      String?
   measure        CoffinMeasure?      @relation(fields: [measureId], references: [id])
   categories     CoffinCategory[]

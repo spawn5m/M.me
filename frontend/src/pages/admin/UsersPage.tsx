@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import DataTable from '../../components/admin/DataTable'
@@ -88,6 +88,10 @@ export default function UsersPage() {
   const [allPriceLists, setAllPriceLists] = useState<AdminPriceList[]>([])
   const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0, totalPages: 1 })
   const [isLoading, setIsLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState('')
+  const [isActiveFilter, setIsActiveFilter] = useState('')
+  const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [confirmTarget, setConfirmTarget] = useState<AdminUser | null>(null)
   const [assignTarget, setAssignTarget] = useState<AdminUser | null>(null)
@@ -102,10 +106,14 @@ export default function UsersPage() {
 
   const selectedRoleIds = watch('roleIds')
 
-  const loadUsers = useCallback(async (page = 1) => {
+  const loadUsers = useCallback(async (page = 1, filters?: { search?: string; role?: string; isActive?: string }) => {
     setIsLoading(true)
     try {
-      const res = await usersApi.list({ page, pageSize: 20 })
+      const params: Record<string, unknown> = { page, pageSize: 20 }
+      if (filters?.search) params.search = filters.search
+      if (filters?.role) params.role = filters.role
+      if (filters?.isActive !== undefined && filters.isActive !== '') params.isActive = filters.isActive === 'true'
+      const res = await usersApi.list(params)
       setUsers(res.data)
       setPagination(res.pagination)
     } finally {
@@ -114,10 +122,38 @@ export default function UsersPage() {
   }, [])
 
   useEffect(() => {
-    loadUsers()
+    loadUsers(1, { search, role: roleFilter, isActive: isActiveFilter })
     rolesApi.list().then((res) => setAllRoles(res.data))
     pricelistsApi.list().then((res) => setAllPriceLists(res.data))
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loadUsers])
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    if (searchDebounce.current) clearTimeout(searchDebounce.current)
+    searchDebounce.current = setTimeout(() => {
+      loadUsers(1, { search: value, role: roleFilter, isActive: isActiveFilter })
+    }, 300)
+  }
+
+  const handleRoleChange = (value: string) => {
+    setRoleFilter(value)
+    loadUsers(1, { search, role: value, isActive: isActiveFilter })
+  }
+
+  const handleIsActiveChange = (value: string) => {
+    setIsActiveFilter(value)
+    loadUsers(1, { search, role: roleFilter, isActive: value })
+  }
+
+  const resetFilters = () => {
+    setSearch('')
+    setRoleFilter('')
+    setIsActiveFilter('')
+    loadUsers(1, {})
+  }
+
+  const hasActiveFilters = search || roleFilter || isActiveFilter
 
   const openAssign = (user: AdminUser) => {
     setAssignTarget(user)
@@ -208,17 +244,56 @@ export default function UsersPage() {
         </p>
       )}
 
+      {/* Barra filtri */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
+        <input
+          type="text"
+          placeholder="Cerca per nome o email…"
+          value={search}
+          onChange={(e) => handleSearchChange(e.target.value)}
+          className="admin-input w-64"
+        />
+        <select
+          value={roleFilter}
+          onChange={(e) => handleRoleChange(e.target.value)}
+          className="admin-select w-48"
+        >
+          <option value="">Tutti i ruoli</option>
+          {allRoles.map((r) => (
+            <option key={r.id} value={r.name}>{r.label}</option>
+          ))}
+        </select>
+        <select
+          value={isActiveFilter}
+          onChange={(e) => handleIsActiveChange(e.target.value)}
+          className="admin-select w-36"
+        >
+          <option value="">Tutti gli stati</option>
+          <option value="true">Attivi</option>
+          <option value="false">Disattivi</option>
+        </select>
+        {hasActiveFilters && (
+          <button onClick={resetFilters} className="admin-button-secondary text-xs">
+            Reimposta
+          </button>
+        )}
+      </div>
+
       <DataTable<AdminUser & Record<string, unknown>>
         columns={columns as never}
         data={users as never}
         keyField="id"
         pagination={pagination}
-        onPageChange={loadUsers}
+        onPageChange={(page) => loadUsers(page, { search, role: roleFilter, isActive: isActiveFilter })}
         isLoading={isLoading}
         actions={[
           {
             label: 'Listino',
-            onClick: (u) => openAssign(u as AdminUser)
+            onClick: (u) => openAssign(u as AdminUser),
+            hidden: (u) => {
+              const user = u as AdminUser
+              return userHasRole(user, 'super_admin') || userHasRole(user, 'manager')
+            }
           },
           {
             label: 'Disattiva',
@@ -334,9 +409,9 @@ export default function UsersPage() {
                 </div>
               )}
 
-              {(userHasRole(assignTarget, 'impresario_funebre') || userHasRole(assignTarget, 'manager') || userHasRole(assignTarget, 'super_admin')) && (
+              {userHasRole(assignTarget, 'impresario_funebre') && (
                 <div>
-                  <label className="admin-label">Listino Funebre</label>
+                  <label className="admin-label">Listino Cofani</label>
                   <select value={assignFuneralId} onChange={e => setAssignFuneralId(e.target.value)}
                     className="admin-select">
                     <option value="">— Nessuno —</option>
@@ -346,7 +421,7 @@ export default function UsersPage() {
                   </select>
                 </div>
               )}
-              {(userHasRole(assignTarget, 'marmista') || userHasRole(assignTarget, 'manager') || userHasRole(assignTarget, 'super_admin')) && (
+              {(userHasRole(assignTarget, 'marmista') || userHasRole(assignTarget, 'impresario_funebre')) && (
                 <div>
                   <label className="admin-label">Listino Marmista</label>
                   <select value={assignMarmistaId} onChange={e => setAssignMarmistaId(e.target.value)}
