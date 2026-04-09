@@ -3,7 +3,6 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import UsersPage from '../UsersPage'
-import type { AdminUserPermissionDetail } from '../../../../../backend/src/types/shared'
 
 vi.mock('../../../lib/admin/users-api', () => ({
   usersApi: {
@@ -27,23 +26,13 @@ vi.mock('../../../lib/api/pricelists', () => ({
   },
 }))
 
-vi.mock('../../../lib/admin/permissions-api', () => ({
-  permissionsApi: {
-    list: vi.fn(),
-    getUserPermissions: vi.fn(),
-    updateUserPermissions: vi.fn(),
-  },
-}))
-
 import { usersApi } from '../../../lib/admin/users-api'
 import { rolesApi } from '../../../lib/admin/roles-api'
 import { pricelistsApi } from '../../../lib/api/pricelists'
-import { permissionsApi } from '../../../lib/admin/permissions-api'
 
 const mockUsersApi = vi.mocked(usersApi)
 const mockRolesApi = vi.mocked(rolesApi)
 const mockPricelistsApi = vi.mocked(pricelistsApi)
-const mockPermissionsApi = vi.mocked(permissionsApi)
 
 const userRow = {
   id: 'user-1',
@@ -77,60 +66,6 @@ const clientUserRow = {
   updatedAt: '2026-04-08T10:00:00.000Z',
 }
 
-const permissionCatalog = [
-  {
-    id: 'perm-1',
-    code: 'roles.read',
-    resource: 'roles',
-    action: 'read',
-    scope: null,
-    label: 'Visualizzare ruoli',
-    description: 'Consente di vedere ruoli e permessi',
-    isSystem: true,
-  },
-  {
-    id: 'perm-2',
-    code: 'users.write',
-    resource: 'users',
-    action: 'write',
-    scope: null,
-    label: 'Gestire utenti',
-    description: 'Consente di creare e modificare utenti',
-    isSystem: true,
-  },
-]
-
-const initialDetail = {
-  user: {
-    id: userRow.id,
-    email: userRow.email,
-    firstName: userRow.firstName,
-    lastName: userRow.lastName,
-    isActive: userRow.isActive,
-  },
-  roles: userRow.roles,
-  directPermissions: [permissionCatalog[1]],
-  effectivePermissions: [permissionCatalog[0], permissionCatalog[1]],
-}
-
-const updatedDetail = {
-  ...initialDetail,
-  directPermissions: [permissionCatalog[0]],
-  effectivePermissions: [permissionCatalog[0], permissionCatalog[1]],
-}
-
-function createDeferred<T>() {
-  let resolve!: (value: T) => void
-  let reject!: (reason?: unknown) => void
-
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res
-    reject = rej
-  })
-
-  return { promise, resolve, reject }
-}
-
 function renderPage() {
   return render(
     <MemoryRouter>
@@ -155,194 +90,13 @@ describe('UsersPage', () => {
       data: [],
       pagination: { page: 1, pageSize: 0, total: 0, totalPages: 1 },
     })
-    mockPermissionsApi.list.mockResolvedValue({
-      data: permissionCatalog,
-      pagination: { page: 1, pageSize: 2, total: 2, totalPages: 1 },
-    })
-    mockPermissionsApi.getUserPermissions.mockResolvedValue(initialDetail)
-    mockPermissionsApi.updateUserPermissions.mockResolvedValue(updatedDetail)
   })
 
-  it('opens the permission modal and loads catalog plus user detail', async () => {
-    const user = userEvent.setup()
-
+  it('does not render a Permessi action for user rows', async () => {
     renderPage()
 
-    await user.click(await screen.findByRole('button', { name: 'Permessi' }))
-
-    const dialog = await screen.findByRole('dialog', { name: 'Permessi utente: Mario Rossi' })
-
-    expect(dialog).toBeInTheDocument()
-    expect(within(dialog).getByText('Ruoli assegnati')).toBeInTheDocument()
-    expect(within(dialog).getByText('Manager')).toBeInTheDocument()
-
-    await waitFor(() => {
-      expect(mockPermissionsApi.list).toHaveBeenCalledTimes(1)
-      expect(mockPermissionsApi.getUserPermissions).toHaveBeenCalledWith(userRow.id)
-    })
-  })
-
-  it('saves the selected direct grants', async () => {
-    const user = userEvent.setup()
-
-    renderPage()
-
-    await user.click(await screen.findByRole('button', { name: 'Permessi' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Permessi utente: Mario Rossi' })
-
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Visualizzare ruoli' }))
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Gestire utenti' }))
-    await user.click(within(dialog).getByRole('button', { name: 'Salva permessi' }))
-
-    await waitFor(() => {
-      expect(mockPermissionsApi.updateUserPermissions).toHaveBeenCalledWith(userRow.id, ['roles.read'])
-    })
-  })
-
-  it('shows effective permissions in the modal', async () => {
-    const user = userEvent.setup()
-
-    renderPage()
-
-    await user.click(await screen.findByRole('button', { name: 'Permessi' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Permessi utente: Mario Rossi' })
-
-    expect(within(dialog).getByText('Permessi effettivi')).toBeInTheDocument()
-    expect(within(dialog).getAllByText('roles.read').length).toBeGreaterThan(0)
-    expect(within(dialog).getAllByText('users.write').length).toBeGreaterThan(0)
-  })
-
-  it('shows a modal error when permission save fails', async () => {
-    const user = userEvent.setup()
-    mockPermissionsApi.updateUserPermissions.mockRejectedValueOnce({
-      response: {
-        data: {
-          message: 'Salvataggio permessi non riuscito',
-        },
-      },
-    })
-
-    renderPage()
-
-    await user.click(await screen.findByRole('button', { name: 'Permessi' }))
-    const dialog = await screen.findByRole('dialog', { name: 'Permessi utente: Mario Rossi' })
-
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Visualizzare ruoli' }))
-    await user.click(within(dialog).getByRole('checkbox', { name: 'Gestire utenti' }))
-    await user.click(within(dialog).getByRole('button', { name: 'Salva permessi' }))
-
-    expect(await screen.findByText('Salvataggio permessi non riuscito')).toBeInTheDocument()
-    expect(screen.getByRole('dialog', { name: 'Permessi utente: Mario Rossi' })).toBeInTheDocument()
-  })
-
-  it('ignores stale permission responses when another user is opened later', async () => {
-    const user = userEvent.setup()
-    const luigiDetail: AdminUserPermissionDetail = {
-      ...initialDetail,
-      user: {
-        id: clientUserRow.id,
-        email: clientUserRow.email,
-        firstName: clientUserRow.firstName,
-        lastName: clientUserRow.lastName,
-        isActive: clientUserRow.isActive,
-      },
-      roles: clientUserRow.roles,
-      directPermissions: [permissionCatalog[0]],
-      effectivePermissions: [permissionCatalog[0]],
-    }
-    const firstDetail = createDeferred<AdminUserPermissionDetail>()
-    const secondDetail = createDeferred<AdminUserPermissionDetail>()
-
-    mockUsersApi.list.mockResolvedValueOnce({
-      data: [userRow, clientUserRow],
-      pagination: { page: 1, pageSize: 2, total: 2, totalPages: 1 },
-    })
-    mockPermissionsApi.getUserPermissions.mockImplementation((id: string) => {
-      return id === userRow.id ? firstDetail.promise : secondDetail.promise
-    })
-
-    renderPage()
-
-    const marioRow = (await screen.findByText('Mario Rossi')).closest('tr')
-    const luigiRow = (await screen.findByText('Luigi Bianchi')).closest('tr')
-
-    expect(marioRow).not.toBeNull()
-    expect(luigiRow).not.toBeNull()
-
-    await user.click(within(marioRow as HTMLTableRowElement).getByRole('button', { name: 'Permessi' }))
-    await user.click(within(luigiRow as HTMLTableRowElement).getByRole('button', { name: 'Permessi' }))
-
-    secondDetail.resolve(luigiDetail)
-
-    const dialog = await screen.findByRole('dialog', { name: 'Permessi utente: Luigi Bianchi' })
-    expect(within(dialog).getByText('Impresario funebre')).toBeInTheDocument()
-    expect(within(dialog).queryByText('Manager')).toBeNull()
-
-    firstDetail.resolve(initialDetail)
-
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: 'Permessi utente: Luigi Bianchi' })).toBeInTheDocument()
-      expect(within(dialog).getByText('Impresario funebre')).toBeInTheDocument()
-      expect(within(dialog).queryByText('Manager')).toBeNull()
-    })
-  })
-
-  it('ignores stale permission saves after another user is opened', async () => {
-    const user = userEvent.setup()
-    const luigiDetail: AdminUserPermissionDetail = {
-      ...initialDetail,
-      user: {
-        id: clientUserRow.id,
-        email: clientUserRow.email,
-        firstName: clientUserRow.firstName,
-        lastName: clientUserRow.lastName,
-        isActive: clientUserRow.isActive,
-      },
-      roles: clientUserRow.roles,
-      directPermissions: [permissionCatalog[0]],
-      effectivePermissions: [permissionCatalog[0]],
-    }
-    const marioSave = createDeferred<AdminUserPermissionDetail>()
-
-    mockUsersApi.list.mockResolvedValueOnce({
-      data: [userRow, clientUserRow],
-      pagination: { page: 1, pageSize: 2, total: 2, totalPages: 1 },
-    })
-    mockPermissionsApi.getUserPermissions.mockImplementation((id: string) => {
-      return Promise.resolve(id === userRow.id ? initialDetail : luigiDetail)
-    })
-    mockPermissionsApi.updateUserPermissions.mockImplementation((id: string) => {
-      return id === userRow.id ? marioSave.promise : Promise.resolve(updatedDetail)
-    })
-
-    renderPage()
-
-    const marioRow = (await screen.findByText('Mario Rossi')).closest('tr')
-    const luigiRow = (await screen.findByText('Luigi Bianchi')).closest('tr')
-
-    expect(marioRow).not.toBeNull()
-    expect(luigiRow).not.toBeNull()
-
-    await user.click(within(marioRow as HTMLTableRowElement).getByRole('button', { name: 'Permessi' }))
-    const marioDialog = await screen.findByRole('dialog', { name: 'Permessi utente: Mario Rossi' })
-    await user.click(within(marioDialog).getByRole('checkbox', { name: 'Visualizzare ruoli' }))
-    await user.click(within(marioDialog).getByRole('checkbox', { name: 'Gestire utenti' }))
-    await user.click(within(marioDialog).getByRole('button', { name: 'Salva permessi' }))
-
-    await user.click(within(marioDialog).getAllByRole('button', { name: 'Chiudi' })[0])
-    await user.click(within(luigiRow as HTMLTableRowElement).getByRole('button', { name: 'Permessi' }))
-
-    const luigiDialog = await screen.findByRole('dialog', { name: 'Permessi utente: Luigi Bianchi' })
-    expect(within(luigiDialog).getByText('Impresario funebre')).toBeInTheDocument()
-    expect(within(luigiDialog).queryByText('Manager')).toBeNull()
-
-    marioSave.resolve(updatedDetail)
-
-    await waitFor(() => {
-      expect(screen.getByRole('dialog', { name: 'Permessi utente: Luigi Bianchi' })).toBeInTheDocument()
-      expect(within(luigiDialog).getByText('Impresario funebre')).toBeInTheDocument()
-      expect(within(luigiDialog).queryByText('Manager')).toBeNull()
-    })
+    expect(await screen.findByText(userRow.email)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Permessi' })).toBeNull()
   })
 
   it('renders the listino modal with accessible dialog semantics and placeholder-only empty state', async () => {
@@ -383,6 +137,49 @@ describe('UsersPage', () => {
     expect(assignButton).toBeEnabled()
   })
 
+  it('moves focus into the listino modal, traps tab navigation, and restores focus on Escape', async () => {
+    const user = userEvent.setup()
+
+    mockUsersApi.list.mockResolvedValueOnce({
+      data: [clientUserRow],
+      pagination: { page: 1, pageSize: 1, total: 1, totalPages: 1 },
+    })
+    mockRolesApi.list.mockResolvedValueOnce({
+      data: clientUserRow.roles,
+      pagination: { page: 1, pageSize: 1, total: 1, totalPages: 1 },
+    })
+    mockPricelistsApi.list.mockResolvedValueOnce({
+      data: [
+        { id: 'funeral-1', name: 'Funebre Base', type: 'sale', articleType: 'funeral', parentId: null, autoUpdate: false, _count: { items: 0 } },
+        { id: 'marmista-1', name: 'Marmista Base', type: 'sale', articleType: 'marmista', parentId: null, autoUpdate: false, _count: { items: 0 } },
+      ],
+      pagination: { page: 1, pageSize: 2, total: 2, totalPages: 1 },
+    })
+
+    renderPage()
+
+    await user.click(await screen.findByRole('button', { name: 'Listino' }))
+
+    const dialog = await screen.findByRole('dialog', { name: 'Assegna Listino — Luigi Bianchi' })
+    const closeButton = within(dialog).getByRole('button', { name: 'Chiudi' })
+
+    expect(closeButton).toHaveFocus()
+
+    await user.tab()
+    await user.tab()
+    await user.tab()
+    await user.tab()
+
+    expect(closeButton).toHaveFocus()
+
+    await user.keyboard('{Escape}')
+
+    expect(screen.queryByRole('dialog', { name: 'Assegna Listino — Luigi Bianchi' })).toBeNull()
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Listino' })).toHaveFocus()
+    })
+  })
+
   it('shows an inline error when listino assignment fails', async () => {
     const user = userEvent.setup()
 
@@ -418,5 +215,90 @@ describe('UsersPage', () => {
 
     expect(await within(dialog).findByText('Assegnazione listino non riuscita')).toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Assegna Listino — Luigi Bianchi' })).toBeInTheDocument()
+  })
+
+  it('keeps the page usable when role options cannot be loaded', async () => {
+    const user = userEvent.setup()
+
+    mockRolesApi.list.mockRejectedValueOnce({
+      response: {
+        data: {
+          message: 'Ruoli non disponibili',
+        },
+      },
+    })
+
+    renderPage()
+
+    expect(await screen.findByText(userRow.email)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo utente' }))
+
+    const createDialog = screen.getByRole('dialog', { name: 'Nuovo utente' })
+
+    expect(within(createDialog).getByRole('alert')).toHaveTextContent('Ruoli non disponibili')
+    expect(within(createDialog).queryByRole('button', { name: 'Manager' })).toBeNull()
+    expect(within(createDialog).getByRole('button', { name: 'Salva' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Modifica' }))
+
+    const editDialog = await screen.findByRole('dialog', { name: 'Modifica — Mario Rossi' })
+
+    expect(within(editDialog).getByRole('alert')).toHaveTextContent('Ruoli non disponibili')
+    expect(within(editDialog).getByText('Manager')).toBeInTheDocument()
+    expect(within(editDialog).getByRole('button', { name: 'Salva modifiche' })).toBeEnabled()
+  })
+
+  it('exposes selected role state in create and edit modals', async () => {
+    const user = userEvent.setup()
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo utente' }))
+
+    const createDialog = screen.getByRole('dialog', { name: 'Nuovo utente' })
+    const createRoleButton = within(createDialog).getByRole('button', { name: 'Manager' })
+
+    expect(createRoleButton).toHaveAttribute('aria-pressed', 'false')
+
+    await user.click(createRoleButton)
+
+    expect(createRoleButton).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(screen.getByRole('button', { name: 'Annulla' }))
+    await user.click(screen.getByRole('button', { name: 'Modifica' }))
+
+    const editDialog = await screen.findByRole('dialog', { name: 'Modifica — Mario Rossi' })
+    const editRoleButton = within(editDialog).getByRole('button', { name: 'Manager' })
+
+    expect(editRoleButton).toHaveAttribute('aria-pressed', 'true')
+
+    await user.click(editRoleButton)
+
+    expect(editRoleButton).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  it('associates create and edit user inputs with programmatic labels', async () => {
+    const user = userEvent.setup()
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo utente' }))
+
+    const createDialog = screen.getByRole('dialog', { name: 'Nuovo utente' })
+
+    expect(within(createDialog).getByLabelText('Nome')).toBeInTheDocument()
+    expect(within(createDialog).getByLabelText('Cognome')).toBeInTheDocument()
+    expect(within(createDialog).getByLabelText('Email')).toBeInTheDocument()
+    expect(within(createDialog).getByLabelText('Password')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Annulla' }))
+    await user.click(screen.getByRole('button', { name: 'Modifica' }))
+
+    const editDialog = await screen.findByRole('dialog', { name: 'Modifica — Mario Rossi' })
+
+    expect(within(editDialog).getByLabelText('Nome')).toBeInTheDocument()
+    expect(within(editDialog).getByLabelText('Cognome')).toBeInTheDocument()
+    expect(within(editDialog).getByLabelText('Email')).toBeInTheDocument()
   })
 })

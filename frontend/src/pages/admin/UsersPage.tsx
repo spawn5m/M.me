@@ -5,17 +5,13 @@ import { z } from 'zod'
 import DataTable from '../../components/admin/DataTable'
 import FormModal from '../../components/admin/FormModal'
 import ConfirmDialog from '../../components/admin/ConfirmDialog'
-import PermissionEditorModal from '../../components/admin/PermissionEditorModal'
 import { usersApi } from '../../lib/admin/users-api'
 import { rolesApi } from '../../lib/admin/roles-api'
-import { permissionsApi } from '../../lib/admin/permissions-api'
 import { pricelistsApi } from '../../lib/api/pricelists'
 import type {
-  AdminPermission,
   AdminPriceList,
   AdminRole,
   AdminUser,
-  AdminUserPermissionDetail,
 } from '../../../../backend/src/types/shared'
 
 // ─── Schema form ──────────────────────────────────────────────────────────────
@@ -37,6 +33,15 @@ const editSchema = z.object({
 
 type CreateFormValues = z.infer<typeof createSchema>
 type EditFormValues = z.infer<typeof editSchema>
+
+const FOCUSABLE_SELECTOR = [
+  'button:not([disabled])',
+  '[href]',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ')
 
 // ─── Colonne tabella ──────────────────────────────────────────────────────────
 
@@ -103,27 +108,29 @@ export default function UsersPage() {
   const assignDialogTitleId = useId()
   const funeralSelectId = useId()
   const marmistaSelectId = useId()
+  const createFirstNameId = useId()
+  const createLastNameId = useId()
+  const createEmailId = useId()
+  const createPasswordId = useId()
+  const editFirstNameId = useId()
+  const editLastNameId = useId()
+  const editEmailId = useId()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [allRoles, setAllRoles] = useState<AdminRole[]>([])
+  const [rolesError, setRolesError] = useState<string | null>(null)
   const [allPriceLists, setAllPriceLists] = useState<AdminPriceList[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [editTarget, setEditTarget] = useState<AdminUser | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<AdminUser | null>(null)
   const [assignTarget, setAssignTarget] = useState<AdminUser | null>(null)
-  const [permissionTarget, setPermissionTarget] = useState<AdminUser | null>(null)
-  const [permissionCatalog, setPermissionCatalog] = useState<AdminPermission[]>([])
-  const [permissionDetail, setPermissionDetail] = useState<AdminUserPermissionDetail | null>(null)
-  const [selectedDirectPermissionCodes, setSelectedDirectPermissionCodes] = useState<string[]>([])
   const [assignFuneralId, setAssignFuneralId] = useState('')
   const [assignMarmistaId, setAssignMarmistaId] = useState('')
   const [isAssigning, setIsAssigning] = useState(false)
   const [assignError, setAssignError] = useState<string | null>(null)
-  const [isPermissionLoading, setIsPermissionLoading] = useState(false)
-  const [isPermissionSaving, setIsPermissionSaving] = useState(false)
   const [pageError, setPageError] = useState<string | null>(null)
-  const [permissionError, setPermissionError] = useState<string | null>(null)
-  const permissionRequestIdRef = useRef(0)
+  const assignDialogRef = useRef<HTMLDivElement | null>(null)
+  const assignOpenerRef = useRef<HTMLElement | null>(null)
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, setValue, watch, setError: setFormError, clearErrors } = useForm<CreateFormValues>({
     defaultValues: { roleIds: [] }
@@ -147,7 +154,16 @@ export default function UsersPage() {
 
   useEffect(() => {
     loadUsers()
-    rolesApi.list().then((res) => setAllRoles(res.data))
+    rolesApi.list()
+      .then((res) => {
+        setAllRoles(res.data)
+        setRolesError(null)
+      })
+      .catch((err: unknown) => {
+        const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+        setAllRoles([])
+        setRolesError(msg ?? 'Ruoli non disponibili')
+      })
     pricelistsApi.list().then((res) => setAllPriceLists(res.data))
   }, [loadUsers])
 
@@ -193,11 +209,34 @@ export default function UsersPage() {
   }
 
   const openAssign = (user: AdminUser) => {
+    assignOpenerRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
     setAssignTarget(user)
     setAssignFuneralId(user.funeralPriceList?.id ?? '')
     setAssignMarmistaId(user.marmistaPriceList?.id ?? '')
     setAssignError(null)
   }
+
+  const closeAssign = useCallback(() => {
+    setAssignTarget(null)
+    setAssignError(null)
+
+    const opener = assignOpenerRef.current
+    assignOpenerRef.current = null
+
+    if (opener) {
+      requestAnimationFrame(() => {
+        if (opener.isConnected) {
+          opener.focus()
+          return
+        }
+
+        if (opener.title) {
+          const fallbackOpener = document.querySelector<HTMLElement>(`button[title="${opener.title}"]`)
+          fallbackOpener?.focus()
+        }
+      })
+    }
+  }, [])
 
   const handleAssign = async () => {
     if (!assignTarget) return
@@ -212,7 +251,7 @@ export default function UsersPage() {
       if (assignMarmistaId && assignMarmistaId !== assignTarget.marmistaPriceList?.id) {
         await pricelistsApi.assign(assignMarmistaId, assignTarget.id)
       }
-      setAssignTarget(null)
+      closeAssign()
       loadUsers()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
@@ -222,94 +261,64 @@ export default function UsersPage() {
     }
   }
 
-  const closePermissions = () => {
-    permissionRequestIdRef.current += 1
-    setPermissionTarget(null)
-    setPermissionCatalog([])
-    setPermissionDetail(null)
-    setSelectedDirectPermissionCodes([])
-    setPermissionError(null)
-    setIsPermissionLoading(false)
-    setIsPermissionSaving(false)
-  }
-
-  const openPermissions = async (user: AdminUser) => {
-    const requestId = permissionRequestIdRef.current + 1
-    permissionRequestIdRef.current = requestId
-
-    setPermissionTarget(user)
-    setPermissionCatalog([])
-    setPermissionDetail(null)
-    setSelectedDirectPermissionCodes([])
-    setPermissionError(null)
-    setIsPermissionLoading(true)
-
-    try {
-      const [catalogRes, detailRes] = await Promise.all([
-        permissionsApi.list(),
-        permissionsApi.getUserPermissions(user.id),
-      ])
-
-      if (permissionRequestIdRef.current !== requestId) {
-        return
-      }
-
-      setPermissionCatalog(catalogRes.data)
-      setPermissionDetail(detailRes)
-      setSelectedDirectPermissionCodes(detailRes.directPermissions.map((permission) => permission.code))
-    } catch (err: unknown) {
-      if (permissionRequestIdRef.current !== requestId) {
-        return
-      }
-
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setPermissionError(msg ?? 'Errore durante il caricamento dei permessi')
-    } finally {
-      if (permissionRequestIdRef.current === requestId) {
-        setIsPermissionLoading(false)
-      }
-    }
-  }
-
-  const toggleDirectPermission = (permissionCode: string) => {
-    setSelectedDirectPermissionCodes((current) => current.includes(permissionCode)
-      ? current.filter((code) => code !== permissionCode)
-      : [...current, permissionCode])
-  }
-
-  const handlePermissionSave = async () => {
-    if (!permissionTarget) return
-
-    const requestId = permissionRequestIdRef.current
-
-    setPermissionError(null)
-    setIsPermissionSaving(true)
-
-    try {
-      const detail = await permissionsApi.updateUserPermissions(permissionTarget.id, selectedDirectPermissionCodes)
-
-      if (permissionRequestIdRef.current !== requestId) {
-        return
-      }
-
-      setPermissionDetail(detail)
-      setSelectedDirectPermissionCodes(detail.directPermissions.map((permission) => permission.code))
-    } catch (err: unknown) {
-      if (permissionRequestIdRef.current !== requestId) {
-        return
-      }
-
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setPermissionError(msg ?? 'Errore durante il salvataggio dei permessi')
-    } finally {
-      if (permissionRequestIdRef.current === requestId) {
-        setIsPermissionSaving(false)
-      }
-    }
-  }
-
   const userHasRole = (user: AdminUser, roleName: string) =>
     user.roles.some(r => r.name === roleName)
+
+  useEffect(() => {
+    if (!assignTarget) {
+      return
+    }
+
+    const dialog = assignDialogRef.current
+    if (!dialog) {
+      return
+    }
+
+    const getFocusableElements = () => Array.from(dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR))
+    const focusableElements = getFocusableElements()
+    focusableElements[0]?.focus()
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        closeAssign()
+        return
+      }
+
+      if (event.key !== 'Tab') {
+        return
+      }
+
+      const currentFocusableElements = getFocusableElements()
+      const firstElement = currentFocusableElements[0]
+      const lastElement = currentFocusableElements.at(-1)
+
+      if (!firstElement || !lastElement) {
+        return
+      }
+
+      const activeElement = document.activeElement
+
+      if (event.shiftKey) {
+        if (activeElement === firstElement || !dialog.contains(activeElement)) {
+          event.preventDefault()
+          lastElement.focus()
+        }
+        return
+      }
+
+      if (activeElement === lastElement) {
+        event.preventDefault()
+        firstElement.focus()
+      }
+    }
+
+    dialog.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      dialog.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [assignTarget, closeAssign])
 
   const hasAssignChanges = !!assignTarget && (
     (assignFuneralId !== '' && assignFuneralId !== assignTarget.funeralPriceList?.id) ||
@@ -355,6 +364,8 @@ export default function UsersPage() {
     setValue('roleIds', next)
   }
 
+  const rolesUnavailable = !!rolesError
+
   return (
     <div>
       <div className="admin-page-intro">
@@ -392,12 +403,6 @@ export default function UsersPage() {
             onClick: (u) => openEdit(u as AdminUser)
           },
           {
-            label: 'Permessi',
-            onClick: (u) => {
-              void openPermissions(u as AdminUser)
-            }
-          },
-          {
             label: 'Listino',
             icon: <Tag size={15} />,
             onClick: (u) => openAssign(u as AdminUser),
@@ -422,24 +427,27 @@ export default function UsersPage() {
         onClose={() => setShowCreateModal(false)}
         onSubmit={handleSubmit(onSubmit)}
         isSubmitting={isSubmitting}
+        isSubmitDisabled={rolesUnavailable}
       >
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="admin-label">
+              <label className="admin-label" htmlFor={createFirstNameId}>
                 Nome
               </label>
               <input
+                id={createFirstNameId}
                 {...register('firstName')}
                 className="admin-input"
               />
               {errors.firstName && <p className="text-red-500 text-xs mt-1">{errors.firstName.message}</p>}
             </div>
             <div>
-              <label className="admin-label">
+              <label className="admin-label" htmlFor={createLastNameId}>
                 Cognome
               </label>
               <input
+                id={createLastNameId}
                 {...register('lastName')}
                 className="admin-input"
               />
@@ -448,10 +456,11 @@ export default function UsersPage() {
           </div>
 
           <div>
-            <label className="admin-label">
+            <label className="admin-label" htmlFor={createEmailId}>
               Email
             </label>
             <input
+              id={createEmailId}
               {...register('email')}
               type="email"
               className="admin-input"
@@ -460,10 +469,11 @@ export default function UsersPage() {
           </div>
 
           <div>
-            <label className="admin-label">
+            <label className="admin-label" htmlFor={createPasswordId}>
               Password
             </label>
             <input
+              id={createPasswordId}
               {...register('password')}
               type="password"
               className="admin-input"
@@ -475,23 +485,32 @@ export default function UsersPage() {
             <label className="admin-label">
               Ruoli
             </label>
-            <div className="flex flex-wrap gap-2">
-              {allRoles.map((role) => (
-                <button
-                  key={role.id}
-                  type="button"
-                  onClick={() => toggleRole(role.id)}
-                  className={[
-                    'admin-inline-chip',
-                    selectedRoleIds?.includes(role.id)
-                      ? 'admin-inline-chip-active'
-                      : ''
-                  ].join(' ')}
-                >
-                  {role.label}
-                </button>
-              ))}
-            </div>
+            {rolesUnavailable ? (
+              <p role="alert" className="border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                {rolesError}. Creazione utente temporaneamente non disponibile senza catalogo ruoli.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {allRoles.map((role) => {
+                  const isSelected = selectedRoleIds?.includes(role.id) ?? false
+
+                  return (
+                    <button
+                      key={role.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => toggleRole(role.id)}
+                      className={[
+                        'admin-inline-chip',
+                        isSelected ? 'admin-inline-chip-active' : ''
+                      ].join(' ')}
+                    >
+                      {role.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </FormModal>
@@ -508,38 +527,58 @@ export default function UsersPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="admin-label">Nome</label>
-              <input {...registerEdit('firstName')} className="admin-input" />
+              <label className="admin-label" htmlFor={editFirstNameId}>Nome</label>
+              <input id={editFirstNameId} {...registerEdit('firstName')} className="admin-input" />
               {errorsEdit.firstName && <p className="text-red-500 text-xs mt-1">{errorsEdit.firstName.message}</p>}
             </div>
             <div>
-              <label className="admin-label">Cognome</label>
-              <input {...registerEdit('lastName')} className="admin-input" />
+              <label className="admin-label" htmlFor={editLastNameId}>Cognome</label>
+              <input id={editLastNameId} {...registerEdit('lastName')} className="admin-input" />
               {errorsEdit.lastName && <p className="text-red-500 text-xs mt-1">{errorsEdit.lastName.message}</p>}
             </div>
           </div>
           <div>
-            <label className="admin-label">Email</label>
-            <input {...registerEdit('email')} type="email" className="admin-input" />
+            <label className="admin-label" htmlFor={editEmailId}>Email</label>
+            <input id={editEmailId} {...registerEdit('email')} type="email" className="admin-input" />
             {errorsEdit.email && <p className="text-red-500 text-xs mt-1">{errorsEdit.email.message}</p>}
           </div>
           <div>
             <label className="admin-label">Ruoli</label>
-            <div className="flex flex-wrap gap-2">
-              {allRoles.map((role) => (
-                <button
-                  key={role.id}
-                  type="button"
-                  onClick={() => toggleEditRole(role.id)}
-                  className={[
-                    'admin-inline-chip',
-                    selectedEditRoleIds?.includes(role.id) ? 'admin-inline-chip-active' : ''
-                  ].join(' ')}
-                >
-                  {role.label}
-                </button>
-              ))}
-            </div>
+            {rolesUnavailable ? (
+              <div className="space-y-3">
+                <p role="alert" className="border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                  {rolesError}. I ruoli correnti restano invariati finché il catalogo non torna disponibile.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {editTarget?.roles.map((role) => (
+                    <span key={role.id} className="admin-badge">
+                      {role.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {allRoles.map((role) => {
+                  const isSelected = selectedEditRoleIds?.includes(role.id) ?? false
+
+                  return (
+                    <button
+                      key={role.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => toggleEditRole(role.id)}
+                      className={[
+                        'admin-inline-chip',
+                        isSelected ? 'admin-inline-chip-active' : ''
+                      ].join(' ')}
+                    >
+                      {role.label}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </div>
       </FormModal>
@@ -551,13 +590,14 @@ export default function UsersPage() {
             role="dialog"
             aria-modal="true"
             aria-labelledby={assignDialogTitleId}
+            ref={assignDialogRef}
             className="w-full max-w-md border border-[#E5E0D8] bg-white shadow-[0_24px_80px_rgba(26,43,74,0.16)]"
           >
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E0D8]">
               <h2 id={assignDialogTitleId} className="text-xl text-[#031634]" style={{ fontFamily: 'Playfair Display, serif' }}>
                 Assegna Listino — {assignTarget.firstName} {assignTarget.lastName}
               </h2>
-              <button type="button" aria-label="Chiudi" onClick={() => setAssignTarget(null)} className="text-[#6B7280] text-xl transition-colors hover:text-[#031634]">×</button>
+              <button type="button" aria-label="Chiudi" onClick={closeAssign} className="text-[#6B7280] text-xl transition-colors hover:text-[#031634]">×</button>
             </div>
             <div className="px-6 py-4 space-y-4">
               {(assignTarget.funeralPriceList || assignTarget.marmistaPriceList) && (
@@ -606,7 +646,7 @@ export default function UsersPage() {
               )}
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-[#E5E0D8] bg-[#F8F7F4] px-6 py-4">
-              <button type="button" onClick={() => { setAssignTarget(null); setAssignError(null) }} className="admin-button-secondary">Annulla</button>
+              <button type="button" onClick={closeAssign} className="admin-button-secondary">Annulla</button>
               <button type="button" onClick={handleAssign} disabled={isAssigning || !hasAssignChanges}
                 className="admin-button-primary disabled:opacity-50">
                 {isAssigning ? 'Salvataggio…' : 'Assegna'}
@@ -615,42 +655,6 @@ export default function UsersPage() {
           </div>
         </div>
       )}
-
-      <PermissionEditorModal
-        isOpen={!!permissionTarget}
-        title={permissionTarget ? `Permessi utente: ${permissionTarget.firstName} ${permissionTarget.lastName}` : 'Permessi utente'}
-        permissions={permissionCatalog}
-        selectedCodes={selectedDirectPermissionCodes}
-        readOnly={false}
-        isLoading={isPermissionLoading}
-        isSaving={isPermissionSaving}
-        effectiveCodes={permissionDetail?.effectivePermissions.map((permission) => permission.code) ?? []}
-        secondarySection={{
-          title: 'Ruoli assegnati',
-          content: (
-            <div className="space-y-3">
-              {permissionDetail?.roles.length ? (
-                <div className="flex flex-wrap gap-2">
-                  {permissionDetail.roles.map((role) => (
-                    <span key={role.id} className="admin-badge">{role.label}</span>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-[#6B7280]">Nessun ruolo assegnato</p>
-              )}
-
-              {permissionError && (
-                <p className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
-                  {permissionError}
-                </p>
-              )}
-            </div>
-          ),
-        }}
-        onToggle={toggleDirectPermission}
-        onClose={closePermissions}
-        onSave={permissionDetail ? handlePermissionSave : undefined}
-      />
 
       {/* Confirm disattivazione */}
       <ConfirmDialog

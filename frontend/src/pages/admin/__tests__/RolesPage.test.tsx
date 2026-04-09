@@ -4,6 +4,18 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import RolesPage from '../RolesPage'
 
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void
+  let reject!: (reason?: unknown) => void
+
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+
+  return { promise, resolve, reject }
+}
+
 vi.mock('../../../lib/admin/roles-api', () => ({
   rolesApi: {
     list: vi.fn(),
@@ -94,6 +106,7 @@ describe('RolesPage', () => {
       data: [systemRole, customRole],
       pagination: { page: 1, pageSize: 2, total: 2, totalPages: 1 },
     })
+    mockRolesApi.create.mockResolvedValue(customRole)
     mockPermissionsApi.list.mockResolvedValue({
       data: permissionCatalog,
       pagination: { page: 1, pageSize: 2, total: 2, totalPages: 1 },
@@ -175,7 +188,7 @@ describe('RolesPage', () => {
     await user.click(within(dialog).getByRole('checkbox', { name: 'Creare utenti' }))
     await user.click(within(dialog).getByRole('button', { name: 'Salva permessi' }))
 
-    expect(await within(dialog).findByText('Salvataggio permessi non riuscito')).toBeInTheDocument()
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('Salvataggio permessi non riuscito')
     expect(screen.getByRole('dialog', { name: 'Permessi ruolo: Operatore Magazzino' })).toBeInTheDocument()
   })
 
@@ -190,7 +203,7 @@ describe('RolesPage', () => {
 
     renderPage()
 
-    expect(await screen.findByText('Caricamento ruoli non riuscito')).toBeInTheDocument()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Caricamento ruoli non riuscito')
     expect(screen.queryByText('Operatore Magazzino')).toBeNull()
   })
 
@@ -203,5 +216,141 @@ describe('RolesPage', () => {
 
     expect(screen.getByLabelText('Identificatore (es. operatore_magazzino)')).toHaveAttribute('placeholder', 'nome_ruolo')
     expect(screen.getByLabelText('Nome visualizzato')).toHaveAttribute('placeholder', 'Operatore Magazzino')
+    expect(screen.getByRole('button', { name: 'Chiudi' })).toBeInTheDocument()
+  })
+
+  it('renders a searchable permission checklist in the create-role modal', async () => {
+    const user = userEvent.setup()
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
+
+    const dialog = screen.getByRole('dialog', { name: 'Nuovo ruolo' })
+
+    expect(screen.getByLabelText('Cerca permesso')).toBeInTheDocument()
+    expect(within(dialog).getByRole('checkbox', { name: 'Visualizzare ruoli' })).not.toBeChecked()
+    expect(within(dialog).getByText('roles.read')).toBeInTheDocument()
+    expect(within(dialog).getByText('Consente di vedere ruoli e permessi')).toBeInTheDocument()
+
+    await user.type(screen.getByLabelText('Cerca permesso'), 'creare utenti')
+
+    expect(within(dialog).queryByText('roles.read')).toBeNull()
+    expect(within(dialog).getByText('users.create')).toBeInTheDocument()
+  })
+
+  it('announces create-catalog loading and errors accessibly', async () => {
+    const user = userEvent.setup()
+    const pendingCatalog = deferred<{ data: typeof permissionCatalog, pagination: { page: number, pageSize: number, total: number, totalPages: number } }>()
+
+    mockPermissionsApi.list.mockImplementationOnce(() => pendingCatalog.promise)
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
+
+    expect(screen.getByRole('status')).toHaveTextContent('Caricamento permessi in corso')
+
+    pendingCatalog.reject({
+      response: {
+        data: {
+          message: 'Catalogo permessi non disponibile',
+        },
+      },
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Catalogo permessi non disponibile')
+  })
+
+  it('ignores stale create-catalog responses after closing and reopening the modal', async () => {
+    const user = userEvent.setup()
+    const firstCatalog = deferred<{ data: typeof permissionCatalog, pagination: { page: number, pageSize: number, total: number, totalPages: number } }>()
+
+    mockPermissionsApi.list
+      .mockImplementationOnce(() => firstCatalog.promise)
+      .mockResolvedValueOnce({
+        data: [permissionCatalog[1]],
+        pagination: { page: 1, pageSize: 1, total: 1, totalPages: 1 },
+      })
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
+    expect(screen.getByRole('status')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Annulla' }))
+    expect(screen.queryByRole('dialog', { name: 'Nuovo ruolo' })).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
+
+    const reopenedDialog = await screen.findByRole('dialog', { name: 'Nuovo ruolo' })
+    expect(within(reopenedDialog).getByText('users.create')).toBeInTheDocument()
+
+    firstCatalog.resolve({
+      data: permissionCatalog,
+      pagination: { page: 1, pageSize: 2, total: 2, totalPages: 1 },
+    })
+
+    await waitFor(() => {
+      expect(within(reopenedDialog).queryByText('roles.read')).toBeNull()
+    })
+    expect(within(reopenedDialog).getByText('users.create')).toBeInTheDocument()
+  })
+
+  it('submits selected permission codes when creating a new role', async () => {
+    const user = userEvent.setup()
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
+    await user.type(screen.getByLabelText('Identificatore (es. operatore_magazzino)'), 'custom_catalog_editor')
+    await user.type(screen.getByLabelText('Nome visualizzato'), 'Catalog Editor')
+    await user.click(screen.getByRole('checkbox', { name: 'Visualizzare ruoli' }))
+    await user.click(screen.getByRole('button', { name: 'Salva' }))
+
+    await waitFor(() => {
+      expect(mockRolesApi.create).toHaveBeenCalledWith({
+        name: 'custom_catalog_editor',
+        label: 'Catalog Editor',
+        permissionCodes: ['roles.read'],
+      })
+    })
+  })
+
+  it('creates a new role with no selected permissions', async () => {
+    const user = userEvent.setup()
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
+    await user.type(screen.getByLabelText('Identificatore (es. operatore_magazzino)'), 'nuovo_ruolo')
+    await user.type(screen.getByLabelText('Nome visualizzato'), 'Nuovo Ruolo')
+    await user.click(screen.getByRole('button', { name: 'Salva' }))
+
+    await waitFor(() => {
+      expect(mockRolesApi.create).toHaveBeenCalledWith({
+        name: 'nuovo_ruolo',
+        label: 'Nuovo Ruolo',
+        permissionCodes: [],
+      })
+    })
+  })
+
+  it('submits the create-role modal when pressing Enter in a text input', async () => {
+    const user = userEvent.setup()
+
+    renderPage()
+
+    await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
+    await user.type(screen.getByLabelText('Identificatore (es. operatore_magazzino)'), 'ruolo_enter')
+    await user.type(screen.getByLabelText('Nome visualizzato'), 'Ruolo Enter{enter}')
+
+    await waitFor(() => {
+      expect(mockRolesApi.create).toHaveBeenCalledWith({
+        name: 'ruolo_enter',
+        label: 'Ruolo Enter',
+        permissionCodes: [],
+      })
+    })
   })
 })

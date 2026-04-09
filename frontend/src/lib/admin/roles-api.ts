@@ -14,6 +14,7 @@ interface PaginatedRoles {
 interface CreateRolePayload {
   name: string
   label: string
+  permissionCodes?: string[]
 }
 
 export const rolesApi = {

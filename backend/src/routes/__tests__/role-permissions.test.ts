@@ -295,9 +295,11 @@ describe('Role permission routes', () => {
   })
 
   it('returns 404 when the role does not exist', async () => {
+    const missingRoleId = 'cmrolemissing0000000000000001'
+
     const readRes = await app.inject({
       method: 'GET',
-      url: '/api/roles/not-a-role/permissions',
+      url: `/api/roles/${missingRoleId}/permissions`,
       headers: { cookie: superAdminCookie },
     })
 
@@ -309,7 +311,7 @@ describe('Role permission routes', () => {
 
     const writeRes = await app.inject({
       method: 'PUT',
-      url: '/api/roles/not-a-role/permissions',
+      url: `/api/roles/${missingRoleId}/permissions`,
       headers: { cookie: superAdminCookie },
       payload: { permissionCodes: [] },
     })

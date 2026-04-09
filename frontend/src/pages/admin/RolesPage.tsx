@@ -4,6 +4,7 @@ import { z } from 'zod'
 import DataTable from '../../components/admin/DataTable'
 import FormModal from '../../components/admin/FormModal'
 import ConfirmDialog from '../../components/admin/ConfirmDialog'
+import PermissionChecklist from '../../components/admin/PermissionChecklist'
 import PermissionEditorModal from '../../components/admin/PermissionEditorModal'
 import { permissionsApi } from '../../lib/admin/permissions-api'
 import { rolesApi } from '../../lib/admin/roles-api'
@@ -53,6 +54,10 @@ export default function RolesPage() {
   const [roles, setRoles] = useState<AdminRole[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createPermissionCatalog, setCreatePermissionCatalog] = useState<AdminPermission[]>([])
+  const [selectedCreatePermissionCodes, setSelectedCreatePermissionCodes] = useState<string[]>([])
+  const [isCreatePermissionLoading, setIsCreatePermissionLoading] = useState(false)
+  const [createPermissionError, setCreatePermissionError] = useState<string | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<AdminRole | null>(null)
   const [permissionTarget, setPermissionTarget] = useState<AdminRole | null>(null)
   const [permissionCatalog, setPermissionCatalog] = useState<AdminPermission[]>([])
@@ -62,6 +67,7 @@ export default function RolesPage() {
   const [isPermissionSaving, setIsPermissionSaving] = useState(false)
   const [permissionError, setPermissionError] = useState<string | null>(null)
   const [pageError, setPageError] = useState<string | null>(null)
+  const createPermissionRequestIdRef = useRef(0)
   const permissionRequestIdRef = useRef(0)
   const nameInputId = useId()
   const labelInputId = useId()
@@ -89,6 +95,49 @@ export default function RolesPage() {
   }, [])
 
   useEffect(() => { loadRoles() }, [loadRoles])
+
+  const closeCreateModal = () => {
+    createPermissionRequestIdRef.current += 1
+    setShowCreateModal(false)
+    setCreatePermissionCatalog([])
+    setSelectedCreatePermissionCodes([])
+    setIsCreatePermissionLoading(false)
+    setCreatePermissionError(null)
+  }
+
+  const openCreateModal = async () => {
+    const requestId = createPermissionRequestIdRef.current + 1
+    createPermissionRequestIdRef.current = requestId
+
+    setPageError(null)
+    clearErrors()
+    reset()
+    setSelectedCreatePermissionCodes([])
+    setCreatePermissionCatalog([])
+    setCreatePermissionError(null)
+    setIsCreatePermissionLoading(true)
+    setShowCreateModal(true)
+
+    try {
+      const catalogRes = await permissionsApi.list()
+
+      if (createPermissionRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setCreatePermissionCatalog(catalogRes.data)
+    } catch (err: unknown) {
+      if (createPermissionRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setCreatePermissionError(getErrorMessage(err, 'Errore durante il caricamento dei permessi'))
+    } finally {
+      if (createPermissionRequestIdRef.current === requestId) {
+        setIsCreatePermissionLoading(false)
+      }
+    }
+  }
 
   const closePermissions = () => {
     permissionRequestIdRef.current += 1
@@ -176,6 +225,12 @@ export default function RolesPage() {
     }
   }
 
+  const toggleCreatePermission = (permissionCode: string) => {
+    setSelectedCreatePermissionCodes((current) => current.includes(permissionCode)
+      ? current.filter((code) => code !== permissionCode)
+      : [...current, permissionCode])
+  }
+
   const onSubmit = async (values: CreateFormValues) => {
     clearErrors()
     const result = createSchema.safeParse(values)
@@ -190,9 +245,12 @@ export default function RolesPage() {
     }
 
     try {
-      await rolesApi.create(result.data)
+      await rolesApi.create({
+        ...result.data,
+        permissionCodes: selectedCreatePermissionCodes,
+      })
       reset()
-      setShowCreateModal(false)
+      closeCreateModal()
       await loadRoles()
     } catch (err: unknown) {
       setPageError(getErrorMessage(err, 'Errore durante la creazione'))
@@ -222,7 +280,7 @@ export default function RolesPage() {
           </p>
         </div>
         <button
-          onClick={() => { setPageError(null); clearErrors(); reset(); setShowCreateModal(true) }}
+          onClick={() => { void openCreateModal() }}
           className="admin-button-primary"
         >
           + Nuovo ruolo
@@ -230,7 +288,7 @@ export default function RolesPage() {
       </div>
 
       {pageError && (
-        <p className="mb-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+        <p role="alert" className="mb-4 border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
           {pageError}
         </p>
       )}
@@ -266,9 +324,11 @@ export default function RolesPage() {
       <FormModal
         isOpen={showCreateModal}
         title="Nuovo ruolo"
-        onClose={() => setShowCreateModal(false)}
+        onClose={closeCreateModal}
         onSubmit={handleSubmit(onSubmit)}
         isSubmitting={isSubmitting}
+        panelClassName="max-w-4xl"
+        bodyClassName="space-y-6"
       >
         <div className="space-y-4">
           <div>
@@ -296,6 +356,39 @@ export default function RolesPage() {
             {errors.label && <p className="text-red-500 text-xs mt-1">{errors.label.message}</p>}
           </div>
         </div>
+
+        <section className="space-y-3 border-t border-[#E5E0D8] pt-4">
+          <div className="space-y-1">
+            <h3 className="admin-label mb-0">Permessi iniziali</h3>
+            <p className="text-sm leading-6 text-[#6B7280]">
+              Seleziona i permessi da associare subito al nuovo ruolo. Puoi aggiornarli anche in seguito dal pulsante Permessi.
+            </p>
+          </div>
+
+          {createPermissionError && (
+            <p role="alert" className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+              {createPermissionError}
+            </p>
+          )}
+
+          {isCreatePermissionLoading ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="flex min-h-40 items-center justify-center border border-[#E5E0D8] bg-[#F8F7F4] text-sm text-[#6B7280]"
+            >
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#1A2B4A] border-t-transparent" />
+              <span className="sr-only">Caricamento permessi in corso</span>
+            </div>
+          ) : (
+            <PermissionChecklist
+              permissions={createPermissionCatalog}
+              selectedCodes={selectedCreatePermissionCodes}
+              readOnly={false}
+              onToggle={toggleCreatePermission}
+            />
+          )}
+        </section>
       </FormModal>
 
       <ConfirmDialog
@@ -336,7 +429,7 @@ export default function RolesPage() {
               </p>
 
               {permissionError && (
-                <p className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                <p role="alert" className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
                   {permissionError}
                 </p>
               )}
