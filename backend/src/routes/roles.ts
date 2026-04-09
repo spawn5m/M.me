@@ -1,9 +1,18 @@
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 
+import {
+  getRolePermissionDetail,
+  replaceRolePermissions,
+} from '../lib/authorization/admin-permission-details'
+
 const createRoleSchema = z.object({
   name: z.string().regex(/^[a-z_]+$/, 'Il nome deve contenere solo lettere minuscole e underscore'),
   label: z.string().min(1, 'Label obbligatoria')
+})
+
+const replaceRolePermissionsSchema = z.object({
+  permissionCodes: z.array(z.string()).default([]),
 })
 
 const rolesRoutes: FastifyPluginAsync = async (fastify) => {
@@ -57,6 +66,67 @@ const rolesRoutes: FastifyPluginAsync = async (fastify) => {
     })
 
     return reply.status(201).send(role)
+  })
+
+  fastify.get('/:id/permissions', {
+    preHandler: [fastify.checkPermission('roles.read')]
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+
+    const detail = await getRolePermissionDetail(fastify.prisma, id)
+    if (!detail) {
+      return reply.status(404).send({
+        error: 'NotFound',
+        message: 'Ruolo non trovato',
+        statusCode: 404
+      })
+    }
+
+    return reply.send(detail)
+  })
+
+  fastify.put('/:id/permissions', {
+    preHandler: [fastify.checkPermission('roles.manage')]
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const parsed = replaceRolePermissionsSchema.safeParse(req.body)
+
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: 'ValidationError',
+        message: parsed.error.errors[0].message,
+        statusCode: 400
+      })
+    }
+
+    const role = await fastify.prisma.role.findUnique({ where: { id } })
+    if (!role) {
+      return reply.status(404).send({
+        error: 'NotFound',
+        message: 'Ruolo non trovato',
+        statusCode: 404
+      })
+    }
+
+    if (role.isSystem) {
+      return reply.status(409).send({
+        error: 'Conflict',
+        message: 'I ruoli di sistema non possono essere modificati',
+        statusCode: 409
+      })
+    }
+
+    const replaceError = await replaceRolePermissions(
+      fastify.prisma,
+      id,
+      parsed.data.permissionCodes,
+      req.auth.permissions,
+    )
+    if (replaceError) {
+      return reply.status(replaceError.statusCode).send(replaceError)
+    }
+
+    return reply.send(await getRolePermissionDetail(fastify.prisma, id))
   })
 
   // DELETE /api/roles/:id

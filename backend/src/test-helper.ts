@@ -17,7 +17,9 @@ import coffinsRoutes from './routes/articles/coffins'
 import accessoriesRoutes from './routes/articles/accessories'
 import marmistaRoutes from './routes/articles/marmista'
 import pricelistsRoutes from './routes/pricelists'
+import catalogRoutes from './routes/catalog'
 import clientRoutes from './routes/client'
+import permissionsRoutes from './routes/permissions'
 import { MULTIPART_OPTIONS } from './lib/multipart'
 
 export async function buildTestApp(): Promise<FastifyInstance> {
@@ -43,12 +45,14 @@ export async function buildTestApp(): Promise<FastifyInstance> {
   await app.register(publicRoutes, { prefix: '/api/public' })
   await app.register(usersRoutes, { prefix: '/api/users' })
   await app.register(rolesRoutes, { prefix: '/api/roles' })
+  await app.register(permissionsRoutes, { prefix: '/api/permissions' })
   await app.register(adminRoutes, { prefix: '/api/admin' })
   await app.register(lookupsRoutes, { prefix: '/api/admin/lookups' })
   await app.register(coffinsRoutes, { prefix: '/api/admin/articles/coffins' })
   await app.register(accessoriesRoutes, { prefix: '/api/admin/articles/accessories' })
   await app.register(marmistaRoutes, { prefix: '/api/admin/articles/marmista' })
   await app.register(pricelistsRoutes, { prefix: '/api/admin/pricelists' })
+  await app.register(catalogRoutes, { prefix: '/api/admin/catalog' })
   await app.register(clientRoutes, { prefix: '/api/client' })
 
   await app.ready()

@@ -3,6 +3,10 @@ import bcrypt from 'bcrypt'
 import { z } from 'zod'
 import { Prisma, User, UserRole, Role } from '@prisma/client'
 
+import {
+  getUserPermissionDetail,
+  replaceUserDirectPermissions,
+} from '../lib/authorization/admin-permission-details'
 import { hasAnyPermission, hasPermission } from '../lib/authorization/checks'
 
 const PRICE_LIST_SUMMARY_SELECT = {
@@ -159,6 +163,10 @@ const updateUserSchema = z.object({
   isActive: z.boolean().optional(),
   roleIds: z.array(z.string()).optional(),
   managerId: z.string().nullable().optional()
+})
+
+const replaceUserPermissionsSchema = z.object({
+  permissionCodes: z.array(z.string()).default([]),
 })
 
 // ─── Route ────────────────────────────────────────────────────────────────────
@@ -332,6 +340,91 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     })
 
     return reply.send(subordinates.map(userToResponse))
+  })
+
+  // GET /api/users/:id
+  fastify.get('/:id/permissions', {
+    preHandler: [
+      fastify.checkPermission('roles.manage'),
+      fastify.checkAnyPermission(['users.read.team', 'users.read.all'])
+    ]
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+
+    const user = await fastify.prisma.user.findUnique({
+      where: { id },
+      include: USER_INCLUDE
+    })
+
+    if (!user) {
+      return reply.status(404).send({
+        error: 'NotFound',
+        message: 'Utente non trovato',
+        statusCode: 404
+      })
+    }
+
+    const accessError = ensureCanAccessUser(reply, user as UserRecord, req.auth, {
+      allowAllPermission: canReadAllUsers(req.auth.permissions),
+      allowSuperAdminPermission: canReadSuperAdmins(req.auth.permissions),
+    })
+    if (accessError) {
+      return accessError
+    }
+
+    return reply.send(await getUserPermissionDetail(fastify.prisma, id))
+  })
+
+  fastify.put('/:id/permissions', {
+    preHandler: [
+      fastify.checkPermission('roles.manage'),
+      fastify.checkAnyPermission(['users.update.team', 'users.update.all'])
+    ]
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const parsed = replaceUserPermissionsSchema.safeParse(req.body)
+
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: 'ValidationError',
+        message: parsed.error.errors[0].message,
+        statusCode: 400
+      })
+    }
+
+    const user = await fastify.prisma.user.findUnique({
+      where: { id },
+      include: USER_INCLUDE
+    })
+
+    if (!user) {
+      return reply.status(404).send({
+        error: 'NotFound',
+        message: 'Utente non trovato',
+        statusCode: 404
+      })
+    }
+
+    const accessError = ensureCanAccessUser(reply, user as UserRecord, req.auth, {
+      allowAllPermission: canUpdateAllUsers(req.auth.permissions),
+      allowSuperAdminPermission: canManageSuperAdmins(req.auth.permissions),
+    })
+    if (accessError) {
+      return accessError
+    }
+
+    const replaceError = await replaceUserDirectPermissions(
+      fastify.prisma,
+      id,
+      parsed.data.permissionCodes,
+      req.auth.userId,
+      req.auth.permissions,
+    )
+    if (replaceError) {
+      return reply.status(replaceError.statusCode).send(replaceError)
+    }
+
+    return reply.send(await getUserPermissionDetail(fastify.prisma, id))
   })
 
   // GET /api/users/:id

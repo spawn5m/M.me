@@ -4,10 +4,15 @@ const NOT_IMPLEMENTED = { error: 'NotImplemented', message: 'Endpoint disponibil
 
 const catalogRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.addHook('preHandler', fastify.authenticate)
-  fastify.addHook('preHandler', fastify.checkRole(['manager', 'super_admin']))
+  fastify.addHook('preHandler', fastify.loadAuthorizationContext)
 
-  fastify.get('/pdf', async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
-  fastify.post('/pdf', async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
+  fastify.get('/pdf', {
+    preHandler: [fastify.checkPermission('catalog.pdf.read')]
+  }, async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
+
+  fastify.post('/pdf', {
+    preHandler: [fastify.checkPermission('catalog.pdf.write')]
+  }, async (_req, reply) => reply.status(501).send(NOT_IMPLEMENTED))
 }
 
 export default catalogRoutes
