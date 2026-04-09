@@ -82,6 +82,8 @@ Nota: la matrice include anche `users.assign_pricelist` per continuita' di catal
 
 I grant diretti sono solo additivi: il runtime fa unione tra permessi di ruolo e permessi utente, non sottrazione. Diventano effettivi alla request successiva, perche' i permessi vengono ricalcolati da database su `GET /api/auth/me` e nel contesto di autorizzazione delle route protette.
 
+Nel workflow amministrativo normale la gestione dei permessi resta role-first dalla sezione `Ruoli`; i grant diretti utente non fanno parte del normale flusso UI, anche se il supporto runtime e le relative route restano disponibili.
+
 ## Route map
 
 | Route | Runtime authorization |
@@ -90,7 +92,7 @@ I grant diretti sono solo additivi: il runtime fa unione tra permessi di ruolo e
 | `/api/permissions` | `GET` richiede `roles.read`; restituisce il catalogo permessi di sistema in formato `{ data, pagination }` |
 | `/api/users` | `GET` richiede `users.read.team` o `users.read.all`; `POST` richiede `users.create`; `GET/:id` riusa `users.read.team` o `users.read.all`; `PUT/:id` richiede `users.update.team` o `users.update.all`; `DELETE/:id` richiede `users.disable` |
 | `/api/users/:id/permissions` | `GET` richiede `roles.manage` e (`users.read.team` o `users.read.all`); restituisce `user`, `roles`, `directPermissions`, `effectivePermissions`; `PUT` richiede `roles.manage` e (`users.update.team` o `users.update.all`), sostituisce integralmente i grant diretti utente e rifiuta permission code che il chiamante non possiede gia |
-| `/api/roles` | `GET` richiede `roles.read`; `POST` e `DELETE /:id` richiedono `roles.manage` |
+| `/api/roles` | `GET` richiede `roles.read` oppure almeno uno tra `users.create`, `users.update.team`, `users.update.all` per supportare il workflow di assegnazione ruoli nella gestione utenti; `POST` e `DELETE /:id` richiedono `roles.manage` |
 | `/api/roles/:id/permissions` | `GET` richiede `roles.read`; restituisce `role` e `permissions`; `PUT` richiede `roles.manage`, sostituisce integralmente i permessi del ruolo, rifiuta i ruoli di sistema e rifiuta permission code che il chiamante non possiede gia |
 | `/api/admin/pricelists` | controlli per tipo listino: `pricelists.sale.*` per listini `sale`, `pricelists.purchase.*` per listini `purchase`; `GET /` e `GET /:id` richiedono read; `POST`, `PUT`, `POST /:id/rules`, `DELETE /:id/rules/:ruleId`, `POST /:id/items` richiedono write sul tipo; `DELETE /:id` richiede delete; `GET /:id/preview` richiede preview; `POST /:id/recalculate` richiede recalculate; `PUT /:id/assign/:userId` richiede `pricelists.sale.assign` per sale e `pricelists.purchase.write` per purchase |
 | `/api/admin/catalog/pdf` | `GET` richiede `catalog.pdf.read`; `POST` richiede `catalog.pdf.write`; entrambi restano placeholder `501`, ma il guard runtime e' gia basato su permessi espliciti |

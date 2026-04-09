@@ -149,6 +149,12 @@ Esempio:
 
 Non sono previsti deny espliciti. Se serve restringere, si cambia ruolo o si tolgono grant aggiuntivi.
 
+### 6.5 Workflow admin
+
+Nel runtime restano possibili grant diretti utente, ma il workflow amministrativo ordinario e' role-first.
+
+La gestione operativa dei permessi avviene dalla sezione `Ruoli`: i permessi si compongono e si mantengono sui ruoli, poi i ruoli vengono assegnati agli utenti.
+
 ---
 
 ## 7. Catalogo minimo dei permessi
@@ -179,7 +185,7 @@ Non sono previsti deny espliciti. Se serve restringere, si cambia ruolo o si tol
 
 | Permesso | Descrizione |
 |---|---|
-| `roles.read` | Vedere elenco ruoli e relativi permessi. |
+| `roles.read` | Vedere elenco ruoli e relativi permessi. Nel runtime `GET /api/roles` puo essere letto anche da chi ha `users.create`, `users.update.team` oppure `users.update.all`, cosi la UI utenti puo popolare le opzioni ruolo senza aprire la gestione ruoli completa. |
 | `roles.manage` | Creare, modificare o eliminare ruoli custom e assegnare permessi ai ruoli. |
 
 ### 7.4 Articoli cofano
@@ -479,8 +485,8 @@ Priorita:
 
 Completata.
 
-- pagina ruoli con assegnazione permessi;
-- pagina utenti con grant diretti utente;
+- pagina `Ruoli` come superficie operativa per creare bundle e gestire permessi;
+- pagina utenti focalizzata su assegnazione ruolo e dati utente, non su grant diretti nel flusso ordinario;
 - vista "permessi effettivi" per debug amministrativo.
 
 ### Fase 7 - Test
