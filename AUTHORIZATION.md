@@ -19,13 +19,13 @@ Questo documento definisce:
 
 ## 2. Stato attuale
 
-Oggi il progetto usa un RBAC semplice:
+Oggi il progetto usa un runtime permission-based gia operativo:
 
 - login tramite `@fastify/secure-session`;
-- in sessione vengono salvati `userId` e `roles[]`;
-- le route protette usano `fastify.authenticate` e `fastify.checkRole(...)`;
-- il frontend usa `hasRole()` per proteggere pagine e mostrare voci di navigazione;
-- nel database esistono gia `Permission` e `RolePermission`, ma non sono ancora la source of truth del runtime.
+- in sessione viene salvato `userId`;
+- le route protette usano `fastify.authenticate` e guardie `checkPermission(...)` / `checkAnyPermission(...)`;
+- il frontend usa `permissions[]`, `hasPermission()` e `ProtectedRoute` per riflettere il modello autorizzativo corrente;
+- `Permission`, `RolePermission` e `UserPermission` sono la source of truth del runtime.
 
 ### File attuali coinvolti
 
@@ -43,11 +43,9 @@ Oggi il progetto usa un RBAC semplice:
 
 ### Limiti dell'approccio attuale
 
-- i controlli sono basati su nomi ruolo, non su capability atomiche;
-- il ruolo `collaboratore` e incoerente tra UI e API;
-- i permessi per singolo utente non sono gestibili;
-- un cambio ruolo non e applicato immediatamente se la sessione contiene ancora `roles[]`;
-- il sistema `Permission` esiste, ma non governa davvero l'accesso runtime.
+- restano decisioni di prodotto aperte su visibilita dei ruoli per `manager` e area utenti per `collaboratore`;
+- eventuali permessi futuri per export o reportistica non sono ancora modellati;
+- alcune capability restano placeholder applicativi anche se gia protette da permessi espliciti, come `/api/admin/catalog/pdf` che risponde ancora `501`.
 
 ---
 
@@ -173,7 +171,7 @@ Non sono previsti deny espliciti. Se serve restringere, si cambia ruolo o si tol
 | `users.update.all` | Modificare utenti fuori dal proprio team. |
 | `users.disable` | Disattivare utenti. |
 | `users.assign_manager` | Assegnare o cambiare il manager di un utente. |
-| `users.assign_pricelist` | Assegnare listini a utenti cliente. |
+| `users.assign_pricelist` | Capability catalogata ma non usata come guard runtime corrente; oggi l'assegnazione listini e' governata da `pricelists.sale.assign` per i listini vendita e `pricelists.purchase.write` per i listini acquisto. |
 | `users.super_admin.read` | Vedere utenti con ruolo `super_admin`. |
 | `users.super_admin.manage` | Creare, modificare o disattivare utenti `super_admin`. |
 
@@ -274,6 +272,8 @@ Non sono previsti deny espliciti. Se serve restringere, si cambia ruolo o si tol
 
 ## 9. Matrice default ruolo -> permessi
 
+Nota: la matrice mantiene anche `users.assign_pricelist` come permesso catalogato/default, ma il runtime corrente non lo usa come guard effettivo per l'assegnazione listini. L'operazione e' oggi governata da `pricelists.sale.assign` e `pricelists.purchase.write`.
+
 | Permesso | super_admin | manager | collaboratore | impresario_funebre | marmista |
 |---|---|---|---|---|---|
 | `dashboard.admin.read` | ✅ | ✅ | ✅ | ✗ | ✗ |
@@ -328,6 +328,10 @@ Non sono previsti deny espliciti. Se serve restringere, si cambia ruolo o si tol
 ### Nota sul collaboratore
 
 Per il nuovo modello il `collaboratore` va allineato in modo netto al profilo "catalog editor". Non deve avere accesso di default a ruoli, utenti globali o listini.
+
+### Nota su `users.assign_pricelist`
+
+Il permesso resta presente nel catalogo e nella matrice storica del modello, ma il runtime corrente non lo usa come guard effettivo per l'assegnazione listini. L'enforcement attuale passa da `pricelists.sale.assign` e `pricelists.purchase.write`, come documentato in `docs/authorization-runtime.md`.
 
 ---
 
@@ -473,6 +477,8 @@ Priorita:
 
 ### Fase 6 - UI amministrazione permessi
 
+Completata.
+
 - pagina ruoli con assegnazione permessi;
 - pagina utenti con grant diretti utente;
 - vista "permessi effettivi" per debug amministrativo.
@@ -545,11 +551,10 @@ La migrazione e considerata completata quando:
 
 ---
 
-## 17. Open questions da chiudere prima della migration finale
+## 17. Follow-up fuori scope
 
-- Un `manager` puo leggere i ruoli senza gestirli oppure no.
-- Un `collaboratore` deve poter vedere parte della lista utenti o va rimosso del tutto dall'area utenti.
-- Serve distinguere `catalog.pdf.read` da `catalog.pdf.download`.
-- Serve aggiungere permessi separati per export o reportistica futura.
+- Valutare se un `manager` debba poter leggere i ruoli senza poterli gestire.
+- Valutare se un `collaboratore` debba poter vedere parte della lista utenti o uscire del tutto dall'area utenti.
+- Valutare eventuali permessi separati per export o reportistica futura.
 
-Finche queste domande non sono chiuse, i default in questo documento sono da considerare la baseline consigliata per l'implementazione.
+Per questi punti i default documentati restano la baseline corrente, ma non bloccano la migrazione permission-based gia completata.

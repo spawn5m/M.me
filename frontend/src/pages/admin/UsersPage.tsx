@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Pencil, Tag, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import DataTable from '../../components/admin/DataTable'
 import FormModal from '../../components/admin/FormModal'
 import ConfirmDialog from '../../components/admin/ConfirmDialog'
+import PermissionEditorModal from '../../components/admin/PermissionEditorModal'
 import { usersApi } from '../../lib/admin/users-api'
 import { rolesApi } from '../../lib/admin/roles-api'
+import { permissionsApi } from '../../lib/admin/permissions-api'
 import { pricelistsApi } from '../../lib/api/pricelists'
-import type { AdminUser, AdminRole, AdminPriceList } from '../../../../backend/src/types/shared'
+import type {
+  AdminPermission,
+  AdminPriceList,
+  AdminRole,
+  AdminUser,
+  AdminUserPermissionDetail,
+} from '../../../../backend/src/types/shared'
 
 // ─── Schema form ──────────────────────────────────────────────────────────────
 
@@ -92,6 +100,9 @@ const columns = [
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
+  const assignDialogTitleId = useId()
+  const funeralSelectId = useId()
+  const marmistaSelectId = useId()
   const [users, setUsers] = useState<AdminUser[]>([])
   const [allRoles, setAllRoles] = useState<AdminRole[]>([])
   const [allPriceLists, setAllPriceLists] = useState<AdminPriceList[]>([])
@@ -100,10 +111,19 @@ export default function UsersPage() {
   const [editTarget, setEditTarget] = useState<AdminUser | null>(null)
   const [confirmTarget, setConfirmTarget] = useState<AdminUser | null>(null)
   const [assignTarget, setAssignTarget] = useState<AdminUser | null>(null)
+  const [permissionTarget, setPermissionTarget] = useState<AdminUser | null>(null)
+  const [permissionCatalog, setPermissionCatalog] = useState<AdminPermission[]>([])
+  const [permissionDetail, setPermissionDetail] = useState<AdminUserPermissionDetail | null>(null)
+  const [selectedDirectPermissionCodes, setSelectedDirectPermissionCodes] = useState<string[]>([])
   const [assignFuneralId, setAssignFuneralId] = useState('')
   const [assignMarmistaId, setAssignMarmistaId] = useState('')
   const [isAssigning, setIsAssigning] = useState(false)
+  const [assignError, setAssignError] = useState<string | null>(null)
+  const [isPermissionLoading, setIsPermissionLoading] = useState(false)
+  const [isPermissionSaving, setIsPermissionSaving] = useState(false)
   const [pageError, setPageError] = useState<string | null>(null)
+  const [permissionError, setPermissionError] = useState<string | null>(null)
+  const permissionRequestIdRef = useRef(0)
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, setValue, watch, setError: setFormError, clearErrors } = useForm<CreateFormValues>({
     defaultValues: { roleIds: [] }
@@ -176,11 +196,15 @@ export default function UsersPage() {
     setAssignTarget(user)
     setAssignFuneralId(user.funeralPriceList?.id ?? '')
     setAssignMarmistaId(user.marmistaPriceList?.id ?? '')
+    setAssignError(null)
   }
 
   const handleAssign = async () => {
     if (!assignTarget) return
+
+    setAssignError(null)
     setIsAssigning(true)
+
     try {
       if (assignFuneralId && assignFuneralId !== assignTarget.funeralPriceList?.id) {
         await pricelistsApi.assign(assignFuneralId, assignTarget.id)
@@ -190,13 +214,107 @@ export default function UsersPage() {
       }
       setAssignTarget(null)
       loadUsers()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setAssignError(msg ?? 'Errore durante l\'assegnazione del listino')
     } finally {
       setIsAssigning(false)
     }
   }
 
+  const closePermissions = () => {
+    permissionRequestIdRef.current += 1
+    setPermissionTarget(null)
+    setPermissionCatalog([])
+    setPermissionDetail(null)
+    setSelectedDirectPermissionCodes([])
+    setPermissionError(null)
+    setIsPermissionLoading(false)
+    setIsPermissionSaving(false)
+  }
+
+  const openPermissions = async (user: AdminUser) => {
+    const requestId = permissionRequestIdRef.current + 1
+    permissionRequestIdRef.current = requestId
+
+    setPermissionTarget(user)
+    setPermissionCatalog([])
+    setPermissionDetail(null)
+    setSelectedDirectPermissionCodes([])
+    setPermissionError(null)
+    setIsPermissionLoading(true)
+
+    try {
+      const [catalogRes, detailRes] = await Promise.all([
+        permissionsApi.list(),
+        permissionsApi.getUserPermissions(user.id),
+      ])
+
+      if (permissionRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setPermissionCatalog(catalogRes.data)
+      setPermissionDetail(detailRes)
+      setSelectedDirectPermissionCodes(detailRes.directPermissions.map((permission) => permission.code))
+    } catch (err: unknown) {
+      if (permissionRequestIdRef.current !== requestId) {
+        return
+      }
+
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setPermissionError(msg ?? 'Errore durante il caricamento dei permessi')
+    } finally {
+      if (permissionRequestIdRef.current === requestId) {
+        setIsPermissionLoading(false)
+      }
+    }
+  }
+
+  const toggleDirectPermission = (permissionCode: string) => {
+    setSelectedDirectPermissionCodes((current) => current.includes(permissionCode)
+      ? current.filter((code) => code !== permissionCode)
+      : [...current, permissionCode])
+  }
+
+  const handlePermissionSave = async () => {
+    if (!permissionTarget) return
+
+    const requestId = permissionRequestIdRef.current
+
+    setPermissionError(null)
+    setIsPermissionSaving(true)
+
+    try {
+      const detail = await permissionsApi.updateUserPermissions(permissionTarget.id, selectedDirectPermissionCodes)
+
+      if (permissionRequestIdRef.current !== requestId) {
+        return
+      }
+
+      setPermissionDetail(detail)
+      setSelectedDirectPermissionCodes(detail.directPermissions.map((permission) => permission.code))
+    } catch (err: unknown) {
+      if (permissionRequestIdRef.current !== requestId) {
+        return
+      }
+
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setPermissionError(msg ?? 'Errore durante il salvataggio dei permessi')
+    } finally {
+      if (permissionRequestIdRef.current === requestId) {
+        setIsPermissionSaving(false)
+      }
+    }
+  }
+
   const userHasRole = (user: AdminUser, roleName: string) =>
     user.roles.some(r => r.name === roleName)
+
+  const hasAssignChanges = !!assignTarget && (
+    (assignFuneralId !== '' && assignFuneralId !== assignTarget.funeralPriceList?.id) ||
+    (assignMarmistaId !== '' && assignMarmistaId !== assignTarget.marmistaPriceList?.id)
+  )
 
   const onSubmit = async (values: CreateFormValues) => {
     clearErrors()
@@ -272,6 +390,12 @@ export default function UsersPage() {
             label: 'Modifica',
             icon: <Pencil size={15} />,
             onClick: (u) => openEdit(u as AdminUser)
+          },
+          {
+            label: 'Permessi',
+            onClick: (u) => {
+              void openPermissions(u as AdminUser)
+            }
           },
           {
             label: 'Listino',
@@ -423,12 +547,17 @@ export default function UsersPage() {
       {/* Modal assegnazione listino */}
       {assignTarget && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(26, 43, 74, 0.22)', backdropFilter: 'blur(6px)' }}>
-          <div className="w-full max-w-md border border-[#E5E0D8] bg-white shadow-[0_24px_80px_rgba(26,43,74,0.16)]">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={assignDialogTitleId}
+            className="w-full max-w-md border border-[#E5E0D8] bg-white shadow-[0_24px_80px_rgba(26,43,74,0.16)]"
+          >
             <div className="flex items-center justify-between px-6 py-4 border-b border-[#E5E0D8]">
-              <h2 className="text-xl text-[#031634]" style={{ fontFamily: 'Playfair Display, serif' }}>
+              <h2 id={assignDialogTitleId} className="text-xl text-[#031634]" style={{ fontFamily: 'Playfair Display, serif' }}>
                 Assegna Listino — {assignTarget.firstName} {assignTarget.lastName}
               </h2>
-              <button onClick={() => setAssignTarget(null)} className="text-[#6B7280] text-xl transition-colors hover:text-[#031634]">×</button>
+              <button type="button" aria-label="Chiudi" onClick={() => setAssignTarget(null)} className="text-[#6B7280] text-xl transition-colors hover:text-[#031634]">×</button>
             </div>
             <div className="px-6 py-4 space-y-4">
               {(assignTarget.funeralPriceList || assignTarget.marmistaPriceList) && (
@@ -447,10 +576,10 @@ export default function UsersPage() {
 
               {userHasRole(assignTarget, 'impresario_funebre') && (
                 <div>
-                  <label className="admin-label">Listino Cofani</label>
-                  <select value={assignFuneralId} onChange={e => setAssignFuneralId(e.target.value)}
+                  <label className="admin-label" htmlFor={funeralSelectId}>Listino Cofani</label>
+                  <select id={funeralSelectId} value={assignFuneralId} onChange={e => setAssignFuneralId(e.target.value)}
                     className="admin-select">
-                    <option value="">— Nessuno —</option>
+                    <option value="" disabled>Seleziona listino cofani</option>
                     {allPriceLists.filter(pl => pl.articleType === 'funeral').map(pl => (
                       <option key={pl.id} value={pl.id}>{pl.name} ({pl.type === 'purchase' ? 'Acquisto' : 'Vendita'})</option>
                     ))}
@@ -459,20 +588,26 @@ export default function UsersPage() {
               )}
               {(userHasRole(assignTarget, 'marmista') || userHasRole(assignTarget, 'impresario_funebre')) && (
                 <div>
-                  <label className="admin-label">Listino Marmista</label>
-                  <select value={assignMarmistaId} onChange={e => setAssignMarmistaId(e.target.value)}
+                  <label className="admin-label" htmlFor={marmistaSelectId}>Listino Marmista</label>
+                  <select id={marmistaSelectId} value={assignMarmistaId} onChange={e => setAssignMarmistaId(e.target.value)}
                     className="admin-select">
-                    <option value="">— Nessuno —</option>
+                    <option value="" disabled>Seleziona listino marmista</option>
                     {allPriceLists.filter(pl => pl.articleType === 'marmista').map(pl => (
                       <option key={pl.id} value={pl.id}>{pl.name} ({pl.type === 'purchase' ? 'Acquisto' : 'Vendita'})</option>
                     ))}
                   </select>
                 </div>
               )}
+
+              {assignError && (
+                <p className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                  {assignError}
+                </p>
+              )}
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-[#E5E0D8] bg-[#F8F7F4] px-6 py-4">
-              <button onClick={() => setAssignTarget(null)} className="admin-button-secondary">Annulla</button>
-              <button onClick={handleAssign} disabled={isAssigning || (!assignFuneralId && !assignMarmistaId)}
+              <button type="button" onClick={() => { setAssignTarget(null); setAssignError(null) }} className="admin-button-secondary">Annulla</button>
+              <button type="button" onClick={handleAssign} disabled={isAssigning || !hasAssignChanges}
                 className="admin-button-primary disabled:opacity-50">
                 {isAssigning ? 'Salvataggio…' : 'Assegna'}
               </button>
@@ -480,6 +615,42 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      <PermissionEditorModal
+        isOpen={!!permissionTarget}
+        title={permissionTarget ? `Permessi utente: ${permissionTarget.firstName} ${permissionTarget.lastName}` : 'Permessi utente'}
+        permissions={permissionCatalog}
+        selectedCodes={selectedDirectPermissionCodes}
+        readOnly={false}
+        isLoading={isPermissionLoading}
+        isSaving={isPermissionSaving}
+        effectiveCodes={permissionDetail?.effectivePermissions.map((permission) => permission.code) ?? []}
+        secondarySection={{
+          title: 'Ruoli assegnati',
+          content: (
+            <div className="space-y-3">
+              {permissionDetail?.roles.length ? (
+                <div className="flex flex-wrap gap-2">
+                  {permissionDetail.roles.map((role) => (
+                    <span key={role.id} className="admin-badge">{role.label}</span>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-[#6B7280]">Nessun ruolo assegnato</p>
+              )}
+
+              {permissionError && (
+                <p className="border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+                  {permissionError}
+                </p>
+              )}
+            </div>
+          ),
+        }}
+        onToggle={toggleDirectPermission}
+        onClose={closePermissions}
+        onSave={permissionDetail ? handlePermissionSave : undefined}
+      />
 
       {/* Confirm disattivazione */}
       <ConfirmDialog

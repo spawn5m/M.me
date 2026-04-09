@@ -59,6 +59,17 @@ export interface AdminRole {
   isSystem: boolean
 }
 
+export interface AdminPermission {
+  id: string
+  code: string
+  resource: string
+  action: string
+  scope: string | null
+  label: string
+  description: string
+  isSystem: boolean
+}
+
 export type ArticleType = 'funeral' | 'marmista'
 
 export interface AdminAssignedPriceList {
@@ -80,6 +91,18 @@ export interface AdminUser {
   marmistaPriceList: AdminAssignedPriceList | null
   createdAt: string
   updatedAt: string
+}
+
+export interface AdminUserPermissionDetail {
+  user: Pick<AdminUser, 'id' | 'email' | 'firstName' | 'lastName' | 'isActive'>
+  roles: AdminRole[]
+  directPermissions: AdminPermission[]
+  effectivePermissions: AdminPermission[]
+}
+
+export interface AdminRolePermissionDetail {
+  role: AdminRole
+  permissions: AdminPermission[]
 }
 
 export interface AdminStats {
