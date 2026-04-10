@@ -52,6 +52,7 @@ export const SYSTEM_ROLE_DEFAULTS: Record<SystemRoleName, PermissionCode[]> = {
     'pricelists.purchase.recalculate',
     'catalog.pdf.read',
     'catalog.pdf.write',
+    'branding.logo.manage',
   ],
   manager: [
     'dashboard.admin.read',
@@ -93,6 +94,7 @@ export const SYSTEM_ROLE_DEFAULTS: Record<SystemRoleName, PermissionCode[]> = {
     'pricelists.purchase.recalculate',
     'catalog.pdf.read',
     'catalog.pdf.write',
+    'branding.logo.manage',
   ],
   collaboratore: [
     'dashboard.admin.read',
