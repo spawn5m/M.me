@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { sendContactEmail } from '../lib/mailer'
@@ -30,6 +32,20 @@ function buildPagination(page: number, limit: number, total: number) {
     total,
     totalPages: Math.ceil(total / limit),
   }
+}
+
+// ─── Branding ─────────────────────────────────────────────────────────────────
+
+const LOGO_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'logo')
+const LOGO_BASES = ['logo.png', 'logo.svg']
+
+function findLogoUrl(): string | null {
+  for (const base of LOGO_BASES) {
+    if (fs.existsSync(path.join(LOGO_DIR, base))) {
+      return `/uploads/images/logo/${base}`
+    }
+  }
+  return null
 }
 
 interface PublicCoffinPriceOption {
@@ -860,6 +876,12 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   )
+
+  // ── Branding ──────────────────────────────────────────────────────────────
+
+  fastify.get('/branding/logo', async (_req, reply) => {
+    return reply.send({ url: findLogoUrl() })
+  })
 
 }
 
