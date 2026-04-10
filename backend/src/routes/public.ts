@@ -6,6 +6,7 @@ import {
   loadPriceListTree,
   type PrismaClientLike,
 } from '../lib/priceListUtils'
+import type { CatalogLayoutPublic } from '../types/shared'
 
 // ─── Zod Schemas ─────────────────────────────────────────────────────────────
 
@@ -40,10 +41,8 @@ interface PublicCoffinPriceOption {
 
 interface PublicPricePrisma extends PrismaClientLike {
   user: {
-    findUnique: (args: {
-      where: { id: string }
-      select: { funeralPriceListId: true }
-    }) => Promise<{ funeralPriceListId: string | null } | null>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    findUnique: (args: any) => Promise<any>
   }
 }
 
@@ -173,6 +172,73 @@ async function loadAdminFuneralPriceOptions(
         price: item.computedPrice,
       })
       priceMap.set(item.coffinArticleId, options)
+    }
+  }
+
+  return priceMap
+}
+
+async function loadAssignedAccessoryPriceMap(
+  prisma: PublicPricePrisma,
+  userId: string,
+  articleIds: string[],
+): Promise<Map<string, number>> {
+  const articleIdSet = new Set(articleIds)
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { accessoriesPriceListId: true },
+  })
+
+  if (!user?.accessoriesPriceListId) return new Map<string, number>()
+
+  const tree = await loadPriceListTree(prisma, user.accessoriesPriceListId)
+  if (!tree) return new Map<string, number>()
+
+  const computedItems = await buildComputedItems(prisma, tree)
+  const priceMap = new Map<string, number>()
+
+  for (const item of computedItems) {
+    if (!item.accessoryArticleId || !articleIdSet.has(item.accessoryArticleId)) continue
+    priceMap.set(item.accessoryArticleId, item.computedPrice)
+  }
+
+  return priceMap
+}
+
+async function loadAdminAccessoryPriceOptions(
+  prisma: PrismaClientLike,
+  articleIds: string[],
+): Promise<Map<string, PublicCoffinPriceOption[]>> {
+  const articleIdSet = new Set(articleIds)
+  const priceLists = await prisma.priceList.findMany({
+    where: { articleType: 'accessories', type: 'sale' },
+    select: { id: true, name: true, type: true },
+    orderBy: { name: 'asc' },
+  })
+
+  const computedByList = await Promise.all(
+    priceLists.map(async (priceList) => {
+      const tree = await loadPriceListTree(prisma, priceList.id)
+      if (!tree) return null
+      const computedItems = await buildComputedItems(prisma, tree)
+      return { priceList, computedItems }
+    }),
+  )
+
+  const priceMap = new Map<string, PublicCoffinPriceOption[]>()
+
+  for (const result of computedByList) {
+    if (!result) continue
+    for (const item of result.computedItems) {
+      if (!item.accessoryArticleId || !articleIdSet.has(item.accessoryArticleId)) continue
+      const options = priceMap.get(item.accessoryArticleId) ?? []
+      options.push({
+        priceListId: result.priceList.id,
+        priceListName: result.priceList.name,
+        priceListType: result.priceList.type,
+        price: item.computedPrice,
+      })
+      priceMap.set(item.accessoryArticleId, options)
     }
   }
 
@@ -331,6 +397,7 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
     const queryRaw = request.query as Record<string, unknown>
     const parsed = paginationSchema.extend({
       category: z.string().optional(),
+      search: z.string().optional(),
     }).safeParse(queryRaw)
 
     if (!parsed.success) {
@@ -341,12 +408,18 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    const { page, limit, category } = parsed.data
+    const { page, limit, category, search } = parsed.data
     const skip = (page - 1) * limit
 
-    const where = category
-      ? { categories: { some: { code: category } } }
-      : {}
+    const where = {
+      ...(category ? { categories: { some: { code: category } } } : {}),
+      ...(search ? {
+        OR: [
+          { code: { contains: search, mode: 'insensitive' as const } },
+          { description: { contains: search, mode: 'insensitive' as const } },
+        ],
+      } : {}),
+    }
 
     const [total, articles] = await Promise.all([
       fastify.prisma.accessoryArticle.count({ where }),
@@ -370,8 +443,38 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
       }),
     ])
 
+    const userId = getSessionUserId(request as { session?: SessionLike })
+    const articleIds = articles.map((a) => a.id)
+    const roles = userId ? await loadSessionRoles(fastify.prisma as unknown as PublicRolePrisma, userId) : []
+
+    let assignedPriceMap = new Map<string, number>()
+    let adminPriceOptionsMap = new Map<string, PublicCoffinPriceOption[]>()
+
+    if (articleIds.length > 0) {
+      if (canSeeAdminFuneralPrices(roles)) {
+        adminPriceOptionsMap = await loadAdminAccessoryPriceOptions(
+          fastify.prisma as unknown as PrismaClientLike,
+          articleIds,
+        )
+      } else if (roles.includes('impresario_funebre') && userId) {
+        assignedPriceMap = await loadAssignedAccessoryPriceMap(
+          fastify.prisma as unknown as PublicPricePrisma,
+          userId,
+          articleIds,
+        )
+      }
+    }
+
     return reply.send({
-      data: articles,
+      data: articles.map((article) => ({
+        ...article,
+        ...(roles.includes('impresario_funebre')
+          ? { price: assignedPriceMap.get(article.id) ?? null }
+          : {}),
+        ...(canSeeAdminFuneralPrices(roles)
+          ? { priceOptions: adminPriceOptionsMap.get(article.id) ?? [] }
+          : {}),
+      })),
       pagination: buildPagination(page, limit, total),
     })
   })
@@ -583,6 +686,46 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send(article)
   })
 
+  // ── Catalog PDF layout pubblico ───────────────────────────────────────────
+
+  fastify.get<{ Params: { type: string } }>('/catalog/:type/layout', async (request, reply) => {
+    const CATALOG_TYPES = ['accessories', 'marmista'] as const
+    const typeParsed = z.enum(CATALOG_TYPES).safeParse(request.params.type)
+    if (!typeParsed.success) {
+      return reply.status(400).send({
+        error: 'BAD_REQUEST',
+        message: `Tipo catalogo non valido. Valori accettati: ${CATALOG_TYPES.join(', ')}`,
+        statusCode: 400,
+      })
+    }
+
+    const catalog = await fastify.prisma.pdfCatalog.findUnique({
+      where: { type: typeParsed.data },
+    })
+
+    if (!catalog || catalog.totalPdfPages === null || catalog.pagesSlug === null) {
+      return reply.status(404).send({
+        error: 'NOT_FOUND',
+        message: 'Catalogo non disponibile',
+        statusCode: 404,
+      })
+    }
+
+    const payload: CatalogLayoutPublic = {
+      type: catalog.type as 'accessories' | 'marmista',
+      slug: catalog.pagesSlug,
+      totalPdfPages: catalog.totalPdfPages,
+      layout: {
+        offset: catalog.layoutOffset,
+        firstPageType: catalog.firstPageType as 'single' | 'double',
+        bodyPageType: catalog.bodyPageType as 'single' | 'double',
+        lastPageType: catalog.lastPageType as 'single' | 'double',
+      },
+    }
+
+    return reply.send(payload)
+  })
+
   // ── Contact ───────────────────────────────────────────────────────────────
 
   fastify.post(
@@ -620,6 +763,7 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
   )
+
 }
 
 export default publicRoutes
