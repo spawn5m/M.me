@@ -1,5 +1,8 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { catalogPublicApi } from '../../lib/api/catalog'
+import type { CatalogLayoutPublic } from '../../../../backend/src/types/shared'
+import { catalogPageToPdfFile, pdfFileToDisplayLabel } from '../../../../backend/src/lib/catalogPageMap'
 
 export interface CatalogViewItem {
   id: string
@@ -8,7 +11,8 @@ export interface CatalogViewItem {
   notes?: string
   categories: string[]
   pdfPage?: number
-  price?: number
+  price?: number | null
+  purchasePrice?: number | null
 }
 
 interface AccessoriesViewProps {
@@ -28,6 +32,13 @@ export default function AccessoriesView({
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [catalogLayoutData, setCatalogLayoutData] = useState<CatalogLayoutPublic | null>(null)
+
+  useEffect(() => {
+    catalogPublicApi.layout('accessories')
+      .then((data) => setCatalogLayoutData(data))
+      .catch(() => setCatalogLayoutData(null))
+  }, [])
 
   const categories = useMemo(
     () => [...new Set(items.flatMap((a) => a.categories))],
@@ -53,9 +64,37 @@ export default function AccessoriesView({
     return filtered[0] ?? null
   }, [selectedId, filtered])
 
-  const pdfSrc = activeItem?.pdfPage
-    ? `${catalogPdfUrl}#page=${activeItem.pdfPage}`
-    : catalogPdfUrl
+  const pdfSrc = (() => {
+    if (!activeItem?.pdfPage) return catalogPdfUrl
+    if (catalogLayoutData?.slug && catalogLayoutData.totalPdfPages) {
+      const layout = {
+        offset: catalogLayoutData.layout.offset,
+        firstPageType: catalogLayoutData.layout.firstPageType,
+        bodyPageType: catalogLayoutData.layout.bodyPageType,
+        lastPageType: catalogLayoutData.layout.lastPageType,
+        totalPdfPages: catalogLayoutData.totalPdfPages,
+      }
+      const fileIdx = catalogPageToPdfFile(activeItem.pdfPage, layout)
+      return `/uploads/pdf/pages/${catalogLayoutData.slug}/${fileIdx}.pdf`
+    }
+    return `${catalogPdfUrl}#page=${activeItem.pdfPage}`
+  })()
+
+  const pdfPageLabel = (() => {
+    if (!activeItem?.pdfPage) return null
+    if (catalogLayoutData?.slug && catalogLayoutData.totalPdfPages) {
+      const layout = {
+        offset: catalogLayoutData.layout.offset,
+        firstPageType: catalogLayoutData.layout.firstPageType,
+        bodyPageType: catalogLayoutData.layout.bodyPageType,
+        lastPageType: catalogLayoutData.layout.lastPageType,
+        totalPdfPages: catalogLayoutData.totalPdfPages,
+      }
+      const fileIdx = catalogPageToPdfFile(activeItem.pdfPage, layout)
+      return pdfFileToDisplayLabel(fileIdx, layout)
+    }
+    return `p. ${activeItem.pdfPage}`
+  })()
 
   function handleSearchChange(value: string) {
     setSearch(value)
@@ -76,7 +115,7 @@ export default function AccessoriesView({
   const hasFilters = search !== '' || category !== ''
 
   return (
-    <div className="flex h-[calc(100vh-240px)] min-h-[480px]">
+    <div className="flex gap-4 h-[calc(100vh-240px)] min-h-[480px]">
 
       {/* ── 1/6 — Filtri + Lista ──────────────────────────────── */}
       <div className="w-1/6 flex flex-col border-r border-[#E5E0D8] overflow-hidden">
@@ -190,9 +229,16 @@ export default function AccessoriesView({
                       {item.description}
                     </span>
                     {showPrice && (
-                      <span className="font-mono text-sm text-[#031634] text-right shrink-0">
-                        {item.price !== undefined ? `€ ${item.price.toFixed(2)}` : '—'}
-                      </span>
+                      <div className="flex flex-col items-end shrink-0">
+                        {item.purchasePrice != null && (
+                          <span className="font-mono text-[10px] font-semibold text-red-600">
+                            € {item.purchasePrice.toFixed(2)}
+                          </span>
+                        )}
+                        <span className="font-mono text-sm text-[#031634]">
+                          {item.price != null ? `€ ${item.price.toFixed(2)}` : '—'}
+                        </span>
+                      </div>
                     )}
                     <span className="text-[10px] text-[#6B7280] shrink-0 mt-0.5 text-right line-clamp-1">
                       {item.categories[0] ?? '—'}
@@ -223,9 +269,9 @@ export default function AccessoriesView({
               <span className="text-[11px] text-[#031634] truncate flex-1">
                 {activeItem.description}
               </span>
-              {activeItem.pdfPage !== undefined && (
+              {pdfPageLabel !== null && (
                 <span className="font-mono text-[10px] text-[#6B7280] shrink-0">
-                  {t('catalog.pdfPage')} {activeItem.pdfPage}
+                  {pdfPageLabel}
                 </span>
               )}
             </>
