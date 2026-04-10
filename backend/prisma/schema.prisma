@@ -16,10 +16,12 @@ model User {
   firstName           String
   lastName            String
   isActive            Boolean       @default(true)
-  funeralPriceListId  String?
-  marmistaPriceListId String?
-  funeralPriceList    PriceList?    @relation("UserFuneralPL", fields: [funeralPriceListId], references: [id])
-  marmistaPriceList   PriceList?    @relation("UserMarmistaPL", fields: [marmistaPriceListId], references: [id])
+  funeralPriceListId      String?
+  marmistaPriceListId     String?
+  accessoriesPriceListId  String?
+  funeralPriceList        PriceList?    @relation("UserFuneralPL", fields: [funeralPriceListId], references: [id])
+  marmistaPriceList       PriceList?    @relation("UserMarmistaPL", fields: [marmistaPriceListId], references: [id])
+  accessoriesPriceList    PriceList?    @relation("UserAccessoriesPL", fields: [accessoriesPriceListId], references: [id])
   userRoles           UserRole[]
   userPermissions     UserPermission[] @relation("UserPermissionGrantee")
   grantedPermissions  UserPermission[] @relation("UserPermissionGrantor")
@@ -234,6 +236,7 @@ enum PriceListType {
 enum ArticleType {
   funeral
   marmista
+  accessories
 }
 
 enum DiscountType {
@@ -252,8 +255,9 @@ model PriceList {
   autoUpdate          Boolean         @default(false)
   rules               PriceRule[]
   items               PriceListItem[]
-  funeralPriceListFor User[]          @relation("UserFuneralPL")
-  marmistaPriceListFor User[]         @relation("UserMarmistaPL")
+  funeralPriceListFor      User[]     @relation("UserFuneralPL")
+  marmistaPriceListFor     User[]     @relation("UserMarmistaPL")
+  accessoriesPriceListFor  User[]     @relation("UserAccessoriesPL")
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
 }
@@ -288,10 +292,21 @@ enum PdfCatalogType {
   marmista
 }
 
+enum PageType {
+  single
+  double
+}
+
 model PdfCatalog {
-  id         String         @id @default(cuid())
-  filePath   String
-  fileName   String
-  type       PdfCatalogType @unique
-  uploadedAt DateTime       @default(now())
+  id            String         @id @default(cuid())
+  filePath      String
+  fileName      String
+  type          PdfCatalogType @unique
+  uploadedAt    DateTime       @default(now())
+  layoutOffset  Int            @default(0)
+  firstPageType PageType       @default(single)
+  bodyPageType  PageType       @default(double)
+  lastPageType  PageType       @default(single)
+  totalPdfPages Int?
+  pagesSlug     String?
 }
