@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { mockMarmista } from '../lib/mock-data'
-import type { MarmistaItem, Pagination } from '../lib/types'
+import type { MarmistaItem, CoffinPriceOption, Pagination } from '../lib/types'
 
 interface LookupLike {
   label?: string
@@ -15,6 +15,7 @@ interface PublicMarmistaRaw {
   notes?: string | null
   publicPrice?: number | null
   price?: number | null
+  priceOptions?: CoffinPriceOption[]
   pdfPage?: number | null
   categories?: Array<string | LookupLike>
 }
@@ -32,16 +33,20 @@ function normalizeLookupList(values: Array<string | LookupLike> | undefined): st
 }
 
 function normalizeMarmista(data: PublicMarmistaRaw[]): MarmistaItem[] {
-  return data.map((item) => ({
-    id: item.id,
-    code: item.code,
-    description: item.description,
-    notes: item.notes ?? undefined,
-    publicPrice: item.publicPrice ?? undefined,
-    price: item.price ?? null,
-    pdfPage: item.pdfPage ?? undefined,
-    categories: normalizeLookupList(item.categories),
-  }))
+  return data.map((item) => {
+    const normalized: MarmistaItem = {
+      id: item.id,
+      code: item.code,
+      description: item.description,
+      notes: item.notes ?? undefined,
+      publicPrice: item.publicPrice ?? undefined,
+      pdfPage: item.pdfPage ?? undefined,
+      categories: normalizeLookupList(item.categories),
+    }
+    if (item.price !== undefined) normalized.price = item.price
+    if (item.priceOptions !== undefined) normalized.priceOptions = item.priceOptions
+    return normalized
+  })
 }
 
 interface UseMarmistaParams {

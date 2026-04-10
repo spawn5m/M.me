@@ -68,7 +68,7 @@ export default function AccessoriesView({
   }, [selectedId, filtered])
 
   const pdfSrc = (() => {
-    if (!activeItem?.pdfPage) return catalogPdfUrl
+    if (!activeItem?.pdfPage) return `${catalogPdfUrl}#view=FitH`
     if (catalogLayoutData?.slug && catalogLayoutData.totalPdfPages) {
       const layout = {
         offset: catalogLayoutData.layout.offset,
@@ -78,9 +78,9 @@ export default function AccessoriesView({
         totalPdfPages: catalogLayoutData.totalPdfPages,
       }
       const fileIdx = catalogPageToPdfFile(activeItem.pdfPage, layout)
-      return `/uploads/pdf/pages/${catalogLayoutData.slug}/${fileIdx}.pdf`
+      return `/uploads/pdf/pages/${catalogLayoutData.slug}/${fileIdx}.pdf#view=FitH`
     }
-    return `${catalogPdfUrl}#page=${activeItem.pdfPage}`
+    return `${catalogPdfUrl}#page=${activeItem.pdfPage}&view=FitH`
   })()
 
   const pdfPageLabel = (() => {
@@ -118,7 +118,7 @@ export default function AccessoriesView({
   const hasFilters = search !== '' || category !== ''
 
   return (
-    <div className="flex gap-4 h-[calc(100vh-240px)] min-h-[480px]">
+    <div className="flex gap-4 h-[calc(100vh-140px)] min-h-[800px]">
 
       {/* ── 1/6 — Filtri + Lista ──────────────────────────────── */}
       <div className="w-1/6 flex flex-col border-r border-[#E5E0D8] overflow-hidden">

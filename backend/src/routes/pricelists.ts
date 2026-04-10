@@ -12,7 +12,7 @@ import {
 const priceListBodySchema = z.object({
   name: z.string().min(1),
   type: z.enum(['purchase', 'sale']),
-  articleType: z.enum(['funeral', 'marmista']),
+  articleType: z.enum(['funeral', 'marmista', 'accessories']),
   parentId: z.string().optional().nullable(),
   autoUpdate: z.boolean().optional().default(false),
 })
@@ -404,12 +404,148 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send({ error: 'BadRequest', message: 'Non si può assegnare un listino marmista a un impresario funebre', statusCode: 400 })
     }
 
-    const field = pl.articleType === 'funeral' ? 'funeralPriceListId' : 'marmistaPriceListId'
+    const field =
+      pl.articleType === 'funeral' ? 'funeralPriceListId'
+      : pl.articleType === 'marmista' ? 'marmistaPriceListId'
+      : 'accessoriesPriceListId'
+
     await fastify.prisma.user.update({
       where: { id: req.params.userId },
       data: { [field]: pl.id },
     })
     return reply.send({ ok: true })
+  })
+
+  // GET /purchase-accessories — lista listini acquisto accessori
+  fastify.get('/purchase-accessories', {
+    preHandler: [fastify.checkPermission('pricelists.purchase.read')]
+  }, async () => {
+    const data = await fastify.prisma.priceList.findMany({
+      where: { type: 'purchase', articleType: 'accessories' },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    })
+    return { data }
+  })
+
+  // GET /purchase-prices-accessories?priceListId=X — prezzi acquisto accessori calcolati
+  fastify.get('/purchase-prices-accessories', {
+    preHandler: [fastify.checkPermission('pricelists.purchase.read')]
+  }, async (req, reply) => {
+    const query = z.object({ priceListId: z.string().min(1) }).safeParse(req.query)
+    if (!query.success) {
+      return reply.status(400).send({ error: 'BadRequest', message: 'priceListId mancante', statusCode: 400 })
+    }
+
+    const pricelist = await fastify.prisma.priceList.findUnique({
+      where: { id: query.data.priceListId },
+      select: { type: true, articleType: true },
+    })
+
+    if (!pricelist || pricelist.type !== 'purchase' || pricelist.articleType !== 'accessories') {
+      return reply.status(400).send({ error: 'BadRequest', message: 'Listino acquisto accessori non valido', statusCode: 400 })
+    }
+
+    const tree = await loadPriceListTree(fastify.prisma as PrismaClientLike, query.data.priceListId)
+    if (!tree) return { prices: {} }
+
+    const computedItems = await buildComputedItems(fastify.prisma as PrismaClientLike, tree)
+
+    const prices: Record<string, number> = {}
+    for (const item of computedItems) {
+      if (item.accessoryArticleId != null) {
+        prices[item.accessoryArticleId] = item.computedPrice
+      }
+    }
+    return { prices }
+  })
+
+  // GET /purchase-marmista — lista listini acquisto marmista
+  fastify.get('/purchase-marmista', {
+    preHandler: [fastify.checkPermission('pricelists.purchase.read')]
+  }, async () => {
+    const data = await fastify.prisma.priceList.findMany({
+      where: { type: 'purchase', articleType: 'marmista' },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    })
+    return { data }
+  })
+
+  // GET /purchase-prices-marmista?priceListId=X — prezzi acquisto marmista calcolati
+  fastify.get('/purchase-prices-marmista', {
+    preHandler: [fastify.checkPermission('pricelists.purchase.read')]
+  }, async (req, reply) => {
+    const query = z.object({ priceListId: z.string().min(1) }).safeParse(req.query)
+    if (!query.success) {
+      return reply.status(400).send({ error: 'BadRequest', message: 'priceListId mancante', statusCode: 400 })
+    }
+
+    const pricelist = await fastify.prisma.priceList.findUnique({
+      where: { id: query.data.priceListId },
+      select: { type: true, articleType: true },
+    })
+
+    if (!pricelist || pricelist.type !== 'purchase' || pricelist.articleType !== 'marmista') {
+      return reply.status(400).send({ error: 'BadRequest', message: 'Listino acquisto marmista non valido', statusCode: 400 })
+    }
+
+    const tree = await loadPriceListTree(fastify.prisma as PrismaClientLike, query.data.priceListId)
+    if (!tree) return { prices: {} }
+
+    const computedItems = await buildComputedItems(fastify.prisma as PrismaClientLike, tree)
+
+    const prices: Record<string, number> = {}
+    for (const item of computedItems) {
+      if (item.marmistaArticleId != null) {
+        prices[item.marmistaArticleId] = item.computedPrice
+      }
+    }
+    return { prices }
+  })
+
+  // GET /purchase-funeral — lista listini acquisto cofani (per attivazione inline nella pagina pubblica)
+  fastify.get('/purchase-funeral', {
+    preHandler: [fastify.checkPermission('pricelists.purchase.read')]
+  }, async () => {
+    const data = await fastify.prisma.priceList.findMany({
+      where: { type: 'purchase', articleType: 'funeral' },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+    })
+    return { data }
+  })
+
+  // GET /purchase-prices?priceListId=X — prezzi acquisto cofani calcolati
+  fastify.get('/purchase-prices', {
+    preHandler: [fastify.checkPermission('pricelists.purchase.read')]
+  }, async (req, reply) => {
+    const query = z.object({ priceListId: z.string().min(1) }).safeParse(req.query)
+    if (!query.success) {
+      return reply.status(400).send({ error: 'BadRequest', message: 'priceListId mancante', statusCode: 400 })
+    }
+
+    const pricelist = await fastify.prisma.priceList.findUnique({
+      where: { id: query.data.priceListId },
+      select: { type: true, articleType: true },
+    })
+
+    if (!pricelist || pricelist.type !== 'purchase' || pricelist.articleType !== 'funeral') {
+      return reply.status(400).send({ error: 'BadRequest', message: 'Listino acquisto cofani non valido', statusCode: 400 })
+    }
+
+    const tree = await loadPriceListTree(fastify.prisma as PrismaClientLike, query.data.priceListId)
+    if (!tree) return { prices: {} }
+
+    const computedItems = await buildComputedItems(fastify.prisma as PrismaClientLike, tree)
+
+    const prices: Record<string, number> = {}
+    for (const item of computedItems) {
+      if (item.coffinArticleId != null) {
+        prices[item.coffinArticleId] = item.computedPrice
+      }
+    }
+    return { prices }
   })
 }
 
