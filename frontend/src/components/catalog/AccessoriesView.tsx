@@ -190,14 +190,13 @@ export default function AccessoriesView({
         {(() => {
           const isMarmista = catalogType === 'marmista'
           const cols = isMarmista
-            ? showPrice ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]'
-            : showPrice ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]'
+            ? showPrice ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]'
+            : showPrice ? 'grid-cols-[1fr_auto]' : 'grid-cols-[1fr]'
           return (
             <div className={`grid gap-2 px-4 py-2 bg-[#F4F3F0] text-[9px] font-bold uppercase tracking-[0.12em] text-[#6B7280] shrink-0 ${cols}`}>
               <span>{t('catalog.description')}</span>
               {isMarmista && <span className="text-right">Pub.</span>}
               {showPrice && <span className="text-right">{t('catalog.price')}</span>}
-              <span>{t('catalog.category')}</span>
             </div>
           )
         })()}
@@ -219,60 +218,60 @@ export default function AccessoriesView({
                 <button
                   key={item.id}
                   onClick={() => setSelectedId(item.id)}
-                  className={`w-full text-left px-4 py-3 border-b border-[#E5E0D8] transition-colors duration-150 cursor-pointer ${
+                  className={`w-full text-left px-4 py-4 border-b border-[#E5E0D8] transition-colors duration-150 cursor-pointer ${
                     isActive
                       ? 'bg-[#F4F3F0] border-l-2 border-l-[#C9A96E]'
                       : 'hover:bg-[#F4F3F0] border-l-2 border-l-transparent'
                   }`}
                 >
-                  <span className="font-mono text-[10px] text-[#C9A96E] tracking-widest block mb-0.5">
-                    {item.code}
-                  </span>
-                  {(() => {
-                    const isMarmista = catalogType === 'marmista'
-                    const cols = isMarmista
-                      ? showPrice ? 'grid-cols-[1fr_auto_auto_auto]' : 'grid-cols-[1fr_auto_auto]'
-                      : showPrice ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]'
-                    return (
-                      <div className={`grid gap-2 items-start ${cols}`}>
-                        <span className="text-sm text-[#031634] leading-snug line-clamp-2 text-left">
-                          {item.description}
-                        </span>
-                        {/* Prezzo pubblico — sempre visibile per marmista */}
-                        {isMarmista && (
-                          <span className="font-mono text-sm text-[#031634] shrink-0 text-right">
-                            {item.publicPrice != null ? `€ ${item.publicPrice.toFixed(2)}` : '—'}
-                          </span>
-                        )}
-                        {/* Prezzo listino — solo quando showPrice */}
-                        {!isMarmista && showPrice && (
-                          <div className="flex flex-col items-end shrink-0">
-                            {item.purchasePrice != null && (
-                              <span className="font-mono text-[10px] font-semibold text-red-600">
-                                € {item.purchasePrice.toFixed(2)}
-                              </span>
-                            )}
-                            <span className="font-mono text-sm text-[#031634]">
-                              {item.price != null ? `€ ${item.price.toFixed(2)}` : '—'}
+                  {/* Codice + prezzi sulla stessa riga */}
+                  <div className="flex items-start justify-between gap-2 mb-1">
+                    <span className="font-mono text-[10px] text-[#C9A96E] tracking-widest shrink-0 pt-0.5">
+                      {item.code}
+                    </span>
+                    {/* Colonna prezzi */}
+                    {(() => {
+                      const isMarmista = catalogType === 'marmista'
+                      return (
+                        <div className="flex flex-col items-end shrink-0 gap-0.5">
+                          {isMarmista && (
+                            <span className="font-mono text-[11px] text-[#6B7280]">
+                              {item.publicPrice != null ? `€ ${item.publicPrice.toFixed(2)}` : '—'}
                             </span>
-                          </div>
-                        )}
-                        {isMarmista && showPrice && (
-                          <span className="font-mono text-sm text-[#1A2B4A] font-semibold shrink-0 text-right">
-                            {item.price != null ? `€ ${item.price.toFixed(2)}` : '—'}
-                          </span>
-                        )}
-                        <span className="text-[10px] text-[#6B7280] shrink-0 mt-0.5 text-right line-clamp-1">
-                          {item.categories[0] ?? '—'}
-                        </span>
-                      </div>
-                    )
-                  })()}
-                  {item.notes && (
-                    <p className="text-[11px] text-[#6B7280] italic line-clamp-1 mt-0.5">
-                      {item.notes}
-                    </p>
-                  )}
+                          )}
+                          {showPrice && (
+                            <>
+                              {item.purchasePrice != null && (
+                                <span className="font-mono text-[10px] font-semibold text-red-600">
+                                  € {item.purchasePrice.toFixed(2)}
+                                </span>
+                              )}
+                              <span className="font-mono text-[11px] font-semibold text-[#031634]">
+                                {item.price != null ? `€ ${item.price.toFixed(2)}` : '—'}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                      )
+                    })()}
+                  </div>
+                  {/* Descrizione */}
+                  <p className="text-sm text-[#031634] leading-snug line-clamp-3 text-left">
+                    {item.description}
+                  </p>
+                  {/* Categoria + note */}
+                  <div className="mt-1.5 flex flex-wrap gap-1 items-center">
+                    {item.categories[0] && (
+                      <span className="text-[9px] font-medium uppercase tracking-[0.1em] text-[#6B7280] bg-[#F4F3F0] px-1.5 py-0.5 rounded-sm">
+                        {item.categories[0]}
+                      </span>
+                    )}
+                    {item.notes && (
+                      <span className="text-[10px] text-[#6B7280] italic line-clamp-1">
+                        {item.notes}
+                      </span>
+                    )}
+                  </div>
                 </button>
               )
             })
