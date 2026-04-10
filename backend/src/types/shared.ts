@@ -151,7 +151,8 @@ export interface ImportResult {
 
 // ─── Catalog PDF ──────────────────────────────────────────────────────────────
 
-export interface CatalogLayout {
+/** Layout configuration as returned by API responses (no totalPdfPages). */
+export interface CatalogLayoutConfig {
   offset: number
   firstPageType: 'single' | 'double'
   bodyPageType: 'single' | 'double'
@@ -166,12 +167,12 @@ export interface CatalogStatus {
   splitPages: number
   isComplete: boolean
   slug: string
-  layout: CatalogLayout
+  layout: CatalogLayoutConfig
 }
 
 export interface CatalogLayoutPublic {
   type: 'accessories' | 'marmista'
   slug: string
   totalPdfPages: number
-  layout: CatalogLayout
+  layout: CatalogLayoutConfig
 }
