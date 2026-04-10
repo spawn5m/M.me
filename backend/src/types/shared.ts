@@ -70,7 +70,7 @@ export interface AdminPermission {
   isSystem: boolean
 }
 
-export type ArticleType = 'funeral' | 'marmista'
+export type ArticleType = 'funeral' | 'marmista' | 'accessories'
 
 export interface AdminAssignedPriceList {
   id: string
@@ -89,6 +89,7 @@ export interface AdminUser {
   manager: string | null
   funeralPriceList: AdminAssignedPriceList | null
   marmistaPriceList: AdminAssignedPriceList | null
+  accessoriesPriceList: AdminAssignedPriceList | null
   createdAt: string
   updatedAt: string
 }
@@ -147,3 +148,30 @@ export interface ImportResult {
 
 // Nota: SessionData augmentation è in src/plugins/auth.ts
 // dove @fastify/secure-session viene importato
+
+// ─── Catalog PDF ──────────────────────────────────────────────────────────────
+
+export interface CatalogLayout {
+  offset: number
+  firstPageType: 'single' | 'double'
+  bodyPageType: 'single' | 'double'
+  lastPageType: 'single' | 'double'
+}
+
+export interface CatalogStatus {
+  type: 'accessories' | 'marmista'
+  fileName: string
+  uploadedAt: string
+  totalPdfPages: number | null
+  splitPages: number
+  isComplete: boolean
+  slug: string
+  layout: CatalogLayout
+}
+
+export interface CatalogLayoutPublic {
+  type: 'accessories' | 'marmista'
+  slug: string
+  totalPdfPages: number
+  layout: CatalogLayout
+}
