@@ -1,11 +1,14 @@
 import fs from 'fs'
 import path from 'path'
-import { PDFDocument } from 'pdf-lib'
+import { execFileSync } from 'child_process'
 import type { FastifyBaseLogger } from 'fastify'
 import type { PrismaClient } from '@prisma/client'
 
 const UPLOADS_PDF = path.resolve(process.cwd(), '..', 'uploads', 'pdf')
 const PAGES_DIR = path.join(UPLOADS_PDF, 'pages')
+
+const PDFSEPARATE = '/opt/homebrew/bin/pdfseparate'
+const PDFINFO = '/opt/homebrew/bin/pdfinfo'
 
 export function slugify(filename: string): string {
   return filename
@@ -28,6 +31,13 @@ export function deleteSlugPages(slug: string): void {
   }
 }
 
+function countPdfPages(filePath: string): number {
+  const output = execFileSync(PDFINFO, [filePath], { encoding: 'utf8' })
+  const match = output.match(/^Pages:\s+(\d+)/m)
+  if (!match) throw new Error('pdfinfo: numero pagine non trovato')
+  return parseInt(match[1], 10)
+}
+
 export async function runSplit(params: {
   catalogId: string
   filePath: string
@@ -40,29 +50,18 @@ export async function runSplit(params: {
   const outDir = path.join(PAGES_DIR, slug)
   fs.mkdirSync(outDir, { recursive: true })
 
-  const bytes = fs.readFileSync(filePath)
-  const srcDoc = await PDFDocument.load(bytes, { ignoreEncryption: true })
-  const total = srcDoc.getPageCount()
+  const total = countPdfPages(filePath)
 
   await prisma.pdfCatalog.update({
     where: { id: catalogId },
     data: { totalPdfPages: total },
   })
 
-  log.info({ slug, total }, 'Split PDF avviato')
+  log.info({ slug, total }, 'Split PDF avviato con pdfseparate')
 
-  for (let i = 0; i < total; i++) {
-    const pageNum = i + 1
-    const outPath = path.join(outDir, `${pageNum}.pdf`)
+  // pdfseparate crea: outDir/1.pdf, outDir/2.pdf, …
+  const pattern = path.join(outDir, '%d.pdf')
+  execFileSync(PDFSEPARATE, [filePath, pattern])
 
-    if (fs.existsSync(outPath)) continue
-
-    const pageDoc = await PDFDocument.create()
-    const [copied] = await pageDoc.copyPages(srcDoc, [i])
-    pageDoc.addPage(copied)
-    const pageBytes = await pageDoc.save()
-    fs.writeFileSync(outPath, pageBytes)
-  }
-
-  log.info({ slug }, 'Split PDF completato')
+  log.info({ slug, total }, 'Split PDF completato')
 }
