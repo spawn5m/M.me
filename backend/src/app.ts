@@ -25,6 +25,7 @@ import permissionsRoutes from './routes/permissions'
 import { MULTIPART_OPTIONS } from './lib/multipart'
 
 const app = Fastify({
+  bodyLimit: 350 * 1024 * 1024, // 350 MB — necessario per upload catalogo PDF
   logger: {
     transport:
       process.env.NODE_ENV === 'development'

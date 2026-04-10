@@ -7,5 +7,5 @@ export const MULTIPART_OPTIONS = {
   },
 } as const
 
-export const PDF_MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024   // 100 MB
+export const PDF_MAX_FILE_SIZE_BYTES = 300 * 1024 * 1024   // 300 MB
 export const PDF_MAX_FILE_SIZE_MB = PDF_MAX_FILE_SIZE_BYTES / (1024 * 1024)
