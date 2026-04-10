@@ -1,14 +1,15 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMarmista } from '../hooks/useMarmista'
-import { useAuth } from '../hooks/useAuth'
+import { useAuth } from '../context/AuthContext'
 import AccessoriesView from '../components/catalog/AccessoriesView'
 import OffertaMeseCard from '../components/catalog/OffertaMeseCard'
 
 export default function MarmistiPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const isMarmista = user?.role === 'marmista'
+  const isMarmista = user?.roles?.includes('marmista') ?? false
+  const isLoggedIn = user !== null
   const { items, loading } = useMarmista()
 
   const catalogItems = useMemo(
@@ -20,10 +21,14 @@ export default function MarmistiPage() {
         notes: item.notes,
         categories: item.categories,
         pdfPage: item.pdfPage,
-        price: item.publicPrice,
+        publicPrice: item.publicPrice ?? null,
+        price: item.price ?? null,
       })),
     [items]
   )
+
+  // Il prezzo listino (price) è visibile solo da loggati che hanno un listino assegnato
+  const hasAssignedPrice = isLoggedIn && catalogItems.some((i) => i.price != null)
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
@@ -46,7 +51,8 @@ export default function MarmistiPage() {
         <AccessoriesView
           items={catalogItems}
           loading={loading}
-          showPrice={true}
+          catalogType="marmista"
+          showPrice={hasAssignedPrice}
           catalogPdfUrl="/uploads/pdf/VEZZANI%20CATALOGO%202026.pdf"
         />
       </section>

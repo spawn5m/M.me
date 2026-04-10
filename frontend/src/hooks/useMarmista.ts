@@ -14,6 +14,7 @@ interface PublicMarmistaRaw {
   description: string
   notes?: string | null
   publicPrice?: number | null
+  price?: number | null
   pdfPage?: number | null
   categories?: Array<string | LookupLike>
 }
@@ -37,6 +38,7 @@ function normalizeMarmista(data: PublicMarmistaRaw[]): MarmistaItem[] {
     description: item.description,
     notes: item.notes ?? undefined,
     publicPrice: item.publicPrice ?? undefined,
+    price: item.price ?? null,
     pdfPage: item.pdfPage ?? undefined,
     categories: normalizeLookupList(item.categories),
   }))

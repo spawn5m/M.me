@@ -54,6 +54,9 @@ export interface AccessoryItem {
   imageUrl?: string
   categories: string[]
   pdfPage?: number
+  price?: number | null
+  priceOptions?: CoffinPriceOption[]
+  purchasePrice?: number | null
 }
 
 // Marmista (con prezzo pubblico)
@@ -64,6 +67,7 @@ export interface MarmistaItem {
   notes?: string
   pdfPage?: number
   publicPrice?: number
+  price?: number | null       // prezzo listino vendita assegnato — solo quando loggato
   linkedAccessory?: { id: string; code: string; description: string }
   categories: string[]
 }

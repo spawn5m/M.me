@@ -205,6 +205,33 @@ async function loadAssignedAccessoryPriceMap(
   return priceMap
 }
 
+async function loadAssignedMarmistaPrice(
+  prisma: PublicPricePrisma,
+  userId: string,
+  articleIds: string[],
+): Promise<Map<string, number>> {
+  const articleIdSet = new Set(articleIds)
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { marmistaPriceListId: true },
+  })
+
+  if (!user?.marmistaPriceListId) return new Map<string, number>()
+
+  const tree = await loadPriceListTree(prisma, user.marmistaPriceListId)
+  if (!tree) return new Map<string, number>()
+
+  const computedItems = await buildComputedItems(prisma, tree)
+  const priceMap = new Map<string, number>()
+
+  for (const item of computedItems) {
+    if (!item.marmistaArticleId || !articleIdSet.has(item.marmistaArticleId)) continue
+    priceMap.set(item.marmistaArticleId, item.computedPrice)
+  }
+
+  return priceMap
+}
+
 async function loadAdminAccessoryPriceOptions(
   prisma: PrismaClientLike,
   articleIds: string[],
@@ -553,8 +580,24 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
       }),
     ])
 
+    // Prezzo listino vendita — solo per utenti autenticati con listino marmista assegnato
+    const userId = getSessionUserId(request as { session?: SessionLike })
+    let assignedPriceMap = new Map<string, number>()
+
+    if (userId && articles.length > 0) {
+      const articleIds = articles.map((a) => a.id)
+      assignedPriceMap = await loadAssignedMarmistaPrice(
+        fastify.prisma as unknown as PublicPricePrisma,
+        userId,
+        articleIds,
+      )
+    }
+
     return reply.send({
-      data: articles,
+      data: articles.map((article) => ({
+        ...article,
+        ...(assignedPriceMap.has(article.id) ? { price: assignedPriceMap.get(article.id) } : {}),
+      })),
       pagination: buildPagination(page, limit, total),
     })
   })
