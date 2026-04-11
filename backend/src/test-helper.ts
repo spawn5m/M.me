@@ -20,6 +20,7 @@ import pricelistsRoutes from './routes/pricelists'
 import catalogRoutes from './routes/catalog'
 import clientRoutes from './routes/client'
 import permissionsRoutes from './routes/permissions'
+import { localesPublicRoutes, localesAdminRoutes } from './routes/locales'
 import { MULTIPART_OPTIONS } from './lib/multipart'
 
 export async function buildTestApp(): Promise<FastifyInstance> {
@@ -43,6 +44,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
 
   await app.register(authRoutes, { prefix: '/api/auth' })
   await app.register(publicRoutes, { prefix: '/api/public' })
+  await app.register(localesPublicRoutes, { prefix: '/api/public/locales' })
   await app.register(usersRoutes, { prefix: '/api/users' })
   await app.register(rolesRoutes, { prefix: '/api/roles' })
   await app.register(permissionsRoutes, { prefix: '/api/permissions' })
@@ -53,6 +55,7 @@ export async function buildTestApp(): Promise<FastifyInstance> {
   await app.register(marmistaRoutes, { prefix: '/api/admin/articles/marmista' })
   await app.register(pricelistsRoutes, { prefix: '/api/admin/pricelists' })
   await app.register(catalogRoutes, { prefix: '/api/admin/catalog' })
+  await app.register(localesAdminRoutes, { prefix: '/api/admin/locales' })
   await app.register(clientRoutes, { prefix: '/api/client' })
 
   await app.ready()

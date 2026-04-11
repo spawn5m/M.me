@@ -3,19 +3,28 @@ import fs from 'fs'
 import path from 'path'
 
 // Sovrascrivibile via env per i test (usa un file temporaneo)
-export const LOCALES_PATH =
-  process.env.LOCALES_PATH ??
-  path.resolve(process.cwd(), '..', 'frontend', 'src', 'locales', 'it.json')
+function getLocalesPath(): string {
+  return process.env.LOCALES_PATH ?? path.resolve(process.cwd(), '..', 'frontend', 'src', 'locales', 'it.json')
+}
+
+// For backward compatibility with code that might import LOCALES_PATH directly
+export const LOCALES_PATH = {
+  toString() {
+    return getLocalesPath()
+  }
+}
 
 export function readLocales(): Record<string, unknown> {
-  const raw = fs.readFileSync(LOCALES_PATH, 'utf-8')
+  const filePath = getLocalesPath()
+  const raw = fs.readFileSync(filePath, 'utf-8')
   return JSON.parse(raw) as Record<string, unknown>
 }
 
 export function writeLocalesAtomic(data: Record<string, unknown>): void {
-  const tmp = LOCALES_PATH + '.tmp'
+  const filePath = getLocalesPath()
+  const tmp = filePath + '.tmp'
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n', 'utf-8')
-  fs.renameSync(tmp, LOCALES_PATH)
+  fs.renameSync(tmp, filePath)
 }
 
 // Plugin pubblico: montato su /api/public/locales
