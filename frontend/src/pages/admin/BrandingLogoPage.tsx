@@ -111,14 +111,14 @@ export default function BrandingLogoPage() {
           <div className="flex items-start gap-6">
             <div className="flex h-32 w-32 items-center justify-center border border-[#E5E0D8] bg-[#F8F7F4] p-3">
               <img
-                src={`${logoUrl}?t=${Date.now()}`}
+                src={logoUrl}
                 alt="Logo corrente"
                 className="max-h-full max-w-full object-contain"
               />
             </div>
             <div className="flex flex-col gap-3">
               <p className="text-sm text-[#6B7280]">
-                File: <span className="font-medium text-[#031634]">{logoUrl.split('/').pop()}</span>
+                File: <span className="font-medium text-[#031634]">{logoUrl.split('/').pop()?.split('?')[0]}</span>
               </p>
               <button
                 onClick={() => void handleDelete()}

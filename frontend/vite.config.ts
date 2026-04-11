@@ -22,7 +22,7 @@ export default defineConfig({
       name: 'serve-uploads',
       configureServer(server) {
         server.middlewares.use('/uploads', (req, res, next) => {
-          const decoded = decodeURIComponent(req.url?.replace(/^\//, '') ?? '')
+          const decoded = decodeURIComponent((req.url?.split('?')[0] ?? '').replace(/^\//, ''))
           const filePath = path.resolve(__dirname, '../uploads', decoded)
           if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
             const ext = path.extname(filePath).toLowerCase()
