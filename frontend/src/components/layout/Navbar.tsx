@@ -61,7 +61,7 @@ export default function Navbar({ variant }: NavbarProps) {
         <Link
           to="/"
           data-testid="navbar-wordmark"
-          className={`flex items-center gap-2 ${wordmarkBase} ${wordmarkColor}`}
+          className={`flex items-end gap-2 ${wordmarkBase} ${wordmarkColor}`}
         >
           {logoUrl && (
             <img
