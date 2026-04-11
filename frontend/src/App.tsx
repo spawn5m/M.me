@@ -5,6 +5,7 @@ import Navbar from './components/layout/Navbar'
 import FooterLight from './components/layout/FooterLight'
 
 import { ADMIN_ROUTE_PERMISSIONS, AuthProvider, CLIENT_ROUTE_PERMISSIONS, getDefaultRoute, useAuth } from './context/AuthContext'
+import { BrandingProvider } from './context/BrandingContext'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -179,10 +180,12 @@ function AppContent() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    </BrowserRouter>
+    <BrandingProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </BrowserRouter>
+    </BrandingProvider>
   )
 }
