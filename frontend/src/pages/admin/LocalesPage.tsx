@@ -441,9 +441,13 @@ export default function LocalesPage() {
       setFullLocale(updated)
       setDirtyKeys(new Set())
       setSaveSuccess(true)
-      // Aggiorna i18n senza ricaricare la pagina
-      await i18n.reloadResources('it')
       setTimeout(() => setSaveSuccess(false), 3000)
+      // Aggiorna i18n senza ricaricare la pagina (non-fatal se fallisce)
+      try {
+        await i18n.reloadResources('it')
+      } catch {
+        // il file è salvato correttamente, il refresh in-memory è non critico
+      }
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Errore sconosciuto.')
     } finally {
@@ -592,7 +596,7 @@ export default function LocalesPage() {
               disabled={saving || dirtyKeys.size === 0}
               className="inline-flex min-h-9 items-center justify-center border border-[#C9A96E] px-6 py-2 text-sm font-medium text-[#C9A96E] transition-colors hover:bg-[#C9A96E] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {saving ? 'Salvataggio...' : `Salva ${currentSection.label}`}
+              {saving ? 'Salvataggio...' : 'Salva modifiche'}
             </button>
             {dirtyKeys.size > 0 && !saving && (
               <p className="text-xs text-[#6B7280]">
