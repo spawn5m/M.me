@@ -27,7 +27,8 @@ const ADMIN_DEFAULT_ROUTE_RULES: readonly RoutePermissionRule[] = [
   { path: '/admin/lookups/coffin-categories', permissions: ['lookups.read'] },
   { path: '/admin/measures', permissions: ['measures.read'] },
   { path: '/admin/pricelists', permissions: ['pricelists.sale.read', 'pricelists.purchase.read'] },
-  { path: '/admin/catalog', permissions: ['catalog.pdf.read'] }
+  { path: '/admin/catalog', permissions: ['catalog.pdf.read'] },
+  { path: '/admin/locales', permissions: ['locales.manage'] },
 ]
 
 const CLIENT_DEFAULT_ROUTE_RULES: readonly RoutePermissionRule[] = [
