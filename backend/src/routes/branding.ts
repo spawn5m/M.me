@@ -3,7 +3,10 @@ import fs from 'fs'
 import path from 'path'
 
 const LOGO_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'logo')
-const ALLOWED_MIMES = new Set(['image/png', 'image/svg+xml'])
+const PNG_MIMES = new Set(['image/png'])
+// SVG può arrivare con MIME diversi a seconda del browser/OS
+const SVG_MIMES = new Set(['image/svg+xml', 'text/xml', 'text/plain', 'application/xml', 'application/octet-stream'])
+const ALLOWED_MIMES = new Set([...PNG_MIMES, ...SVG_MIMES])
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2 MB
 const MAX_DIM = 512
 
@@ -36,7 +39,11 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const mime = data.mimetype
-    if (!ALLOWED_MIMES.has(mime)) {
+    const originalName = (data.filename ?? '').toLowerCase()
+    const isSvgByExt = originalName.endsWith('.svg')
+    const isPngByExt = originalName.endsWith('.png')
+
+    if (!ALLOWED_MIMES.has(mime) && !isSvgByExt && !isPngByExt) {
       data.file.resume()
       return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Formato non supportato. Usa PNG o SVG.', statusCode: 400 })
     }
@@ -53,7 +60,7 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
     }
     const buffer = Buffer.concat(chunks)
 
-    if (mime === 'image/png') {
+    if (isPngByExt || PNG_MIMES.has(mime)) {
       const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
       if (buffer.length < 24 || !buffer.subarray(0, 8).equals(PNG_MAGIC)) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'File PNG non valido.', statusCode: 400 })
@@ -68,7 +75,7 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    const ext = mime === 'image/svg+xml' ? 'svg' : 'png'
+    const ext = isSvgByExt || mime === 'image/svg+xml' ? 'svg' : 'png'
     const filename = `logo.${ext}`
 
     fs.mkdirSync(LOGO_DIR, { recursive: true })
