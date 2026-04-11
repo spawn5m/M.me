@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth, getDefaultRoute } from '../context/AuthContext'
+import { useBranding } from '../context/BrandingContext'
 
 export default function HomePage() {
   const { t } = useTranslation()
   const { user, permissions } = useAuth()
+  const { logoUrl } = useBranding()
 
   const reservedAreaHref = getDefaultRoute(user, permissions)
 
@@ -16,6 +18,16 @@ export default function HomePage() {
         className="w-full min-h-screen flex flex-col items-center justify-center gap-12 px-8"
         style={{ backgroundColor: '#071325' }}
       >
+        {/* Logo aziendale (1/5 della larghezza del titolo) */}
+        {logoUrl && (
+          <img
+            src={logoUrl}
+            alt="Mirigliani logo"
+            className="object-contain"
+            style={{ width: 'clamp(3.5rem, 8vw, 7rem)', height: 'auto' }}
+          />
+        )}
+
         {/* Wordmark */}
         <h1
           className="font-['Inter'] font-black uppercase tracking-tight text-center leading-none"
