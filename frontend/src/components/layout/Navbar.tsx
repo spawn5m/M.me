@@ -38,7 +38,7 @@ export default function Navbar({ variant }: NavbarProps) {
     : 'bg-[#FAF9F6]/80 backdrop-blur-md shadow-[var(--shadow-warm)]'
 
   // Wordmark styles
-  const wordmarkBase = "font-['Newsreader'] text-2xl tracking-tight uppercase font-semibold"
+  const wordmarkBase = "font-['Newsreader'] text-2xl tracking-tight uppercase font-semibold leading-none"
   const wordmarkColor = isDark ? 'text-white' : 'text-[#031634]'
 
   // Nav link styles
@@ -67,7 +67,7 @@ export default function Navbar({ variant }: NavbarProps) {
             <img
               src={logoUrl}
               alt="Mirigliani logo"
-              className="h-10 w-auto object-contain self-center"
+              className="h-10 w-auto object-contain"
             />
           )}
           MIRIGLIANI
