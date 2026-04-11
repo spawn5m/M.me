@@ -67,7 +67,7 @@ export default function Navbar({ variant }: NavbarProps) {
             <img
               src={logoUrl}
               alt="Mirigliani logo"
-              className="h-6 w-auto object-contain"
+              className="h-10 w-auto object-contain self-center"
             />
           )}
           MIRIGLIANI

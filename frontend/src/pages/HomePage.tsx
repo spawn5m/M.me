@@ -18,23 +18,23 @@ export default function HomePage() {
         className="w-full min-h-screen flex flex-col items-center justify-center gap-12 px-8"
         style={{ backgroundColor: '#071325' }}
       >
-        {/* Logo aziendale (1/5 della larghezza del titolo) */}
-        {logoUrl && (
-          <img
-            src={logoUrl}
-            alt="Mirigliani logo"
-            className="object-contain"
-            style={{ width: 'clamp(3.5rem, 8vw, 7rem)', height: 'auto' }}
-          />
-        )}
-
-        {/* Wordmark */}
-        <h1
-          className="font-['Inter'] font-black uppercase tracking-tight text-center leading-none"
-          style={{ fontSize: 'clamp(4rem, 12vw, 10rem)', color: '#FFFFFF' }}
-        >
-          MIRIGLIANI
-        </h1>
+        {/* Logo + Wordmark — raggruppati con gap ridotto */}
+        <div className="flex flex-col items-center gap-4">
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="Mirigliani logo"
+              className="object-contain"
+              style={{ width: 'clamp(6rem, 14vw, 12rem)', height: 'auto' }}
+            />
+          )}
+          <h1
+            className="font-['Inter'] font-black uppercase tracking-tight text-center leading-none"
+            style={{ fontSize: 'clamp(4rem, 12vw, 10rem)', color: '#FFFFFF' }}
+          >
+            MIRIGLIANI
+          </h1>
+        </div>
 
         {/* Pulsanti principali */}
         <div className="flex flex-wrap items-center justify-center gap-6">
