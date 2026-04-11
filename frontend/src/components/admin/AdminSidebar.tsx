@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useBranding } from '../../context/BrandingContext'
 
 interface NavLeaf {
   to: string
@@ -60,6 +61,13 @@ const NAV_ITEMS: NavItem[] = [
   },
   { kind: 'leaf', to: '/admin/pricelists', label: 'Listini', permissions: ['pricelists.sale.read', 'pricelists.purchase.read'] },
   { kind: 'leaf', to: '/admin/catalog', label: 'Catalogo PDF', permissions: ['catalog.pdf.read'] },
+  {
+    kind: 'group',
+    label: 'Interfaccia',
+    children: [
+      { to: '/admin/branding/logo', label: 'Logo', permissions: ['branding.logo.manage'] },
+    ],
+  },
 ]
 
 const LEAF_STYLE = 'block border px-4 py-3 text-sm font-medium transition-colors'
@@ -90,6 +98,7 @@ function ChevronIcon({ open }: { open: boolean }) {
 export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' | 'client' }) {
   const { hasPermission, hasAnyPermission } = useAuth()
   const location = useLocation()
+  const { logoUrl } = useBranding()
 
   const items = variant === 'client' ? CLIENT_NAV : NAV_ITEMS
 
@@ -123,9 +132,16 @@ export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' 
       <div className="border-b border-[#E5E0D8] px-6 py-7">
         <NavLink
           to="/"
-          className="text-lg tracking-[0.16em] uppercase text-[#031634] transition-colors hover:text-[#C9A96E]"
+          className="flex items-center gap-2 text-lg tracking-[0.16em] uppercase text-[#031634] transition-colors hover:text-[#C9A96E]"
           style={{ fontFamily: 'Playfair Display, serif' }}
         >
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="Mirigliani logo"
+              className="h-5 w-auto object-contain"
+            />
+          )}
           Mirigliani
         </NavLink>
         <p className="mt-2 text-xs font-medium uppercase tracking-[0.2em] text-[#C9A96E]">Area riservata</p>
