@@ -22,6 +22,7 @@ import pricelistsRoutes from './routes/pricelists'
 import catalogRoutes from './routes/catalog'
 import clientRoutes from './routes/client'
 import permissionsRoutes from './routes/permissions'
+import brandingAdminRoutes from './routes/branding'
 import { MULTIPART_OPTIONS } from './lib/multipart'
 
 const app = Fastify({
@@ -71,6 +72,7 @@ const start = async () => {
   await app.register(marmistaRoutes, { prefix: '/api/admin/articles/marmista' })
   await app.register(pricelistsRoutes, { prefix: '/api/admin/pricelists' })
   await app.register(catalogRoutes, { prefix: '/api/admin/catalog' })
+  await app.register(brandingAdminRoutes, { prefix: '/api/admin/branding' })
   await app.register(clientRoutes, { prefix: '/api/client' })
 
   const port = Number(process.env.PORT) || 3001
