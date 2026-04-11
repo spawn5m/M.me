@@ -46,6 +46,7 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
     for await (const chunk of data.file) {
       totalSize += chunk.length
       if (totalSize > MAX_FILE_SIZE) {
+        data.file.resume()
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'File troppo grande (max 2 MB).', statusCode: 400 })
       }
       chunks.push(chunk as Buffer)
@@ -53,7 +54,8 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
     const buffer = Buffer.concat(chunks)
 
     if (mime === 'image/png') {
-      if (buffer.length < 24) {
+      const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
+      if (buffer.length < 24 || !buffer.subarray(0, 8).equals(PNG_MAGIC)) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'File PNG non valido.', statusCode: 400 })
       }
       const { width, height } = getPngDimensions(buffer)

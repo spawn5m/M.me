@@ -16,7 +16,9 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
   const refresh = useCallback(() => {
     fetch('/api/public/branding/logo')
       .then((r) => r.json())
-      .then((data: { url: string | null }) => setLogoUrl(data.url))
+      .then((data: { url: string | null }) =>
+        setLogoUrl(data.url ? `${data.url}?t=${Date.now()}` : null)
+      )
       .catch(() => setLogoUrl(null))
   }, [])
 
