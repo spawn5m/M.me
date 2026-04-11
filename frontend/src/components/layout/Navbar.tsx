@@ -1,6 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth, getDefaultRoute } from '../../context/AuthContext'
+import { useBranding } from '../../context/BrandingContext'
 
 export interface NavbarProps {
   variant: 'dark' | 'light'
@@ -24,6 +25,7 @@ export default function Navbar({ variant }: NavbarProps) {
   const { t } = useTranslation()
   const { user, permissions } = useAuth()
   const location = useLocation()
+  const { logoUrl } = useBranding()
   const isDark = variant === 'dark'
 
    const reservedAreaHref = getDefaultRoute(user, permissions)
@@ -59,8 +61,15 @@ export default function Navbar({ variant }: NavbarProps) {
         <Link
           to="/"
           data-testid="navbar-wordmark"
-          className={`${wordmarkBase} ${wordmarkColor}`}
+          className={`flex items-center gap-2 ${wordmarkBase} ${wordmarkColor}`}
         >
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="Mirigliani logo"
+              className="h-6 w-auto object-contain"
+            />
+          )}
           MIRIGLIANI
         </Link>
 
