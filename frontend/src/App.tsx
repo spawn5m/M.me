@@ -27,6 +27,7 @@ const PriceListsPage = lazy(() => import('./pages/admin/PriceListsPage'))
 const PriceListDetailPage = lazy(() => import('./pages/admin/PriceListDetailPage'))
 const MeasuresPage = lazy(() => import('./pages/admin/MeasuresPage'))
 const CatalogPdfPage = lazy(() => import('./pages/admin/CatalogPdfPage'))
+const BrandingLogoPage = lazy(() => import('./pages/admin/BrandingLogoPage'))
 
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'))
 const FuneralCatalogPage = lazy(() => import('./pages/client/FuneralCatalogPage'))
@@ -151,6 +152,7 @@ function AppContent() {
             <Route path="catalog" element={<ProtectedRoute requiredPermissions={['catalog.pdf.read']}><CatalogPdfPage /></ProtectedRoute>} />
             <Route path="lookups/:type" element={<ProtectedRoute requiredPermissions={['lookups.read']}><LookupPage /></ProtectedRoute>} />
             <Route path="measures" element={<ProtectedRoute requiredPermissions={['measures.read']}><MeasuresPage /></ProtectedRoute>} />
+            <Route path="branding/logo" element={<ProtectedRoute requiredPermissions={['branding.logo.manage']}><BrandingLogoPage /></ProtectedRoute>} />
             <Route path="pricelists" element={<ProtectedRoute requiredPermissions={['pricelists.sale.read', 'pricelists.purchase.read']}><PriceListsPage /></ProtectedRoute>} />
             <Route path="pricelists/:id" element={<ProtectedRoute requiredPermissions={['pricelists.sale.read', 'pricelists.purchase.read']}><PriceListDetailPage /></ProtectedRoute>} />
           </Route>
