@@ -1,11 +1,11 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import Navbar from './components/layout/Navbar'
 import FooterLight from './components/layout/FooterLight'
 
 import { ADMIN_ROUTE_PERMISSIONS, AuthProvider, CLIENT_ROUTE_PERMISSIONS, getDefaultRoute, useAuth } from './context/AuthContext'
-import { BrandingProvider } from './context/BrandingContext'
+import { BrandingProvider, useBranding } from './context/BrandingContext'
 import ProtectedRoute from './components/admin/ProtectedRoute'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
@@ -96,6 +96,16 @@ function AppContent() {
   const location = useLocation()
   const isDark = location.pathname === '/'
   const isAdmin = location.pathname.startsWith('/admin') || location.pathname.startsWith('/client')
+
+  const { logoUrl } = useBranding()
+
+  useEffect(() => {
+    const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
+    if (link) {
+      link.href = logoUrl ?? '/favicon.svg'
+      link.type = logoUrl?.endsWith('.svg') ? 'image/svg+xml' : 'image/png'
+    }
+  }, [logoUrl])
 
   return (
     <>
