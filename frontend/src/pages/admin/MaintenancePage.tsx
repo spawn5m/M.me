@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import i18n from 'i18next'
 import { fetchAdminMaintenance, updateAdminMaintenance } from '../../lib/api/maintenance'
+import { readMaintenancePreviewEnabled, writeMaintenancePreviewEnabled } from '../../lib/maintenance-preview'
 import type { AdminMaintenancePageConfig, AdminMaintenanceResponse, MaintenancePageKey } from '../../../../backend/src/types/shared'
 
 const PAGE_LABELS: Record<MaintenancePageKey, string> = {
@@ -14,6 +15,7 @@ const PAGE_LABELS: Record<MaintenancePageKey, string> = {
 const PAGE_ORDER: MaintenancePageKey[] = ['home', 'ourStory', 'whereWeAre', 'funeralHomes', 'marmistas']
 
 export default function MaintenancePage() {
+  const [previewEnabled, setPreviewEnabled] = useState(() => readMaintenancePreviewEnabled())
   const [initialState, setInitialState] = useState<AdminMaintenanceResponse | null>(null)
   const [formState, setFormState] = useState<AdminMaintenanceResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -55,6 +57,11 @@ export default function MaintenancePage() {
     setSaveSuccess(false)
   }
 
+  function updatePreviewEnabled(enabled: boolean) {
+    setPreviewEnabled(enabled)
+    writeMaintenancePreviewEnabled(enabled)
+  }
+
   async function handleSave() {
     if (!formState) return
     setSaving(true)
@@ -91,6 +98,27 @@ export default function MaintenancePage() {
         <p className="mt-2 text-sm text-[#6B7280]">
           Attiva o disattiva la manutenzione delle pagine pubbliche e definisci il testo mostrato ai visitatori.
         </p>
+      </div>
+
+      <div className="border border-[#E5E0D8] bg-white p-6 shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-[0.12em] text-[#6B7280]">Preview manutenzione</p>
+            <p className="mt-2 text-sm text-[#6B7280]">
+              Attiva la preview solo per questa sessione admin per vedere le pagine pubbliche reali durante la manutenzione.
+            </p>
+          </div>
+
+          <label className="inline-flex cursor-pointer items-center gap-3 self-start text-sm font-medium text-[#031634]">
+            <input
+              type="checkbox"
+              checked={previewEnabled}
+              onChange={(e) => updatePreviewEnabled(e.target.checked)}
+              className="h-5 w-5 accent-[#C9A96E]"
+            />
+            Preview manutenzione
+          </label>
+        </div>
       </div>
 
       <div className="space-y-4">

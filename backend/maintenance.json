@@ -1,9 +1,19 @@
 {
   "pages": {
-    "home": { "enabled": false },
-    "ourStory": { "enabled": false },
-    "whereWeAre": { "enabled": false },
-    "funeralHomes": { "enabled": false },
-    "marmistas": { "enabled": false }
+    "home": {
+      "enabled": false
+    },
+    "ourStory": {
+      "enabled": true
+    },
+    "whereWeAre": {
+      "enabled": true
+    },
+    "funeralHomes": {
+      "enabled": false
+    },
+    "marmistas": {
+      "enabled": false
+    }
   }
 }

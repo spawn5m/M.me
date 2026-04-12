@@ -43,6 +43,7 @@ const SAMPLE = {
 describe('MaintenancePage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    window.sessionStorage.clear()
     mockFetchAdminMaintenance.mockResolvedValue(axiosResponse(SAMPLE))
     mockUpdateAdminMaintenance.mockResolvedValue(axiosResponse({ ok: true }))
     mockReloadResources.mockResolvedValue(undefined)
@@ -76,5 +77,32 @@ describe('MaintenancePage', () => {
 
     expect(mockUpdateAdminMaintenance.mock.calls[0]?.[0].pages.home.message).toBe('Home in manutenzione')
     expect(mockReloadResources).toHaveBeenCalledWith('it')
+  })
+
+  it('inizializza la preview dalla sessione senza sporcare il form', async () => {
+    window.sessionStorage.setItem('admin-maintenance-preview-enabled', 'true')
+
+    render(<MaintenancePage />)
+
+    const previewToggle = await screen.findByRole('checkbox', { name: 'Preview manutenzione' })
+
+    expect(previewToggle).toBeChecked()
+    expect(screen.getByRole('button', { name: 'Salva modifiche' })).toBeDisabled()
+    expect(screen.queryByText('Hai modifiche non salvate.')).toBeNull()
+  })
+
+  it('aggiorna la preview nella sessione', async () => {
+    const user = userEvent.setup()
+
+    render(<MaintenancePage />)
+
+    const previewToggle = await screen.findByRole('checkbox', { name: 'Preview manutenzione' })
+
+    expect(window.sessionStorage.getItem('admin-maintenance-preview-enabled')).toBeNull()
+
+    await user.click(previewToggle)
+
+    expect(window.sessionStorage.getItem('admin-maintenance-preview-enabled')).toBe('true')
+    expect(screen.getByRole('button', { name: 'Salva modifiche' })).toBeDisabled()
   })
 })

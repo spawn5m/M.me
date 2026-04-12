@@ -4,6 +4,8 @@ import Navbar from './Navbar'
 import FooterLight from './FooterLight'
 import PublicMaintenanceScreen from './PublicMaintenanceScreen'
 import { useMaintenance } from '../../context/MaintenanceContext'
+import { useAuth } from '../../context/AuthContext'
+import { readMaintenancePreviewEnabled } from '../../lib/maintenance-preview'
 import type { MaintenancePageKey } from '../../../../backend/src/types/shared'
 
 interface PublicPageRouteProps {
@@ -14,6 +16,27 @@ interface PublicPageRouteProps {
 export default function PublicPageRoute({ page, children }: PublicPageRouteProps) {
   const { t } = useTranslation()
   const { pages } = useMaintenance()
+  const { permissions, isLoading } = useAuth()
+  const previewEnabled = readMaintenancePreviewEnabled()
+  const canPreviewMaintenance = previewEnabled && !isLoading && permissions.includes('maintenance.manage')
+
+  if (previewEnabled && isLoading) {
+    return null
+  }
+
+  if (canPreviewMaintenance) {
+    if (page === 'home') {
+      return <>{children}</>
+    }
+
+    return (
+      <>
+        <Navbar variant="light" />
+        {children}
+        <FooterLight />
+      </>
+    )
+  }
 
   if (pages.home.enabled) {
     return (
