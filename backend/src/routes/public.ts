@@ -48,6 +48,19 @@ function findLogoUrl(): string | null {
   return null
 }
 
+const BRANDING_IMG_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'branding')
+const VALID_BRANDING_SLOTS = ['home-funebri', 'home-marmisti', 'home-altri', 'storia-narrativa'] as const
+const BRANDING_IMG_EXTS = ['png', 'webp', 'svg'] as const
+
+function findBrandingImageUrl(slot: string): string | null {
+  for (const ext of BRANDING_IMG_EXTS) {
+    if (fs.existsSync(path.join(BRANDING_IMG_DIR, `${slot}.${ext}`))) {
+      return `/uploads/images/branding/${slot}.${ext}`
+    }
+  }
+  return null
+}
+
 interface PublicCoffinPriceOption {
   priceListId: string
   priceListName: string
@@ -881,6 +894,13 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.get('/branding/logo', async (_req, reply) => {
     return reply.send({ url: findLogoUrl() })
+  })
+
+  fastify.get('/branding/images', async (_req, reply) => {
+    const images = Object.fromEntries(
+      VALID_BRANDING_SLOTS.map((slot) => [slot, findBrandingImageUrl(slot)])
+    )
+    return reply.send({ images })
   })
 
 }
