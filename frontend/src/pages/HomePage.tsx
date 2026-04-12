@@ -6,7 +6,7 @@ import { useBranding } from '../context/BrandingContext'
 export default function HomePage() {
   const { t } = useTranslation()
   const { user, permissions } = useAuth()
-  const { logoUrl } = useBranding()
+  const { logoUrl, images } = useBranding()
 
   const reservedAreaHref = getDefaultRoute(user, permissions)
 
@@ -32,7 +32,7 @@ export default function HomePage() {
             className="font-['Inter'] font-black uppercase tracking-tight text-center leading-none"
             style={{ fontSize: 'clamp(4rem, 12vw, 10rem)', color: '#FFFFFF' }}
           >
-            MIRIGLIANI
+           {t('home.headline')}
           </h1>
         </div>
 
@@ -94,11 +94,20 @@ export default function HomePage() {
               {t('home.sectionFunebriCta')}
             </Link>
           </div>
-          <div
-            className="hidden md:block w-full h-[500px]"
-            style={{ backgroundColor: '#0D1E35' }}
-            aria-hidden="true"
-          />
+          {images['home-funebri'] ? (
+            <img
+              src={images['home-funebri']!}
+              alt=""
+              className="hidden md:block w-full h-[500px] object-cover"
+              aria-hidden="true"
+            />
+          ) : (
+            <div
+              className="hidden md:block w-full h-[500px]"
+              style={{ backgroundColor: '#0D1E35' }}
+              aria-hidden="true"
+            />
+          )}
         </div>
       </section>
 
@@ -108,11 +117,20 @@ export default function HomePage() {
         style={{ backgroundColor: '#0D1E35', borderColor: '#1E2D45' }}
       >
         <div className="max-w-screen-2xl mx-auto px-12 py-24 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div
-            className="hidden md:block w-full h-[500px]"
-            style={{ backgroundColor: '#142032' }}
-            aria-hidden="true"
-          />
+          {images['home-marmisti'] ? (
+            <img
+              src={images['home-marmisti']!}
+              alt=""
+              className="hidden md:block w-full h-[500px] object-cover"
+              aria-hidden="true"
+            />
+          ) : (
+            <div
+              className="hidden md:block w-full h-[500px]"
+              style={{ backgroundColor: '#142032' }}
+              aria-hidden="true"
+            />
+          )}
           <div className="flex flex-col gap-6 justify-center">
             <p
               className="font-['Inter'] text-xs font-medium uppercase tracking-widest"
@@ -147,11 +165,20 @@ export default function HomePage() {
         style={{ backgroundColor: '#0D1E35', borderColor: '#1E2D45' }}
       >
         <div className="max-w-screen-2xl mx-auto px-12 py-24 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-          <div
-            className="hidden md:block w-full h-[500px]"
-            style={{ backgroundColor: '#142032' }}
-            aria-hidden="true"
-          />
+          {images['home-altri'] ? (
+            <img
+              src={images['home-altri']!}
+              alt=""
+              className="hidden md:block w-full h-[500px] object-cover"
+              aria-hidden="true"
+            />
+          ) : (
+            <div
+              className="hidden md:block w-full h-[500px]"
+              style={{ backgroundColor: '#142032' }}
+              aria-hidden="true"
+            />
+          )}
           <div className="flex flex-col gap-6 justify-center">
             <p
               className="font-['Inter'] text-xs font-medium uppercase tracking-widest"
