@@ -2,6 +2,10 @@ import { FastifyPluginAsync } from 'fastify'
 import fs from 'fs'
 import path from 'path'
 
+const PNG_MAGIC_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
+const RIFF_BYTES = Buffer.from([0x52, 0x49, 0x46, 0x46])
+const WEBP_BYTES = Buffer.from([0x57, 0x45, 0x42, 0x50])
+
 const LOGO_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'logo')
 const PNG_MIMES = new Set(['image/png'])
 // SVG può arrivare con MIME diversi a seconda del browser/OS
@@ -84,8 +88,7 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
     const buffer = Buffer.concat(chunks)
 
     if (isPngByExt || PNG_MIMES.has(mime)) {
-      const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
-      if (buffer.length < 24 || !buffer.subarray(0, 8).equals(PNG_MAGIC)) {
+      if (buffer.length < 24 || !buffer.subarray(0, 8).equals(PNG_MAGIC_BYTES)) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'File PNG non valido.', statusCode: 400 })
       }
       const { width, height } = getPngDimensions(buffer)
@@ -99,9 +102,7 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     if (isWebpByExt || WEBP_MIMES.has(mime)) {
-      const RIFF = Buffer.from([0x52, 0x49, 0x46, 0x46])
-      const WEBP_SIG = Buffer.from([0x57, 0x45, 0x42, 0x50])
-      if (buffer.length < 12 || !buffer.subarray(0, 4).equals(RIFF) || !buffer.subarray(8, 12).equals(WEBP_SIG)) {
+      if (buffer.length < 12 || !buffer.subarray(0, 4).equals(RIFF_BYTES) || !buffer.subarray(8, 12).equals(WEBP_BYTES)) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'File WebP non valido.', statusCode: 400 })
       }
     }
@@ -191,16 +192,13 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
     const buffer = Buffer.concat(chunks)
 
     if (isPngByExt || PNG_MIMES.has(mime)) {
-      const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A])
-      if (buffer.length < 24 || !buffer.subarray(0, 8).equals(PNG_MAGIC)) {
+      if (buffer.length < 8 || !buffer.subarray(0, 8).equals(PNG_MAGIC_BYTES)) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'File PNG non valido.', statusCode: 400 })
       }
     }
 
     if (isWebpByExt || WEBP_MIMES.has(mime)) {
-      const RIFF = Buffer.from([0x52, 0x49, 0x46, 0x46])
-      const WEBP_SIG = Buffer.from([0x57, 0x45, 0x42, 0x50])
-      if (buffer.length < 12 || !buffer.subarray(0, 4).equals(RIFF) || !buffer.subarray(8, 12).equals(WEBP_SIG)) {
+      if (buffer.length < 12 || !buffer.subarray(0, 4).equals(RIFF_BYTES) || !buffer.subarray(8, 12).equals(WEBP_BYTES)) {
         return reply.status(400).send({ error: 'BAD_REQUEST', message: 'File WebP non valido.', statusCode: 400 })
       }
     }
