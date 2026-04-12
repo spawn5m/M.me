@@ -67,7 +67,6 @@ export default function FuneralCatalogPage() {
         </div>
       )}
 
-      {/* Ricerca */}
       <input
         type="text"
         placeholder="Cerca per codice o descrizione..."
@@ -76,52 +75,31 @@ export default function FuneralCatalogPage() {
         className="w-full max-w-sm border border-[#E5E0D8] rounded-[6px] px-3 py-2 text-sm text-[#1A1A1A] placeholder-[#6B7280] focus:outline-none focus:border-[#1A2B4A]"
       />
 
-      {/* Tabella */}
       <div className="bg-white border border-[#E5E0D8] rounded-[8px] shadow-[0_2px_8px_rgba(26,43,74,0.08)] overflow-hidden">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-[#F8F7F4] border-b border-[#E5E0D8]">
-              <th className="text-left px-4 py-3 font-medium text-[#6B7280] uppercase tracking-wider text-xs">
-                Codice
-              </th>
-              <th className="text-left px-4 py-3 font-medium text-[#6B7280] uppercase tracking-wider text-xs">
-                Descrizione
-              </th>
-              <th className="text-right px-4 py-3 font-medium text-[#6B7280] uppercase tracking-wider text-xs">
-                Prezzo
-              </th>
+              <th className="text-left px-4 py-3 font-medium text-[#6B7280] uppercase tracking-wider text-xs">Codice</th>
+              <th className="text-left px-4 py-3 font-medium text-[#6B7280] uppercase tracking-wider text-xs">Descrizione</th>
+              <th className="text-right px-4 py-3 font-medium text-[#6B7280] uppercase tracking-wider text-xs">Prezzo</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr>
-                <td colSpan={3} className="text-center py-10 text-[#6B7280]">
-                  Caricamento...
-                </td>
-              </tr>
+              <tr><td colSpan={3} className="text-center py-10 text-[#6B7280]">Caricamento...</td></tr>
             ) : filtered.length === 0 ? (
-              <tr>
-                <td colSpan={3} className="text-center py-10 text-[#6B7280]">
-                  Nessun articolo trovato.
-                </td>
-              </tr>
+              <tr><td colSpan={3} className="text-center py-10 text-[#6B7280]">Nessun articolo trovato.</td></tr>
             ) : (
               filtered.map((item, i) => (
                 <tr
                   key={item.id}
                   onClick={() => navigate(`/client/catalog/funeral/${item.id}`)}
-                  className={`cursor-pointer hover:bg-[#F8F7F4] transition-colors ${
-                    i !== filtered.length - 1 ? 'border-b border-[#E5E0D8]' : ''
-                  }`}
+                  className={`cursor-pointer hover:bg-[#F8F7F4] transition-colors ${i !== filtered.length - 1 ? 'border-b border-[#E5E0D8]' : ''}`}
                 >
-                  <td className="px-4 py-3 font-['JetBrains_Mono'] text-[#1A2B4A] font-medium">
-                    {item.code}
-                  </td>
+                  <td className="px-4 py-3 font-['JetBrains_Mono'] text-[#1A2B4A] font-medium">{item.code}</td>
                   <td className="px-4 py-3 text-[#1A1A1A]">{item.description}</td>
                   <td className="px-4 py-3 text-right font-['JetBrains_Mono'] text-[#1A1A1A]">
-                    {item.price != null
-                      ? `€ ${item.price.toFixed(2)}`
-                      : <span className="text-[#6B7280]">—</span>}
+                    {item.price != null ? `€ ${item.price.toFixed(2)}` : <span className="text-[#6B7280]">—</span>}
                   </td>
                 </tr>
               ))
@@ -130,26 +108,11 @@ export default function FuneralCatalogPage() {
         </table>
       </div>
 
-      {/* Paginazione */}
       {pagination && pagination.totalPages > 1 && (
         <div className="flex items-center gap-3 justify-end text-sm">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage(p => p - 1)}
-            className="px-3 py-1.5 border border-[#E5E0D8] rounded-[6px] text-[#1A2B4A] disabled:opacity-40 hover:bg-[#F8F7F4] transition-colors"
-          >
-            ← Precedente
-          </button>
-          <span className="text-[#6B7280]">
-            Pagina {page} di {pagination.totalPages}
-          </span>
-          <button
-            disabled={page >= pagination.totalPages}
-            onClick={() => setPage(p => p + 1)}
-            className="px-3 py-1.5 border border-[#E5E0D8] rounded-[6px] text-[#1A2B4A] disabled:opacity-40 hover:bg-[#F8F7F4] transition-colors"
-          >
-            Successiva →
-          </button>
+          <button disabled={page <= 1} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 border border-[#E5E0D8] rounded-[6px] text-[#1A2B4A] disabled:opacity-40 hover:bg-[#F8F7F4] transition-colors">← Precedente</button>
+          <span className="text-[#6B7280]">Pagina {page} di {pagination.totalPages}</span>
+          <button disabled={page >= pagination.totalPages} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 border border-[#E5E0D8] rounded-[6px] text-[#1A2B4A] disabled:opacity-40 hover:bg-[#F8F7F4] transition-colors">Successiva →</button>
         </div>
       )}
     </div>

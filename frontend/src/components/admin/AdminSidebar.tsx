@@ -67,6 +67,7 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { to: '/admin/branding/logo', label: 'Immagini', permissions: ['branding.logo.manage'] },
       { to: '/admin/locales', label: 'Testi', permissions: ['locales.manage'] },
+      { to: '/admin/maintenance', label: 'Manutenzione', permissions: ['maintenance.manage'] },
     ],
   },
 ]

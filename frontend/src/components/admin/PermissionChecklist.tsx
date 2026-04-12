@@ -16,12 +16,6 @@ export default function PermissionChecklist({
 }: PermissionChecklistProps) {
   const [query, setQuery] = useState('')
 
-  const handleRowToggle = (permissionCode: string) => {
-    if (!readOnly) {
-      onToggle(permissionCode)
-    }
-  }
-
   const filteredPermissions = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase()
 
@@ -39,7 +33,7 @@ export default function PermissionChecklist({
   }, [permissions, query])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
         <label className="admin-label" htmlFor="permission-search">
           Cerca permesso
@@ -49,63 +43,78 @@ export default function PermissionChecklist({
           type="search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Cerca permesso"
+          placeholder="Filtra per codice o descrizione…"
           className="admin-input"
         />
       </div>
 
-      <div className="max-h-[24rem] space-y-2 overflow-y-auto pr-1">
-        {filteredPermissions.length === 0 ? (
-          <p className="border border-[#E5E0D8] bg-[#F8F7F4] px-4 py-3 text-sm text-[#6B7280]">
-            Nessun permesso trovato
-          </p>
-        ) : (
-          filteredPermissions.map((permission) => {
-            const checked = selectedCodes.includes(permission.code)
+      <div className="max-h-[22rem] overflow-y-auto border border-[#E5E0D8]">
+        <table className="w-full text-sm">
+          <thead className="sticky top-0 z-10 bg-[#F8F7F4]">
+            <tr className="border-b border-[#E5E0D8]">
+              <th className="w-10 px-3 py-2 text-center">
+                <span className="sr-only">Seleziona</span>
+              </th>
+              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-[#1A2B4A] text-xs">
+                Codice permesso
+              </th>
+              <th className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-[#1A2B4A] text-xs">
+                Descrizione
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[#E5E0D8] bg-white">
+            {filteredPermissions.length === 0 ? (
+              <tr>
+                <td colSpan={3} className="px-4 py-6 text-center text-[#6B7280]">
+                  Nessun permesso trovato
+                </td>
+              </tr>
+            ) : (
+              filteredPermissions.map((permission) => {
+                const checked = selectedCodes.includes(permission.code)
 
-            return (
-              <div
-                key={permission.code}
-                onClick={() => handleRowToggle(permission.code)}
-                className={[
-                  'flex min-h-11 cursor-pointer items-start gap-3 border px-4 py-3 transition-colors',
-                  checked
-                    ? 'border-[#C9A96E] bg-[#FCFBF8]'
-                    : 'border-[#E5E0D8] bg-white hover:border-[#C9A96E]',
-                  readOnly ? 'cursor-default' : '',
-                ].join(' ')}
-              >
-                <input
-                  id={`permission-${permission.id}`}
-                  type="checkbox"
-                  aria-labelledby={`permission-label-${permission.id}`}
-                  aria-describedby={`permission-description-${permission.id}`}
-                  checked={checked}
-                  disabled={readOnly}
-                  onClick={(event) => event.stopPropagation()}
-                  onChange={() => onToggle(permission.code)}
-                  className="mt-1 h-4 w-4 accent-[#1A2B4A]"
-                />
-
-                <div className="min-w-0 flex-1 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <code className="admin-code">{permission.code}</code>
-                    {permission.isSystem && <span className="admin-badge">Sistema</span>}
-                  </div>
-                  <span
-                    id={`permission-label-${permission.id}`}
-                    className="block text-sm font-medium text-[#1A1A1A]"
+                return (
+                  <tr
+                    key={permission.code}
+                    onClick={() => { if (!readOnly) onToggle(permission.code) }}
+                    className={[
+                      'transition-colors',
+                      readOnly ? '' : 'cursor-pointer',
+                      checked
+                        ? 'bg-[#FCFBF8]'
+                        : 'hover:bg-[#F8F7F4]',
+                    ].join(' ')}
                   >
-                    {permission.label}
-                  </span>
-                  <p id={`permission-description-${permission.id}`} className="text-sm leading-6 text-[#6B7280]">
-                    {permission.description}
-                  </p>
-                </div>
-              </div>
-            )
-          })
-        )}
+                    <td className="px-3 py-2 text-center">
+                      <input
+                        id={`permission-${permission.id}`}
+                        type="checkbox"
+                        aria-label={permission.label}
+                        checked={checked}
+                        disabled={readOnly}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={() => onToggle(permission.code)}
+                        className="h-4 w-4 accent-[#1A2B4A]"
+                      />
+                    </td>
+                    <td className="px-3 py-2">
+                      <code className="admin-code">{permission.code}</code>
+                    </td>
+                    <td className="px-3 py-2 text-[#1A1A1A]">
+                      <span className="font-medium">{permission.label}</span>
+                      {permission.description && (
+                        <p className="mt-0.5 text-xs text-[#6B7280] leading-relaxed">
+                          {permission.description}
+                        </p>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })
+            )}
+          </tbody>
+        </table>
       </div>
     </div>
   )

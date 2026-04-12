@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { pipeline } from 'stream/promises'
 import * as fs from 'fs'
 import * as path from 'path'
+import * as XLSX from 'xlsx'
 import { parseExcelFile, splitCodes, validateImagePath } from '../../lib/excelImporter'
 import { MULTIPART_MAX_FILE_SIZE_MB } from '../../lib/multipart'
 import type { ImportResult } from '../../types/shared'
@@ -267,6 +268,16 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
         const colorResult = await resolveCodes(fastify.prisma.color, splitCodes(row.colori ?? ''))
         const finishResult = await resolveCodes(fastify.prisma.finish, splitCodes(row.finiture ?? ''))
 
+        let measureId: string | null = null
+        if (row.misura) {
+          const measure = await fastify.prisma.coffinMeasure.findFirst({ where: { code: row.misura.trim() } })
+          if (measure) {
+            measureId = measure.id
+          } else {
+            result.warnings.push({ row: rowNum, code: row.codice, reason: `Misura non trovata: ${row.misura}` })
+          }
+        }
+
         let imageUrl: string | null = null
         if (row.immagine) {
           imageUrl = validateImagePath(row.immagine, uploadsRoot)
@@ -282,6 +293,7 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
             description: row.descrizione ?? '',
             notes: row.note || null,
             imageUrl,
+            measureId,
             categories: { connect: categoryResult.ids.map(id => ({ id })) },
             subcategories: { connect: subcategoryResult.ids.map(id => ({ id })) },
             essences: { connect: essenceResult.ids.map(id => ({ id })) },
@@ -293,6 +305,7 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
             description: row.descrizione ?? '',
             notes: row.note || null,
             imageUrl,
+            measureId,
             categories: { set: categoryResult.ids.map(id => ({ id })) },
             subcategories: { set: subcategoryResult.ids.map(id => ({ id })) },
             essences: { set: essenceResult.ids.map(id => ({ id })) },
@@ -309,6 +322,25 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
 
     fs.unlinkSync(tmpPath)
     return result
+  })
+
+  // GET /import-template — scarica template Excel vuoto
+  fastify.get('/import-template', {
+    preHandler: [fastify.checkPermission('articles.coffins.import')]
+  }, async (_req, reply) => {
+    const headers = [
+      'codice', 'descrizione', 'note', 'misura', 'categorie',
+      'sottocategorie', 'essenze', 'figure', 'colori', 'finiture', 'immagine',
+    ]
+    const ws = XLSX.utils.aoa_to_sheet([headers])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Cofani')
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+
+    reply
+      .header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      .header('Content-Disposition', 'attachment; filename="template-cofani.xlsx"')
+      .send(buffer)
   })
 }
 

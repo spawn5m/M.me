@@ -33,6 +33,7 @@ export const clientApi = {
         subcategories?: Array<{ code: string }>
       }>(`${BASE}/catalog/funeral/${id}`),
 
+
     marmista: (params?: Record<string, string>) =>
       req<{
         data: Array<{ id: string; code: string; description: string; price: number | null }>

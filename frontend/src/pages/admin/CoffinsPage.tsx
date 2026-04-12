@@ -316,6 +316,16 @@ export default function CoffinsPage() {
     }
   }
 
+  const handleDownloadTemplate = async () => {
+    const blob = await articlesApi.coffins.downloadTemplate()
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'template-cofani.xlsx'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -423,20 +433,63 @@ export default function CoffinsPage() {
       )}
 
       {tab === 'import' && (
-        <div className="admin-panel max-w-xl p-6">
-          <p className="mb-4 text-sm text-[#6B7280]">
-            Carica un file Excel (.xlsx) con colonne: <code className="admin-code">codice, descrizione, note, categorie, misura</code>
-          </p>
-          <label className="block">
-            <span className="sr-only">Scegli file Excel</span>
-            <input
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleImport}
-              disabled={isImporting}
-              className="admin-file-input disabled:opacity-50"
-            />
-          </label>
+        <div className="admin-panel max-w-2xl p-6 space-y-6">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-[#1A2B4A]">Colonne richieste nel file Excel</p>
+              <button
+                type="button"
+                onClick={() => { void handleDownloadTemplate() }}
+                className="admin-button-secondary text-xs"
+              >
+                Scarica template
+              </button>
+            </div>
+            <div className="border border-[#E5E0D8] overflow-hidden">
+              <table className="w-full text-xs">
+                <thead className="bg-[#F8F7F4]">
+                  <tr className="border-b border-[#E5E0D8]">
+                    <th className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-[#1A2B4A]">Colonna</th>
+                    <th className="px-3 py-2 text-left font-semibold uppercase tracking-wider text-[#1A2B4A]">Note</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#E5E0D8] bg-white">
+                  {[
+                    { col: 'codice', note: 'Obbligatorio. Usato come chiave per upsert.' },
+                    { col: 'descrizione', note: '' },
+                    { col: 'note', note: 'Opzionale.' },
+                    { col: 'misura', note: 'Codice misura (es. 190x60). Opzionale.' },
+                    { col: 'categorie', note: 'Codici separati da punto e virgola (es. CAT1;CAT2). Obbligatorio.' },
+                    { col: 'sottocategorie', note: 'Codici separati da punto e virgola. Opzionale.' },
+                    { col: 'essenze', note: 'Codici separati da punto e virgola. Opzionale.' },
+                    { col: 'figure', note: 'Codici separati da punto e virgola. Opzionale.' },
+                    { col: 'colori', note: 'Codici separati da punto e virgola. Opzionale.' },
+                    { col: 'finiture', note: 'Codici separati da punto e virgola. Opzionale.' },
+                    { col: 'immagine', note: 'Percorso relativo alla cartella uploads/images (es. coffins/img.jpg). Opzionale.' },
+                  ].map(({ col, note }) => (
+                    <tr key={col}>
+                      <td className="px-3 py-2"><code className="admin-code">{col}</code></td>
+                      <td className="px-3 py-2 text-[#6B7280]">{note}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-2 text-sm font-medium text-[#1A2B4A]">Carica file</p>
+            <label className="block">
+              <span className="sr-only">Scegli file Excel</span>
+              <input
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={handleImport}
+                disabled={isImporting}
+                className="admin-file-input disabled:opacity-50"
+              />
+            </label>
+          </div>
           {isImporting && <p className="text-sm text-[#6B7280] mt-3">Importazione in corso…</p>}
 
           {importResult && (

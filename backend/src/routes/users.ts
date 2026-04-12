@@ -21,15 +21,19 @@ const USER_INCLUDE = {
   managers: true,
   funeralPriceList: { select: PRICE_LIST_SUMMARY_SELECT },
   marmistaPriceList: { select: PRICE_LIST_SUMMARY_SELECT },
+  accessoriesPriceList: { select: PRICE_LIST_SUMMARY_SELECT },
 } as const
 
 // ─── Tipi interni ─────────────────────────────────────────────────────────────
 
+type PriceListSummary = { id: string; name: string; type: 'purchase' | 'sale'; articleType: 'funeral' | 'marmista' | 'accessories' }
+
 type UserWithRoles = User & {
   userRoles: (UserRole & { role: Role })[]
   managers?: { managerId: string }[]
-  funeralPriceList?: { id: string; name: string; type: 'purchase' | 'sale'; articleType: 'funeral' | 'marmista' } | null
-  marmistaPriceList?: { id: string; name: string; type: 'purchase' | 'sale'; articleType: 'funeral' | 'marmista' } | null
+  funeralPriceList?: PriceListSummary | null
+  marmistaPriceList?: PriceListSummary | null
+  accessoriesPriceList?: PriceListSummary | null
 }
 
 type UserRecord = UserWithRoles & {
@@ -37,13 +41,14 @@ type UserRecord = UserWithRoles & {
 }
 
 function userToResponse(user: UserWithRoles) {
-  const { password: _pw, userRoles, managers, funeralPriceList, marmistaPriceList, ...rest } = user
+  const { password: _pw, userRoles, managers, funeralPriceList, marmistaPriceList, accessoriesPriceList, ...rest } = user
   return {
     ...rest,
     roles: userRoles.map((ur) => ({ id: ur.role.id, name: ur.role.name, label: ur.role.label })),
     manager: managers?.[0]?.managerId ?? null,
     funeralPriceList: funeralPriceList ?? null,
     marmistaPriceList: marmistaPriceList ?? null,
+    accessoriesPriceList: accessoriesPriceList ?? null,
   }
 }
 

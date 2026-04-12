@@ -77,7 +77,7 @@ export default function OffertaMeseCard({ item }: OffertaMeseCardProps) {
               </div>
             )}
 
-            {item.price !== undefined && (
+            {item.price != null && (
               <div className="pt-2">
                 <p className="text-[9px] font-bold uppercase tracking-widest text-[#6B7280] mb-1">
                   {t('catalog.publicPrice')}

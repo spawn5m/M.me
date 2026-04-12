@@ -1,16 +1,42 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { articlesApi } from '../../lib/api/articles'
+import { lookupsApi } from '../../lib/api/lookups'
 import DataTable from '../../components/admin/DataTable'
 import FormModal from '../../components/admin/FormModal'
 import ConfirmDialog from '../../components/admin/ConfirmDialog'
-import type { AdminAccessoryArticle, ImportResult } from '../../../../backend/src/types/shared'
+import type { AdminAccessoryArticle, AdminLookup, ImportResult } from '../../../../backend/src/types/shared'
 
 interface FormData {
   code: string
   description: string
   notes: string
   pdfPage: string
+  categoryIds: string[]
+  subcategoryIds: string[]
+}
+
+function MultiSelect({ label, options, value, onChange }: {
+  label: string; options: AdminLookup[]; value: string[]
+  onChange: (val: string[]) => void
+}) {
+  const toggle = (id: string) =>
+    onChange(value.includes(id) ? value.filter(v => v !== id) : [...value, id])
+  return (
+    <div>
+      <label className="admin-label">{label}</label>
+      <div className="max-h-32 overflow-y-auto border border-[#E5E0D8] bg-white p-2">
+        <div className="flex flex-wrap gap-2">
+          {options.map(opt => (
+            <button key={opt.id} type="button" onClick={() => toggle(opt.id)}
+              className={`admin-inline-chip ${value.includes(opt.id) ? 'admin-inline-chip-active' : ''}`}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 type Tab = 'list' | 'import'
@@ -26,8 +52,12 @@ export default function AccessoriesPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [isImporting, setIsImporting] = useState(false)
+  const [availableCategories, setAvailableCategories] = useState<AdminLookup[]>([])
+  const [availableSubcategories, setAvailableSubcategories] = useState<AdminLookup[]>([])
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>()
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormData>({
+    defaultValues: { categoryIds: [], subcategoryIds: [] },
+  })
 
   const load = useCallback(async () => {
     setIsLoading(true)
@@ -41,13 +71,30 @@ export default function AccessoriesPage() {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    Promise.all([
+      lookupsApi.list('accessory-categories'),
+      lookupsApi.list('accessory-subcategories'),
+    ]).then(([cats, subs]) => {
+      setAvailableCategories(cats.data)
+      setAvailableSubcategories(subs.data)
+    }).catch(() => {})
+  }, [])
+
   const openCreate = () => {
-    reset({ code: '', description: '', notes: '', pdfPage: '' })
+    reset({ code: '', description: '', notes: '', pdfPage: '', categoryIds: [], subcategoryIds: [] })
     setIsCreating(true)
   }
 
   const openEdit = (item: AdminAccessoryArticle) => {
-    reset({ code: item.code, description: item.description, notes: item.notes ?? '', pdfPage: item.pdfPage?.toString() ?? '' })
+    reset({
+      code: item.code,
+      description: item.description,
+      notes: item.notes ?? '',
+      pdfPage: item.pdfPage?.toString() ?? '',
+      categoryIds: item.categories.map(c => c.id),
+      subcategoryIds: item.subcategories.map(c => c.id),
+    })
     setEditing(item)
   }
 
@@ -56,7 +103,7 @@ export default function AccessoriesPage() {
   const onSubmit = handleSubmit(async (data) => {
     setIsSubmitting(true)
     try {
-      const payload = { ...data, pdfPage: data.pdfPage ? parseInt(data.pdfPage, 10) : null }
+      const payload = { ...data, pdfPage: data.pdfPage ? parseInt(data.pdfPage, 10) : null, categoryIds: data.categoryIds, subcategoryIds: data.subcategoryIds }
       if (editing) {
         await articlesApi.accessories.update(editing.id, payload)
       } else {
@@ -153,6 +200,20 @@ export default function AccessoriesPage() {
             <label className="admin-label">Descrizione <span className="text-red-500">*</span></label>
             <input {...register('description', { required: 'Obbligatorio' })} className="admin-input" />
             {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description.message}</p>}
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <MultiSelect
+              label="Categorie"
+              options={availableCategories}
+              value={watch('categoryIds')}
+              onChange={val => setValue('categoryIds', val)}
+            />
+            <MultiSelect
+              label="Sottocategorie"
+              options={availableSubcategories}
+              value={watch('subcategoryIds')}
+              onChange={val => setValue('subcategoryIds', val)}
+            />
           </div>
           <div>
             <label className="admin-label">Pagina PDF</label>

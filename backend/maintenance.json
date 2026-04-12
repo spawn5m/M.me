@@ -1,0 +1,9 @@
+{
+  "pages": {
+    "home": { "enabled": false },
+    "ourStory": { "enabled": false },
+    "whereWeAre": { "enabled": false },
+    "funeralHomes": { "enabled": false },
+    "marmistas": { "enabled": false }
+  }
+}

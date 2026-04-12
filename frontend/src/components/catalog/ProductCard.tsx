@@ -7,6 +7,7 @@ interface ProductCardProps {
   badge?: string
   showPrice?: boolean
   price?: number | null
+  purchasePrice?: number | null
   onClick: () => void
 }
 
@@ -17,6 +18,7 @@ export default function ProductCard({
   badge,
   showPrice,
   price,
+  purchasePrice,
   onClick,
 }: ProductCardProps) {
   const { t } = useTranslation()
@@ -60,11 +62,16 @@ export default function ProductCard({
       )}
 
       {showPrice && price !== undefined && (
-        <div className="mt-4">
+        <div className="mt-4 text-right">
           <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[#6B7280]">
             {t('catalog.priceListPrice')}
           </p>
-          <p className="mt-1 font-mono text-xl font-bold text-[#C9A96E]">
+          {purchasePrice != null && (
+            <p className="mt-0.5 font-mono text-[11px] font-semibold text-red-600">
+              acq. € {purchasePrice.toFixed(2)}
+            </p>
+          )}
+          <p className="mt-0.5 font-mono text-xl font-bold text-[#C9A96E]">
             {price != null ? (
               `€ ${price.toFixed(2)}`
             ) : (

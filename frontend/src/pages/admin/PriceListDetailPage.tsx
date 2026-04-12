@@ -91,6 +91,25 @@ export default function PriceListDetailPage() {
             marmistaArticleId: null,
           })),
         ])
+      } else if (currentPriceList.articleType === 'accessories') {
+        const accessories = await articlesApi.accessories.list({ page: 1, pageSize: 500 })
+        if (cancelled) return
+
+        const priceMap = new Map<string, number>()
+        for (const item of currentPriceList.items) {
+          if (item.accessoryArticle) priceMap.set(`accessory:${item.accessoryArticle.code}`, item.price)
+        }
+
+        setEditableItems(
+          accessories.data.map((item) => ({
+            key: `accessory:${item.code}`,
+            label: `[${item.code}] ${item.description}`,
+            price: priceMap.get(`accessory:${item.code}`)?.toString() ?? '',
+            coffinArticleId: null,
+            accessoryArticleId: item.id,
+            marmistaArticleId: null,
+          }))
+        )
       } else {
         const marmista = await articlesApi.marmista.list({ page: 1, pageSize: 500 })
         if (cancelled) return
@@ -224,7 +243,7 @@ export default function PriceListDetailPage() {
         </div>
 
         <span className="inline-flex min-h-10 items-center border border-[#E5E0D8] bg-white px-3 py-2 text-xs font-medium uppercase tracking-[0.14em] text-[#6B7280] shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
-          {priceList.type === 'purchase' ? 'Acquisto' : 'Vendita'} · {priceList.articleType === 'funeral' ? 'Funebre' : 'Marmista'}
+          {priceList.type === 'purchase' ? 'Acquisto' : 'Vendita'} · {priceList.articleType === 'funeral' ? 'Funebre' : priceList.articleType === 'accessories' ? 'Accessori' : 'Marmista'}
         </span>
       </div>
 

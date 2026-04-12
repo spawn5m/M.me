@@ -10,7 +10,7 @@ import type { AdminPriceList } from '../../../../backend/src/types/shared'
 interface WizardStep1 {
   name: string
   type: 'sale' | 'purchase'
-  articleType: 'funeral' | 'marmista'
+  articleType: 'funeral' | 'marmista' | 'accessories'
   isDerivato: boolean
   autoUpdate: boolean
   parentId: string
@@ -114,7 +114,7 @@ export default function PriceListsPage() {
     },
     {
       key: 'articleType', header: 'Dominio',
-      render: (item: Record<string, unknown>) => item.articleType === 'funeral' ? 'Funebre' : 'Marmista',
+      render: (item: Record<string, unknown>) => item.articleType === 'funeral' ? 'Funebre' : item.articleType === 'accessories' ? 'Accessori' : 'Marmista',
     },
     {
       key: 'parentId', header: 'Base/Derivato',
@@ -176,6 +176,7 @@ export default function PriceListsPage() {
               <select {...register('articleType')} className="admin-select">
                 <option value="funeral">Funebre</option>
                 <option value="marmista">Marmista</option>
+                <option value="accessories">Accessori</option>
               </select>
             </div>
           </div>

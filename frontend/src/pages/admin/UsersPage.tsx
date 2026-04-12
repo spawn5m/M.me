@@ -74,6 +74,7 @@ const columns = [
       const labels = [
         u.funeralPriceList ? `Funebre: ${u.funeralPriceList.name}` : null,
         u.marmistaPriceList ? `Marmista: ${u.marmistaPriceList.name}` : null,
+        u.accessoriesPriceList ? `Accessori: ${u.accessoriesPriceList.name}` : null,
       ].filter(Boolean)
 
       if (labels.length === 0) {

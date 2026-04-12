@@ -9,6 +9,14 @@ import MarmistiPage from '../MarmistiPage'
 import NostraStoriaPage from '../NostraStoriaPage'
 import DoveSiamoPage from '../DoveSiamoPage'
 import itJSON from '../../locales/it.json'
+import { AuthProvider } from '../../context/AuthContext'
+
+vi.mock('../../lib/api', () => ({
+  default: {
+    get: vi.fn().mockRejectedValue(new Error('401')),
+    post: vi.fn(),
+  },
+}))
 
 // Mock react-leaflet to avoid DOM issues in jsdom
 vi.mock('react-leaflet', () => ({
@@ -65,7 +73,9 @@ await testI18n.use(initReactI18next).init({
 function renderWithProviders(ui: React.ReactElement) {
   return render(
     <I18nextProvider i18n={testI18n}>
-      <MemoryRouter>{ui}</MemoryRouter>
+      <MemoryRouter>
+        <AuthProvider>{ui}</AuthProvider>
+      </MemoryRouter>
     </I18nextProvider>
   )
 }

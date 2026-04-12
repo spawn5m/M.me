@@ -6,7 +6,7 @@ export interface LoadedPriceListTree {
   id: string
   name: string
   type: 'purchase' | 'sale'
-  articleType: 'funeral' | 'marmista'
+  articleType: 'funeral' | 'marmista' | 'accessories'
   parentId: string | null
   autoUpdate: boolean
   rules: Array<{

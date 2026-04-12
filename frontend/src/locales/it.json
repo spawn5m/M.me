@@ -22,11 +22,7 @@
     "serverError": "Errore interno del server"
   },
   "home": {
-    "badge": "Dal 1988 in Sardegna",
-    "headline": "ECCELLENZA FUNEBRE.",
-    "subheadline": "Fornitore leader in Sardegna di Codani funebri e Arte Sacra in Sardegna.",
-    "ctaPrimary": "SCOPRI I PRODOTTI",
-    "ctaSecondary": "CONTATTACI",
+    "headline": "MIRIGLIANI",
     "sectionFunebri": "PER LE IMPRESE FUNEBRI",
     "sectionFunebriInt": "Al servizio del cliente",
     "sectionFunebriDesc": "Cofani, accessori e arredi di alta qualità per i professionisti del settore.",
@@ -49,7 +45,7 @@
     "coffins": "Cofani",
     "accessories": "Accessori",
     "marmista": "Per i Marmisti",
-    "ceabis": "Catalogo Ceabis",
+    "ceabis": "Catalogo CEABIS",
     "noResults": "Nessun prodotto trovato",
     "loading": "Caricamento...",
     "filterAll": "Tutti",
@@ -131,18 +127,18 @@
     "villamarPhone": "",
     "villamarHours": "Lun-Ven 8:00-12:30 ~ 15:00-17:00 ",
     "sassari": "Sede di Sassari",
-    "sassariAddress": "Via Sassari 45, 07100 Sassari (SS)",
-    "sassariPhone": "+39 079 123 4567",
-    "sassariHours": "Lun-Ven 8:30-17:30",
+    "sassariAddress": "Via Giuseppe de Martini 201, 07100 Sassari (SS)",
+    "sassariPhone": "",
+    "sassariHours": "Su Appuntamento",
     "pickupTitle": "Orari di Ritiro",
     "pickupVillamar": "Sede di Villamar",
     "pickupVillamarWeekdays": "8:00 – 12:30 / 15:00 – 17:00",
-    "pickupVillamarSaturday": "8:00 – 12:00",
-    "pickupVillamarSunday": "Chiuso",
+    "pickupVillamarSaturday": "Chiuso (Solo Appuntamento)",
+    "pickupVillamarSunday": "Chiuso (Solo Appuntamento)",
     "pickupSassari": "Sede di Sassari",
-    "pickupSassariWeekdays": "8:30 – 17:30",
-    "pickupSassariSaturday": "8:30 – 12:30",
-    "pickupSassariSunday": "Chiuso",
+    "pickupSassariWeekdays": "Su Appuntamento",
+    "pickupSassariSaturday": "Su Appuntamento",
+    "pickupSassariSunday": "Su Appuntamento",
     "contactTitle": "Contattaci",
     "contactName": "Nome",
     "contactEmail": "Email",
@@ -156,12 +152,17 @@
     "contactSent": "Messaggio inviato con successo!",
     "contactError": "Errore nell'invio. Riprova."
   },
-    "footer": {
+  "footer": {
     "textClaim": "Ingrosso di Articoli Funerbi e Arte Funeraria. Concessionario per la Sardegna di Vezzani",
-    "rightsReserved":"Tutti i diritti riservati",
+    "rightsReserved": "Tutti i diritti riservati",
     "navigation": "Navigatore",
     "contacts": "Contatti"
-
-
+  },
+  "maintenance": {
+    "home": "Il sito è temporaneamente in manutenzione.",
+    "ourStory": "Questa pagina è temporaneamente in manutenzione.",
+    "whereWeAre": "Questa pagina è temporaneamente in manutenzione.",
+    "funeralHomes": "Questa pagina è temporaneamente in manutenzione.",
+    "marmistas": "Questa pagina è temporaneamente in manutenzione."
   }
 }

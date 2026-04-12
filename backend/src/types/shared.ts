@@ -146,6 +146,28 @@ export interface ImportResult {
   warnings: Array<{ row: number; code: string; reason: string }>
 }
 
+export type MaintenancePageKey = 'home' | 'ourStory' | 'whereWeAre' | 'funeralHomes' | 'marmistas'
+
+export interface MaintenancePageState {
+  enabled: boolean
+}
+
+export type MaintenanceStateMap = Record<MaintenancePageKey, MaintenancePageState>
+
+export interface PublicMaintenanceResponse {
+  pages: MaintenanceStateMap
+}
+
+export interface AdminMaintenancePageConfig extends MaintenancePageState {
+  message: string
+}
+
+export type AdminMaintenanceConfigMap = Record<MaintenancePageKey, AdminMaintenancePageConfig>
+
+export interface AdminMaintenanceResponse {
+  pages: AdminMaintenanceConfigMap
+}
+
 // Nota: SessionData augmentation è in src/plugins/auth.ts
 // dove @fastify/secure-session viene importato
 

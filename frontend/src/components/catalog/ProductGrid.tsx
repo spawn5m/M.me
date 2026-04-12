@@ -9,6 +9,7 @@ interface GridItem {
   imageUrl?: string
   badge?: string
   price?: number | null
+  purchasePrice?: number | null
 }
 
 interface ProductGridProps {
@@ -71,6 +72,7 @@ export default function ProductGrid({
           badge={item.badge}
           showPrice={showPrice}
           price={item.price}
+          purchasePrice={item.purchasePrice}
           onClick={() => onItemClick(item.id)}
         />
       ))}

@@ -1,12 +1,12 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import Navbar from './components/layout/Navbar'
-import FooterLight from './components/layout/FooterLight'
 
 import { ADMIN_ROUTE_PERMISSIONS, AuthProvider, CLIENT_ROUTE_PERMISSIONS, getDefaultRoute, useAuth } from './context/AuthContext'
 import { BrandingProvider, useBranding } from './context/BrandingContext'
+import { MaintenanceProvider } from './context/MaintenanceContext'
 import ProtectedRoute from './components/admin/ProtectedRoute'
+import PublicPageRoute from './components/layout/PublicPageRoute'
 
 const HomePage = lazy(() => import('./pages/HomePage'))
 const ImpreseFunebrePage = lazy(() => import('./pages/ImpreseFunebrePage'))
@@ -29,6 +29,7 @@ const MeasuresPage = lazy(() => import('./pages/admin/MeasuresPage'))
 const CatalogPdfPage = lazy(() => import('./pages/admin/CatalogPdfPage'))
 const BrandingLogoPage = lazy(() => import('./pages/admin/BrandingLogoPage'))
 const LocalesPage = lazy(() => import('./pages/admin/LocalesPage'))
+const MaintenancePage = lazy(() => import('./pages/admin/MaintenancePage'))
 
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'))
 const FuneralCatalogPage = lazy(() => import('./pages/client/FuneralCatalogPage'))
@@ -96,7 +97,6 @@ function RouteFallback({ isAdmin }: { isAdmin: boolean }) {
 
 function AppContent() {
   const location = useLocation()
-  const isDark = location.pathname === '/'
   const isAdmin = location.pathname.startsWith('/admin') || location.pathname.startsWith('/client')
 
   const { logoUrl } = useBranding()
@@ -111,17 +111,14 @@ function AppContent() {
 
   return (
     <>
-      {!isDark && !isAdmin && !location.pathname.startsWith('/login') && (
-        <Navbar variant="light" />
-      )}
       <Suspense fallback={<RouteFallback isAdmin={isAdmin} />}>
         <Routes>
           {/* Pubbliche */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/storia" element={<NostraStoriaPage />} />
-          <Route path="/dove-siamo" element={<DoveSiamoPage />} />
-          <Route path="/imprese-funebri" element={<ImpreseFunebrePage />} />
-          <Route path="/marmisti" element={<MarmistiPage />} />
+          <Route path="/" element={<PublicPageRoute page="home"><HomePage /></PublicPageRoute>} />
+          <Route path="/storia" element={<PublicPageRoute page="ourStory"><NostraStoriaPage /></PublicPageRoute>} />
+          <Route path="/dove-siamo" element={<PublicPageRoute page="whereWeAre"><DoveSiamoPage /></PublicPageRoute>} />
+          <Route path="/imprese-funebri" element={<PublicPageRoute page="funeralHomes"><ImpreseFunebrePage /></PublicPageRoute>} />
+          <Route path="/marmisti" element={<PublicPageRoute page="marmistas"><MarmistiPage /></PublicPageRoute>} />
           <Route path="/area-riservata" element={<PlaceholderPage name="Area Riservata" />} />
 
           {/* Auth */}
@@ -155,6 +152,7 @@ function AppContent() {
             <Route path="measures" element={<ProtectedRoute requiredPermissions={['measures.read']}><MeasuresPage /></ProtectedRoute>} />
             <Route path="branding/logo" element={<ProtectedRoute requiredPermissions={['branding.logo.manage']}><BrandingLogoPage /></ProtectedRoute>} />
             <Route path="locales" element={<ProtectedRoute requiredPermissions={['locales.manage']}><LocalesPage /></ProtectedRoute>} />
+            <Route path="maintenance" element={<ProtectedRoute requiredPermissions={['maintenance.manage']}><MaintenancePage /></ProtectedRoute>} />
             <Route path="pricelists" element={<ProtectedRoute requiredPermissions={['pricelists.sale.read', 'pricelists.purchase.read']}><PriceListsPage /></ProtectedRoute>} />
             <Route path="pricelists/:id" element={<ProtectedRoute requiredPermissions={['pricelists.sale.read', 'pricelists.purchase.read']}><PriceListDetailPage /></ProtectedRoute>} />
           </Route>
@@ -185,9 +183,6 @@ function AppContent() {
           </Route>
         </Routes>
       </Suspense>
-      {!isDark && !isAdmin && !location.pathname.startsWith('/login') && (
-        <FooterLight />
-      )}
     </>
   )
 }
@@ -197,7 +192,9 @@ export default function App() {
     <BrandingProvider>
       <BrowserRouter>
         <AuthProvider>
-          <AppContent />
+          <MaintenanceProvider>
+            <AppContent />
+          </MaintenanceProvider>
         </AuthProvider>
       </BrowserRouter>
     </BrandingProvider>

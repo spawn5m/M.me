@@ -44,6 +44,9 @@ export const articlesApi = {
       form.append('file', file)
       return api.post<ImportResult>(`${base}/coffins/import`, form).then(r => r.data)
     },
+
+    downloadTemplate: () =>
+      api.get(`${base}/coffins/import-template`, { responseType: 'blob' }).then(r => r.data as Blob),
   },
 
   accessories: {

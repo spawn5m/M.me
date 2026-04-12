@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import api from '../lib/api'
 import { mockAccessories } from '../lib/mock-data'
-import type { AccessoryItem, Pagination } from '../lib/types'
+import type { AccessoryItem, CoffinPriceOption, Pagination } from '../lib/types'
 
 interface LookupLike {
   label?: string
@@ -16,6 +16,8 @@ interface PublicAccessoryRaw {
   imageUrl?: string | null
   pdfPage?: number | null
   categories?: Array<string | LookupLike>
+  price?: number | null
+  priceOptions?: CoffinPriceOption[]
 }
 
 function normalizeLookupList(values: Array<string | LookupLike> | undefined): string[] {
@@ -31,15 +33,20 @@ function normalizeLookupList(values: Array<string | LookupLike> | undefined): st
 }
 
 function normalizeAccessories(data: PublicAccessoryRaw[]): AccessoryItem[] {
-  return data.map((item) => ({
-    id: item.id,
-    code: item.code,
-    description: item.description,
-    notes: item.notes ?? undefined,
-    imageUrl: item.imageUrl ?? undefined,
-    pdfPage: item.pdfPage ?? undefined,
-    categories: normalizeLookupList(item.categories),
-  }))
+  return data.map((item) => {
+    const normalized: AccessoryItem = {
+      id: item.id,
+      code: item.code,
+      description: item.description,
+      notes: item.notes ?? undefined,
+      imageUrl: item.imageUrl ?? undefined,
+      pdfPage: item.pdfPage ?? undefined,
+      categories: normalizeLookupList(item.categories),
+    }
+    if (item.price !== undefined) normalized.price = item.price
+    if (item.priceOptions !== undefined) normalized.priceOptions = item.priceOptions
+    return normalized
+  })
 }
 
 interface UseAccessoriesParams {

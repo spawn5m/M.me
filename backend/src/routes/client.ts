@@ -12,6 +12,7 @@ const changePasswordSchema = z.object({
   newPassword: z.string().min(8),
 })
 
+
 const funeralCatalogQuerySchema = z.object({
   category: z.string().optional(),
   subcategory: z.string().optional(),

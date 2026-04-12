@@ -61,6 +61,12 @@ describe('AdminSidebar', () => {
     expect(screen.getByText('Catalogo Funebre')).toBeTruthy()
   })
 
+  it('mostra "Manutenzione" per chi ha maintenance.manage', () => {
+    mockUseAuth.mockReturnValue(makeAuth(['manager'], ['maintenance.manage']))
+    render(<MemoryRouter initialEntries={['/admin/maintenance']}><AdminSidebar /></MemoryRouter>)
+    expect(screen.getByText('Manutenzione')).toBeTruthy()
+  })
+
   it('nasconde una voce client quando manca il permesso client corrispondente', () => {
     mockUseAuth.mockReturnValue(makeAuth(['impresario_funebre'], ['dashboard.client.read']))
     render(<MemoryRouter><AdminSidebar variant="client" /></MemoryRouter>)

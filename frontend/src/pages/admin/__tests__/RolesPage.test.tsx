@@ -214,7 +214,7 @@ describe('RolesPage', () => {
 
     await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
 
-    expect(screen.getByLabelText('Identificatore (es. operatore_magazzino)')).toHaveAttribute('placeholder', 'nome_ruolo')
+    expect(screen.getByLabelText('Identificatore')).toHaveAttribute('placeholder', 'nome_ruolo')
     expect(screen.getByLabelText('Nome visualizzato')).toHaveAttribute('placeholder', 'Operatore Magazzino')
     expect(screen.getByRole('button', { name: 'Chiudi' })).toBeInTheDocument()
   })
@@ -303,7 +303,7 @@ describe('RolesPage', () => {
     renderPage()
 
     await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
-    await user.type(screen.getByLabelText('Identificatore (es. operatore_magazzino)'), 'custom_catalog_editor')
+    await user.type(screen.getByLabelText('Identificatore'), 'custom_catalog_editor')
     await user.type(screen.getByLabelText('Nome visualizzato'), 'Catalog Editor')
     await user.click(screen.getByRole('checkbox', { name: 'Visualizzare ruoli' }))
     await user.click(screen.getByRole('button', { name: 'Salva' }))
@@ -323,7 +323,7 @@ describe('RolesPage', () => {
     renderPage()
 
     await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
-    await user.type(screen.getByLabelText('Identificatore (es. operatore_magazzino)'), 'nuovo_ruolo')
+    await user.type(screen.getByLabelText('Identificatore'), 'nuovo_ruolo')
     await user.type(screen.getByLabelText('Nome visualizzato'), 'Nuovo Ruolo')
     await user.click(screen.getByRole('button', { name: 'Salva' }))
 
@@ -342,7 +342,7 @@ describe('RolesPage', () => {
     renderPage()
 
     await user.click(screen.getByRole('button', { name: '+ Nuovo ruolo' }))
-    await user.type(screen.getByLabelText('Identificatore (es. operatore_magazzino)'), 'ruolo_enter')
+    await user.type(screen.getByLabelText('Identificatore'), 'ruolo_enter')
     await user.type(screen.getByLabelText('Nome visualizzato'), 'Ruolo Enter{enter}')
 
     await waitFor(() => {

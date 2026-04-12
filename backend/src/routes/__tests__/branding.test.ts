@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
+import fs from 'fs'
+import path from 'path'
 import type { FastifyInstance } from 'fastify'
 import {
   buildTestApp,
@@ -24,6 +26,17 @@ interface AuthorizationPrismaClient {
 
 function getAuthorizationPrisma(app: FastifyInstance): AuthorizationPrismaClient {
   return app.prisma as unknown as AuthorizationPrismaClient
+}
+
+const BRANDING_IMG_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'branding')
+
+function removeSlotFiles(slot: string) {
+  for (const ext of ['png', 'webp', 'svg']) {
+    const filePath = path.join(BRANDING_IMG_DIR, `${slot}.${ext}`)
+    if (fs.existsSync(filePath)) {
+      fs.rmSync(filePath)
+    }
+  }
 }
 
 async function ensurePermission(app: FastifyInstance, code: PermissionCode) {
@@ -63,6 +76,7 @@ describe('Branding images routes', () => {
 
   beforeEach(async () => {
     await cleanupTestDb(app)
+    removeSlotFiles('home-funebri')
 
     await seedTestUser(app, { email: 'manager@test.com', password: 'pass123!', roles: ['manager'] })
     await seedTestUser(app, { email: 'collab@test.com', password: 'pass123!', roles: ['collaboratore'] })

@@ -24,6 +24,7 @@ import clientRoutes from './routes/client'
 import permissionsRoutes from './routes/permissions'
 import brandingAdminRoutes from './routes/branding'
 import { localesPublicRoutes, localesAdminRoutes } from './routes/locales'
+import { maintenancePublicRoutes, maintenanceAdminRoutes } from './routes/maintenance'
 import { MULTIPART_OPTIONS } from './lib/multipart'
 
 const app = Fastify({
@@ -76,6 +77,8 @@ const start = async () => {
   await app.register(catalogRoutes, { prefix: '/api/admin/catalog' })
   await app.register(brandingAdminRoutes, { prefix: '/api/admin/branding' })
   await app.register(localesAdminRoutes, { prefix: '/api/admin/locales' })
+  await app.register(maintenancePublicRoutes, { prefix: '/api/public/maintenance' })
+  await app.register(maintenanceAdminRoutes, { prefix: '/api/admin/maintenance' })
   await app.register(clientRoutes, { prefix: '/api/client' })
 
   const port = Number(process.env.PORT) || 3001

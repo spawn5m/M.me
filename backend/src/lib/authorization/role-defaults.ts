@@ -54,6 +54,7 @@ export const SYSTEM_ROLE_DEFAULTS: Record<SystemRoleName, PermissionCode[]> = {
     'catalog.pdf.write',
     'branding.logo.manage',
     'locales.manage',
+    'maintenance.manage',
   ],
   manager: [
     'dashboard.admin.read',
@@ -97,6 +98,7 @@ export const SYSTEM_ROLE_DEFAULTS: Record<SystemRoleName, PermissionCode[]> = {
     'catalog.pdf.write',
     'branding.logo.manage',
     'locales.manage',
+    'maintenance.manage',
   ],
   collaboratore: [
     'dashboard.admin.read',

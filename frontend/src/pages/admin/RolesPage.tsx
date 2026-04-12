@@ -330,10 +330,10 @@ export default function RolesPage() {
         panelClassName="max-w-4xl"
         bodyClassName="space-y-6"
       >
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="admin-label" htmlFor={nameInputId}>
-              Identificatore (es. operatore_magazzino)
+              Identificatore
             </label>
             <input
               id={nameInputId}
@@ -359,7 +359,7 @@ export default function RolesPage() {
 
         <section className="space-y-3 border-t border-[#E5E0D8] pt-4">
           <div className="space-y-1">
-            <h3 className="admin-label mb-0">Permessi iniziali</h3>
+            <h3 className="text-xs font-semibold uppercase tracking-widest text-[#1A2B4A] mb-0">Permessi iniziali</h3>
             <p className="text-sm leading-6 text-[#6B7280]">
               Seleziona i permessi da associare subito al nuovo ruolo. Puoi aggiornarli anche in seguito dal pulsante Permessi.
             </p>

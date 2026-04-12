@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { articlesApi } from '../../lib/api/articles'
+import { lookupsApi } from '../../lib/api/lookups'
 import DataTable from '../../components/admin/DataTable'
 import FormModal from '../../components/admin/FormModal'
 import ConfirmDialog from '../../components/admin/ConfirmDialog'
-import type { AdminMarmistaArticle, ImportResult } from '../../../../backend/src/types/shared'
+import type { AdminMarmistaArticle, AdminLookup, ImportResult } from '../../../../backend/src/types/shared'
 
 interface FormData {
   code: string
@@ -12,6 +13,30 @@ interface FormData {
   notes: string
   pdfPage: string
   publicPrice: string
+  categoryIds: string[]
+}
+
+function MultiSelect({ label, options, value, onChange }: {
+  label: string; options: AdminLookup[]; value: string[]
+  onChange: (val: string[]) => void
+}) {
+  const toggle = (id: string) =>
+    onChange(value.includes(id) ? value.filter(v => v !== id) : [...value, id])
+  return (
+    <div>
+      <label className="admin-label">{label}</label>
+      <div className="max-h-32 overflow-y-auto border border-[#E5E0D8] bg-white p-2">
+        <div className="flex flex-wrap gap-2">
+          {options.map(opt => (
+            <button key={opt.id} type="button" onClick={() => toggle(opt.id)}
+              className={`admin-inline-chip ${value.includes(opt.id) ? 'admin-inline-chip-active' : ''}`}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 type Tab = 'list' | 'import'
@@ -27,8 +52,11 @@ export default function MarmistaArticlesPage() {
   const [isDeleting, setIsDeleting] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [isImporting, setIsImporting] = useState(false)
+  const [availableCategories, setAvailableCategories] = useState<AdminLookup[]>([])
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>()
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors } } = useForm<FormData>({
+    defaultValues: { categoryIds: [] },
+  })
 
   const load = useCallback(async () => {
     setIsLoading(true)
@@ -42,8 +70,14 @@ export default function MarmistaArticlesPage() {
 
   useEffect(() => { load() }, [load])
 
+  useEffect(() => {
+    lookupsApi.list('marmista-categories')
+      .then(res => setAvailableCategories(res.data))
+      .catch(() => {})
+  }, [])
+
   const openCreate = () => {
-    reset({ code: '', description: '', notes: '', pdfPage: '', publicPrice: '' })
+    reset({ code: '', description: '', notes: '', pdfPage: '', publicPrice: '', categoryIds: [] })
     setIsCreating(true)
   }
 
@@ -54,6 +88,7 @@ export default function MarmistaArticlesPage() {
       notes: item.notes ?? '',
       pdfPage: item.pdfPage?.toString() ?? '',
       publicPrice: item.publicPrice?.toString() ?? '',
+      categoryIds: item.categories.map(c => c.id),
     })
     setEditing(item)
   }
@@ -67,6 +102,7 @@ export default function MarmistaArticlesPage() {
         ...data,
         pdfPage: data.pdfPage ? parseInt(data.pdfPage, 10) : null,
         publicPrice: data.publicPrice ? parseFloat(data.publicPrice) : null,
+        categoryIds: data.categoryIds,
       }
       if (editing) {
         await articlesApi.marmista.update(editing.id, payload)
@@ -176,6 +212,12 @@ export default function MarmistaArticlesPage() {
               <input type="number" {...register('pdfPage')} className="admin-input" />
             </div>
           </div>
+          <MultiSelect
+            label="Categorie"
+            options={availableCategories}
+            value={watch('categoryIds')}
+            onChange={val => setValue('categoryIds', val)}
+          />
           <div>
             <label className="admin-label">Note</label>
             <textarea {...register('notes')} rows={2} className="admin-textarea" />

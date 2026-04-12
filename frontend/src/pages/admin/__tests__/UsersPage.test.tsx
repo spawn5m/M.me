@@ -46,6 +46,7 @@ const userRow = {
   manager: null,
   funeralPriceList: null,
   marmistaPriceList: null,
+  accessoriesPriceList: null,
   createdAt: '2026-04-08T10:00:00.000Z',
   updatedAt: '2026-04-08T10:00:00.000Z',
 }
@@ -62,6 +63,7 @@ const clientUserRow = {
   manager: null,
   funeralPriceList: null,
   marmistaPriceList: null,
+  accessoriesPriceList: null,
   createdAt: '2026-04-08T10:00:00.000Z',
   updatedAt: '2026-04-08T10:00:00.000Z',
 }

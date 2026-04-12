@@ -36,14 +36,14 @@ describe('PermissionChecklist', () => {
       />
     )
 
-    fireEvent.change(screen.getByPlaceholderText('Cerca permesso'), {
+    fireEvent.change(screen.getByPlaceholderText('Filtra per codice o descrizione…'), {
       target: { value: 'ruoli' },
     })
 
     expect(screen.getByText('roles.read')).toBeInTheDocument()
     expect(screen.queryByText('users.create')).toBeNull()
 
-    fireEvent.change(screen.getByPlaceholderText('Cerca permesso'), {
+    fireEvent.change(screen.getByPlaceholderText('Filtra per codice o descrizione…'), {
       target: { value: 'users.create' },
     })
 
@@ -94,7 +94,7 @@ describe('PermissionChecklist', () => {
 
     fireEvent.click(screen.getByText('roles.read'))
     fireEvent.click(screen.getByText('Vedere ruoli e permessi'))
-    fireEvent.click(screen.getByText('Ruoli').closest('div')!)
+    fireEvent.click(screen.getByText('Ruoli').closest('tr')!)
 
     expect(onToggle).toHaveBeenNthCalledWith(1, 'roles.read')
     expect(onToggle).toHaveBeenNthCalledWith(2, 'roles.read')

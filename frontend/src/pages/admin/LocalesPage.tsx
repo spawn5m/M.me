@@ -66,11 +66,7 @@ const SECTIONS: SectionDef[] = [
       {
         label: 'Hero',
         fields: [
-          { key: 'home.badge', label: 'Badge (es. "Dal 1988 in Sardegna")' },
           { key: 'home.headline', label: 'Titolo principale', multiline: true },
-          { key: 'home.subheadline', label: 'Sottotitolo', multiline: true },
-          { key: 'home.ctaPrimary', label: 'Bottone primario' },
-          { key: 'home.ctaSecondary', label: 'Bottone secondario' },
         ],
       },
       {
