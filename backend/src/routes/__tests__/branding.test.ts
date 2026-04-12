@@ -83,6 +83,7 @@ describe('Branding images routes', () => {
       expect(body.images).toHaveProperty('home-marmisti')
       expect(body.images).toHaveProperty('home-altri')
       expect(body.images).toHaveProperty('storia-narrativa')
+      expect(Object.keys(body.images)).toHaveLength(4)
       for (const val of Object.values(body.images)) {
         expect(val === null || typeof val === 'string').toBe(true)
       }
