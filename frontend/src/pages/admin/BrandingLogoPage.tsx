@@ -5,10 +5,10 @@ const MAX_LOGO_SIZE = 2 * 1024 * 1024
 const MAX_IMG_SIZE = 5 * 1024 * 1024
 
 const SLOTS = [
-  { id: 'home-funebri', label: 'Imprese Funebri (Home)' },
-  { id: 'home-marmisti', label: 'Marmisti (Home)' },
-  { id: 'home-altri', label: 'Cimiteri / Altri (Home)' },
-  { id: 'storia-narrativa', label: 'La Nostra Storia' },
+  { id: 'home-funebri', label: 'Imprese Funebri (Home)', hint: 'Min 1200×800 px · proporzione 3:2 orizzontale' },
+  { id: 'home-marmisti', label: 'Marmisti (Home)', hint: 'Min 1200×800 px · proporzione 3:2 orizzontale' },
+  { id: 'home-altri', label: 'Cimiteri / Altri (Home)', hint: 'Min 1200×800 px · proporzione 3:2 orizzontale' },
+  { id: 'storia-narrativa', label: 'La Nostra Storia', hint: 'Min 800×1000 px · proporzione 4:5 verticale' },
 ] as const
 
 type SlotId = typeof SLOTS[number]['id']
@@ -260,9 +260,12 @@ export default function BrandingLogoPage() {
                 key={slot.id}
                 className="border border-[#E5E0D8] bg-white p-6 shadow-[0_2px_8px_rgba(26,43,74,0.08)] space-y-4"
               >
-                <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#031634]">
-                  {slot.label}
-                </p>
+                <div>
+                  <p className="text-sm font-medium uppercase tracking-[0.14em] text-[#031634]">
+                    {slot.label}
+                  </p>
+                  <p className="mt-1 text-xs text-[#6B7280]">{slot.hint}</p>
+                </div>
 
                 {/* Anteprima */}
                 <div className="flex h-40 w-full items-center justify-center border border-[#E5E0D8] bg-[#F8F7F4] overflow-hidden">
