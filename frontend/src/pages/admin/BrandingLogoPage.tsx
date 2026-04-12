@@ -5,10 +5,10 @@ const MAX_LOGO_SIZE = 2 * 1024 * 1024
 const MAX_IMG_SIZE = 5 * 1024 * 1024
 
 const SLOTS = [
-  { id: 'home-funebri', label: 'Imprese Funebri (Home)', hint: 'Min 1200×800 px · proporzione 3:2 orizzontale' },
-  { id: 'home-marmisti', label: 'Marmisti (Home)', hint: 'Min 1200×800 px · proporzione 3:2 orizzontale' },
-  { id: 'home-altri', label: 'Cimiteri / Altri (Home)', hint: 'Min 1200×800 px · proporzione 3:2 orizzontale' },
-  { id: 'storia-narrativa', label: 'La Nostra Storia', hint: 'Min 800×1000 px · proporzione 4:5 verticale' },
+  { id: 'home-funebri', label: 'Imprese Funebri (Home)', hint: 'Salvata a 1920×1280 px · se le proporzioni sono diverse l\'immagine viene adattata con sfondo scuro' },
+  { id: 'home-marmisti', label: 'Marmisti (Home)', hint: 'Salvata a 1920×1280 px · se le proporzioni sono diverse l\'immagine viene adattata con sfondo scuro' },
+  { id: 'home-altri', label: 'Cimiteri / Altri (Home)', hint: 'Salvata a 1920×1280 px · se le proporzioni sono diverse l\'immagine viene adattata con sfondo scuro' },
+  { id: 'storia-narrativa', label: 'La Nostra Storia', hint: 'Salvata a 800×1000 px · se le proporzioni sono diverse l\'immagine viene adattata con sfondo navy' },
 ] as const
 
 type SlotId = typeof SLOTS[number]['id']

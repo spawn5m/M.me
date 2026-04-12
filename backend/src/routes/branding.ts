@@ -30,16 +30,26 @@ const IMG_ALLOWED_MIMES = new Set([
 const IMG_EXTS = ['png', 'webp', 'svg'] as const
 const MAX_IMG_SIZE = 5 * 1024 * 1024 // 5 MB
 
-// Lato lungo massimo per slot (px) — il resize mantiene le proporzioni originali
-const SLOT_MAX_LONG_SIDE: Record<string, number> = {
-  'home-funebri': 1920,
-  'home-marmisti': 1920,
-  'home-altri': 1920,
-  'storia-narrativa': 1000,
+// Dimensioni target e colore di letterbox per slot
+// fit: 'contain' → l'intera immagine è visibile, i bordi liberi vengono riempiti con bg
+interface SlotSpec {
+  w: number
+  h: number
+  bg: { r: number; g: number; b: number }
 }
 
-async function resizeByLongSide(buf: Buffer, maxLong: number, format: 'png' | 'webp'): Promise<Buffer> {
-  const instance = sharp(buf).resize(maxLong, maxLong, { fit: 'inside', withoutEnlargement: true })
+const SLOT_SPEC: Record<string, SlotSpec> = {
+  'home-funebri':     { w: 1920, h: 1280, bg: { r: 7,  g: 19, b: 37 } },  // #071325
+  'home-marmisti':    { w: 1920, h: 1280, bg: { r: 7,  g: 19, b: 37 } },
+  'home-altri':       { w: 1920, h: 1280, bg: { r: 7,  g: 19, b: 37 } },
+  'storia-narrativa': { w: 800,  h: 1000, bg: { r: 26, g: 43, b: 74 } },  // #1A2B4A
+}
+
+async function fitToSlot(buf: Buffer, spec: SlotSpec, format: 'png' | 'webp'): Promise<Buffer> {
+  const instance = sharp(buf).resize(spec.w, spec.h, {
+    fit: 'contain',
+    background: { ...spec.bg, alpha: 1 },
+  })
   return format === 'webp' ? instance.webp().toBuffer() : instance.png().toBuffer()
 }
 
@@ -224,9 +234,9 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
           ? 'webp'
           : 'png'
 
-    const maxLong = SLOT_MAX_LONG_SIDE[slot] ?? 1920
+    const spec = SLOT_SPEC[slot] ?? { w: 1920, h: 1280, bg: { r: 7, g: 19, b: 37 } }
     const finalBuffer = ext !== 'svg'
-      ? await resizeByLongSide(buffer, maxLong, ext)
+      ? await fitToSlot(buffer, spec, ext)
       : buffer
 
     fs.mkdirSync(BRANDING_IMG_DIR, { recursive: true })
