@@ -95,12 +95,13 @@ export default function HomePage() {
             </Link>
           </div>
           {images['home-funebri'] ? (
-            <img
-              src={images['home-funebri']!}
-              alt=""
-              className="hidden md:block w-full h-[500px] object-cover"
-              aria-hidden="true"
-            />
+            <div className="hidden md:block w-full h-[500px] overflow-hidden group" aria-hidden="true">
+              <img
+                src={images['home-funebri']!}
+                alt=""
+                className="w-full h-full object-cover scale-100 group-hover:scale-110 transition-transform duration-700 ease-in-out"
+              />
+            </div>
           ) : (
             <div
               className="hidden md:block w-full h-[500px]"
@@ -118,12 +119,13 @@ export default function HomePage() {
       >
         <div className="max-w-screen-2xl mx-auto px-12 py-24 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           {images['home-marmisti'] ? (
-            <img
-              src={images['home-marmisti']!}
-              alt=""
-              className="hidden md:block w-full h-[500px] object-cover"
-              aria-hidden="true"
-            />
+            <div className="hidden md:block w-full h-[500px] overflow-hidden group" aria-hidden="true">
+              <img
+                src={images['home-marmisti']!}
+                alt=""
+                className="w-full h-full object-cover scale-100 group-hover:scale-110 transition-transform duration-700 ease-in-out"
+              />
+            </div>
           ) : (
             <div
               className="hidden md:block w-full h-[500px]"
@@ -166,12 +168,13 @@ export default function HomePage() {
       >
         <div className="max-w-screen-2xl mx-auto px-12 py-24 w-full grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           {images['home-altri'] ? (
-            <img
-              src={images['home-altri']!}
-              alt=""
-              className="hidden md:block w-full h-[500px] object-cover"
-              aria-hidden="true"
-            />
+            <div className="hidden md:block w-full h-[500px] overflow-hidden group" aria-hidden="true">
+              <img
+                src={images['home-altri']!}
+                alt=""
+                className="w-full h-full object-cover scale-100 group-hover:scale-110 transition-transform duration-700 ease-in-out"
+              />
+            </div>
           ) : (
             <div
               className="hidden md:block w-full h-[500px]"
