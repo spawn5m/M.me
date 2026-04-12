@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next'
+import { useBranding } from '../context/BrandingContext'
 
 export default function NostraStoriaPage() {
   const { t } = useTranslation()
+  const { images } = useBranding()
 
   return (
     <div className="min-h-screen bg-[#FAF9F6]">
@@ -28,12 +30,20 @@ export default function NostraStoriaPage() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-10 items-center">
           {/* Immagine placeholder — sinistra */}
           <div className="md:col-span-5">
-            <div className="group aspect-[4/5] relative overflow-hidden border-2 border-transparent hover:border-[#C9A96E] transition-colors duration-300">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#1A2B4A] via-[#2C4A7C] to-[#1A2B4A] group-hover:from-[#2C4A7C] group-hover:via-[#3D6B9E] group-hover:to-[#1A3A5C] scale-100 group-hover:scale-[1.20] transition-all duration-500" />
-              <div className="absolute inset-0 flex items-end p-6">
-                <span className="text-white/20 group-hover:text-[#C9A96E] font-serif text-6xl leading-none transition-colors duration-300">1988</span>
+            {images['storia-narrativa'] ? (
+              <img
+                src={images['storia-narrativa']!}
+                alt="La nostra storia"
+                className="aspect-[4/5] w-full object-cover border-2 border-transparent hover:border-[#C9A96E] transition-colors duration-300"
+              />
+            ) : (
+              <div className="group aspect-[4/5] relative overflow-hidden border-2 border-transparent hover:border-[#C9A96E] transition-colors duration-300">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#1A2B4A] via-[#2C4A7C] to-[#1A2B4A] group-hover:from-[#2C4A7C] group-hover:via-[#3D6B9E] group-hover:to-[#1A3A5C] scale-100 group-hover:scale-[1.20] transition-all duration-500" />
+                <div className="absolute inset-0 flex items-end p-6">
+                  <span className="text-white/20 group-hover:text-[#C9A96E] font-serif text-6xl leading-none transition-colors duration-300">1988</span>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Testo — destra */}
