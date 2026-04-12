@@ -6,7 +6,8 @@ const LOGO_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'logo')
 const PNG_MIMES = new Set(['image/png'])
 // SVG può arrivare con MIME diversi a seconda del browser/OS
 const SVG_MIMES = new Set(['image/svg+xml', 'text/xml', 'text/plain', 'application/xml', 'application/octet-stream'])
-const ALLOWED_MIMES = new Set([...PNG_MIMES, ...SVG_MIMES])
+const WEBP_MIMES = new Set(['image/webp'])
+const ALLOWED_MIMES = new Set([...PNG_MIMES, ...SVG_MIMES, ...WEBP_MIMES])
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2 MB
 const MAX_DIM = 512
 
@@ -17,9 +18,9 @@ function getPngDimensions(buffer: Buffer): { width: number; height: number } {
   return { width, height }
 }
 
-/** Rimuove tutti i file logo esistenti (logo.png, logo.svg). */
+/** Rimuove tutti i file logo esistenti (logo.png, logo.svg, logo.webp). */
 function deleteExistingLogo() {
-  for (const base of ['logo.png', 'logo.svg']) {
+  for (const base of ['logo.png', 'logo.svg', 'logo.webp']) {
     const p = path.join(LOGO_DIR, base)
     if (fs.existsSync(p)) fs.rmSync(p)
   }
@@ -42,10 +43,11 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
     const originalName = (data.filename ?? '').toLowerCase()
     const isSvgByExt = originalName.endsWith('.svg')
     const isPngByExt = originalName.endsWith('.png')
+    const isWebpByExt = originalName.endsWith('.webp')
 
-    if (!ALLOWED_MIMES.has(mime) && !isSvgByExt && !isPngByExt) {
+    if (!ALLOWED_MIMES.has(mime) && !isSvgByExt && !isPngByExt && !isWebpByExt) {
       data.file.resume()
-      return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Formato non supportato. Usa PNG o SVG.', statusCode: 400 })
+      return reply.status(400).send({ error: 'BAD_REQUEST', message: 'Formato non supportato. Usa PNG, WebP o SVG.', statusCode: 400 })
     }
 
     const chunks: Buffer[] = []
@@ -75,7 +77,12 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
-    const ext = isSvgByExt || mime === 'image/svg+xml' ? 'svg' : 'png'
+    const ext =
+      isSvgByExt || mime === 'image/svg+xml'
+        ? 'svg'
+        : isWebpByExt || WEBP_MIMES.has(mime)
+          ? 'webp'
+          : 'png'
     const filename = `logo.${ext}`
 
     fs.mkdirSync(LOGO_DIR, { recursive: true })
@@ -92,7 +99,7 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/logo', {
     preHandler: [fastify.checkPermission('branding.logo.manage')],
   }, async (req, reply) => {
-    const hadLogo = ['logo.png', 'logo.svg'].some((base) => {
+    const hadLogo = ['logo.png', 'logo.svg', 'logo.webp'].some((base) => {
       const p = path.join(LOGO_DIR, base)
       if (fs.existsSync(p)) { fs.rmSync(p); return true }
       return false

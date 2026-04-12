@@ -37,7 +37,7 @@ function buildPagination(page: number, limit: number, total: number) {
 // ─── Branding ─────────────────────────────────────────────────────────────────
 
 const LOGO_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'logo')
-const LOGO_BASES = ['logo.png', 'logo.svg']
+const LOGO_BASES = ['logo.png', 'logo.webp', 'logo.svg']
 
 function findLogoUrl(): string | null {
   for (const base of LOGO_BASES) {

@@ -15,8 +15,8 @@ export default function BrandingLogoPage() {
     setError(null)
     setSuccess(null)
 
-    if (!['image/png', 'image/svg+xml'].includes(file.type)) {
-      setError('Formato non supportato. Usa PNG o SVG.')
+    if (!['image/png', 'image/webp', 'image/svg+xml'].includes(file.type)) {
+      setError('Formato non supportato. Usa PNG, WebP o SVG.')
       return
     }
     if (file.size > MAX_SIZE_BYTES) {
@@ -96,7 +96,7 @@ export default function BrandingLogoPage() {
           Logo aziendale
         </h2>
         <p className="mt-2 text-sm text-[#6B7280]">
-          Carica un'immagine PNG o SVG. Per PNG, dimensioni massime 512×512px. Questa immagine
+          Carica un'immagine PNG, WebP o SVG. Per PNG, dimensioni massime 512×512px. Questa immagine
           comparirà sopra il titolo nella homepage, accanto al nome nella barra di navigazione
           e come favicon del sito.
         </p>
@@ -141,7 +141,7 @@ export default function BrandingLogoPage() {
         onDragOver={(e) => e.preventDefault()}
       >
         <p className="mb-3 text-sm text-[#6B7280]">
-          Trascina qui un file PNG o SVG, oppure
+          Trascina qui un file PNG, WebP o SVG, oppure
         </p>
         <button
           onClick={() => inputRef.current?.click()}
@@ -153,11 +153,11 @@ export default function BrandingLogoPage() {
         <input
           ref={inputRef}
           type="file"
-          accept="image/png,image/svg+xml"
+          accept="image/png,image/webp,image/svg+xml"
           className="hidden"
           onChange={handleFileChange}
         />
-        <p className="mt-3 text-xs text-[#6B7280]">PNG (max 512×512px) · SVG · max 2 MB</p>
+        <p className="mt-3 text-xs text-[#6B7280]">PNG · WebP · SVG · max 2 MB</p>
       </div>
 
       {/* Feedback */}
