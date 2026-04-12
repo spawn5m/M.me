@@ -109,15 +109,20 @@ export default function MaintenancePage() {
             </p>
           </div>
 
-          <label className="inline-flex cursor-pointer items-center gap-3 self-start text-sm font-medium text-[#031634]">
-            <input
-              type="checkbox"
-              checked={previewEnabled}
-              onChange={(e) => updatePreviewEnabled(e.target.checked)}
-              className="h-5 w-5 accent-[#C9A96E]"
-            />
-            Preview manutenzione
-          </label>
+          <div className="w-full self-start lg:max-w-xs">
+            <label htmlFor="maintenance-preview" className="admin-label">
+              Preview manutenzione
+            </label>
+            <select
+              id="maintenance-preview"
+              value={String(previewEnabled)}
+              onChange={(e) => updatePreviewEnabled(e.target.value === 'true')}
+              className="admin-select"
+            >
+              <option value="false">Spenta</option>
+              <option value="true">Attiva</option>
+            </select>
+          </div>
         </div>
       </div>
 

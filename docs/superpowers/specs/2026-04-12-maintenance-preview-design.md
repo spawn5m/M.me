@@ -14,10 +14,11 @@ Permettere agli admin con permesso `maintenance.manage` di attivare una preview 
 
 ## Approccio scelto
 
-La preview viene gestita interamente lato frontend con un toggle globale nella pagina `/admin/maintenance`.
+La preview viene gestita interamente lato frontend con un dropdown globale nella pagina `/admin/maintenance`.
 
-- Un unico controllo `Attiva / Disattiva preview` appare nella parte alta della pagina Manutenzione.
-- Il toggle salva lo stato in `sessionStorage`, cosi' resta attivo durante la sessione e dopo refresh della pagina, ma non viene condiviso con altri admin.
+- Un unico controllo `Preview manutenzione` appare nella parte alta della pagina Manutenzione.
+- Il controllo usa un `select` con due opzioni: `Spenta` e `Attiva`.
+- Il dropdown salva lo stato in `sessionStorage`, cosi' resta attivo durante la sessione e dopo refresh della pagina, ma non viene condiviso con altri admin.
 - Le route pubbliche continuano a usare `PublicPageRoute` come singolo punto di controllo.
 - Se la preview globale e' attiva e l'utente autenticato possiede `maintenance.manage`, `PublicPageRoute` ignora i blocchi manutenzione e rende la pagina reale.
 - In tutti gli altri casi il comportamento resta invariato.
@@ -31,10 +32,10 @@ La preview viene gestita interamente lato frontend con un toggle globale nella p
 La pagina `MaintenancePage.tsx` viene estesa con una sezione introduttiva dedicata alla preview globale:
 
 - Label: `Preview manutenzione`
-- Controllo: toggle binario `Attiva / Disattiva`
+- Controllo: dropdown binario con opzioni `Spenta` e `Attiva`
 - Testo di supporto: chiarisce che la preview permette solo all'admin corrente di vedere le pagine reali durante la manutenzione
 
-Il toggle non fa parte del payload di salvataggio esistente e non influisce su `isDirty` o sul bottone `Salva modifiche`.
+Il dropdown non fa parte del payload di salvataggio esistente e non influisce su `isDirty` o sul bottone `Salva modifiche`.
 
 ### Navigazione pubblica
 
@@ -75,8 +76,9 @@ Motivazioni:
 ### `frontend/src/pages/admin/MaintenancePage.tsx`
 
 - aggiungere stato locale inizializzato da `sessionStorage`
-- aggiungere handler per aggiornare il toggle e sincronizzare lo storage
-- rendere il toggle indipendente dal form dei messaggi manutenzione
+- aggiungere handler per aggiornare il dropdown e sincronizzare lo storage
+- usare un `select` admin light con label `Preview manutenzione` e opzioni `Spenta` / `Attiva`
+- rendere il dropdown indipendente dal form dei messaggi manutenzione
 - mantenere invariati il caricamento backend, il salvataggio e la UI per-card delle pagine
 
 ### `frontend/src/components/layout/PublicPageRoute.tsx`
@@ -113,9 +115,9 @@ La preview globale e' esplicitamente una funzionalita' di navigazione admin loca
 
 | File | Modifica |
 |------|----------|
-| `frontend/src/pages/admin/MaintenancePage.tsx` | Toggle globale preview e persistenza in `sessionStorage` |
+| `frontend/src/pages/admin/MaintenancePage.tsx` | Dropdown globale preview e persistenza in `sessionStorage` |
 | `frontend/src/components/layout/PublicPageRoute.tsx` | Bypass manutenzione per admin con preview attiva |
-| `frontend/src/pages/admin/__tests__/MaintenancePage.test.tsx` | Test toggle globale e persistenza |
+| `frontend/src/pages/admin/__tests__/MaintenancePage.test.tsx` | Test dropdown globale e persistenza |
 | `frontend/src/components/layout/__tests__/PublicPageRoute.test.tsx` | Test bypass manutenzione con preview attiva |
 
 ---
@@ -124,9 +126,9 @@ La preview globale e' esplicitamente una funzionalita' di navigazione admin loca
 
 ### `MaintenancePage`
 
-- mostra il controllo `Preview manutenzione`
+- mostra il controllo `Preview manutenzione` come `combobox`
 - inizializza lo stato leggendo `sessionStorage`
-- aggiorna `sessionStorage` quando il toggle cambia
+- aggiorna `sessionStorage` quando il dropdown cambia tra `Spenta` e `Attiva`
 - non segna il form come dirty solo per il cambio preview
 
 ### `PublicPageRoute`
@@ -139,7 +141,7 @@ La preview globale e' esplicitamente una funzionalita' di navigazione admin loca
 
 ## Decisioni di design
 
-- Toggle globale invece di controlli per-card: riduce rumore nella pagina admin e rispecchia meglio il bisogno di navigazione complessiva
+- Dropdown globale invece di controlli per-card o checkbox: riduce rumore nella pagina admin e usa un pattern gia' presente nelle schermate admin
 - `sessionStorage` invece di backend: evita stato condiviso indesiderato tra admin
 - Bypass centralizzato in `PublicPageRoute`: modifica minima, facile da testare e coerente con l'architettura attuale
 - Nessuna variazione dei dati di manutenzione esistenti: la preview non deve alterare cio' che vedono i visitatori

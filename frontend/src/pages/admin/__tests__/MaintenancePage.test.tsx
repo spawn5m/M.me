@@ -79,30 +79,31 @@ describe('MaintenancePage', () => {
     expect(mockReloadResources).toHaveBeenCalledWith('it')
   })
 
-  it('inizializza la preview dalla sessione senza sporcare il form', async () => {
+  it('inizializza la preview dal dropdown della sessione senza sporcare il form', async () => {
     window.sessionStorage.setItem('admin-maintenance-preview-enabled', 'true')
 
     render(<MaintenancePage />)
 
-    const previewToggle = await screen.findByRole('checkbox', { name: 'Preview manutenzione' })
+    const previewSelect = await screen.findByRole('combobox', { name: 'Preview manutenzione' })
 
-    expect(previewToggle).toBeChecked()
+    expect(previewSelect).toHaveValue('true')
     expect(screen.getByRole('button', { name: 'Salva modifiche' })).toBeDisabled()
     expect(screen.queryByText('Hai modifiche non salvate.')).toBeNull()
   })
 
-  it('aggiorna la preview nella sessione', async () => {
+  it('aggiorna la preview nella sessione tramite dropdown', async () => {
     const user = userEvent.setup()
 
     render(<MaintenancePage />)
 
-    const previewToggle = await screen.findByRole('checkbox', { name: 'Preview manutenzione' })
+    const previewSelect = await screen.findByRole('combobox', { name: 'Preview manutenzione' })
 
     expect(window.sessionStorage.getItem('admin-maintenance-preview-enabled')).toBeNull()
 
-    await user.click(previewToggle)
+    await user.selectOptions(previewSelect, 'true')
 
     expect(window.sessionStorage.getItem('admin-maintenance-preview-enabled')).toBe('true')
+    expect(previewSelect).toHaveValue('true')
     expect(screen.getByRole('button', { name: 'Salva modifiche' })).toBeDisabled()
   })
 })

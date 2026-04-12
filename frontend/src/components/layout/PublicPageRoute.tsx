@@ -5,7 +5,7 @@ import FooterLight from './FooterLight'
 import PublicMaintenanceScreen from './PublicMaintenanceScreen'
 import { useMaintenance } from '../../context/MaintenanceContext'
 import { useAuth } from '../../context/AuthContext'
-import { readMaintenancePreviewEnabled } from '../../lib/maintenance-preview'
+import { useMaintenancePreviewEnabled } from '../../lib/maintenance-preview'
 import type { MaintenancePageKey } from '../../../../backend/src/types/shared'
 
 interface PublicPageRouteProps {
@@ -17,7 +17,7 @@ export default function PublicPageRoute({ page, children }: PublicPageRouteProps
   const { t } = useTranslation()
   const { pages } = useMaintenance()
   const { permissions, isLoading } = useAuth()
-  const previewEnabled = readMaintenancePreviewEnabled()
+  const previewEnabled = useMaintenancePreviewEnabled()
   const canPreviewMaintenance = previewEnabled && !isLoading && permissions.includes('maintenance.manage')
 
   if (previewEnabled && isLoading) {
