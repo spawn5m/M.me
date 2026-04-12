@@ -77,6 +77,14 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
       }
     }
 
+    if (isWebpByExt || WEBP_MIMES.has(mime)) {
+      const RIFF = Buffer.from([0x52, 0x49, 0x46, 0x46])
+      const WEBP_SIG = Buffer.from([0x57, 0x45, 0x42, 0x50])
+      if (buffer.length < 12 || !buffer.subarray(0, 4).equals(RIFF) || !buffer.subarray(8, 12).equals(WEBP_SIG)) {
+        return reply.status(400).send({ error: 'BAD_REQUEST', message: 'File WebP non valido.', statusCode: 400 })
+      }
+    }
+
     const ext =
       isSvgByExt || mime === 'image/svg+xml'
         ? 'svg'
@@ -99,15 +107,13 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.delete('/logo', {
     preHandler: [fastify.checkPermission('branding.logo.manage')],
   }, async (req, reply) => {
-    const hadLogo = ['logo.png', 'logo.svg', 'logo.webp'].some((base) => {
-      const p = path.join(LOGO_DIR, base)
-      if (fs.existsSync(p)) { fs.rmSync(p); return true }
-      return false
-    })
-
+    const hadLogo = ['logo.png', 'logo.svg', 'logo.webp'].some((base) =>
+      fs.existsSync(path.join(LOGO_DIR, base))
+    )
     if (!hadLogo) {
       return reply.status(404).send({ error: 'NOT_FOUND', message: 'Nessun logo da eliminare.', statusCode: 404 })
     }
+    deleteExistingLogo()
 
     req.log.info('Logo eliminato')
     return reply.status(200).send({ message: 'Logo eliminato.' })
