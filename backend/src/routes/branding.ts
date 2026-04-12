@@ -1,6 +1,7 @@
 import { FastifyPluginAsync } from 'fastify'
 import fs from 'fs'
 import path from 'path'
+import sharp from 'sharp'
 
 const PNG_MAGIC_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 const RIFF_BYTES = Buffer.from([0x52, 0x49, 0x46, 0x46])
@@ -28,6 +29,19 @@ const IMG_ALLOWED_MIMES = new Set([
 ])
 const IMG_EXTS = ['png', 'webp', 'svg'] as const
 const MAX_IMG_SIZE = 5 * 1024 * 1024 // 5 MB
+
+// Lato lungo massimo per slot (px) — il resize mantiene le proporzioni originali
+const SLOT_MAX_LONG_SIDE: Record<string, number> = {
+  'home-funebri': 1920,
+  'home-marmisti': 1920,
+  'home-altri': 1920,
+  'storia-narrativa': 1000,
+}
+
+async function resizeByLongSide(buf: Buffer, maxLong: number, format: 'png' | 'webp'): Promise<Buffer> {
+  const instance = sharp(buf).resize(maxLong, maxLong, { fit: 'inside', withoutEnlargement: true })
+  return format === 'webp' ? instance.webp().toBuffer() : instance.png().toBuffer()
+}
 
 function deleteExistingSlotImage(slot: string) {
   for (const ext of IMG_EXTS) {
@@ -210,11 +224,16 @@ const brandingAdminRoutes: FastifyPluginAsync = async (fastify) => {
           ? 'webp'
           : 'png'
 
+    const maxLong = SLOT_MAX_LONG_SIDE[slot] ?? 1920
+    const finalBuffer = ext !== 'svg'
+      ? await resizeByLongSide(buffer, maxLong, ext)
+      : buffer
+
     fs.mkdirSync(BRANDING_IMG_DIR, { recursive: true })
     deleteExistingSlotImage(slot)
 
     const filename = `${slot}.${ext}`
-    fs.writeFileSync(path.join(BRANDING_IMG_DIR, filename), buffer)
+    fs.writeFileSync(path.join(BRANDING_IMG_DIR, filename), finalBuffer)
 
     req.log.info(`Immagine branding caricata: ${filename}`)
     return reply.status(200).send({ url: `/uploads/images/branding/${filename}` })
