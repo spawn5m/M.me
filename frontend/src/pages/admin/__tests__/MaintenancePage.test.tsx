@@ -32,7 +32,7 @@ function axiosResponse<T>(data: T): AxiosResponse<T> {
 
 const SAMPLE = {
   pages: {
-    home: { enabled: false, message: 'Home off' },
+    home: { enabled: false, message: 'Home off', homeH2: 'Home H2 off' },
     ourStory: { enabled: false, message: 'Story off' },
     whereWeAre: { enabled: false, message: 'Where off' },
     funeralHomes: { enabled: false, message: 'Funeral off' },
@@ -53,6 +53,7 @@ describe('MaintenancePage', () => {
     render(<MaintenancePage />)
     expect(await screen.findByText('Manutenzione')).toBeInTheDocument()
     expect(screen.getByText('Home')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Home H2 off')).toBeInTheDocument()
     expect(screen.getByText('La Nostra Storia')).toBeInTheDocument()
     expect(screen.getByText('Dove Siamo')).toBeInTheDocument()
     expect(screen.getByText('Per le Imprese Funebri')).toBeInTheDocument()
@@ -68,7 +69,9 @@ describe('MaintenancePage', () => {
     await user.click(toggle)
     const textareas = screen.getAllByRole('textbox')
     await user.clear(textareas[0])
-    await user.type(textareas[0], 'Home in manutenzione')
+    await user.type(textareas[0], 'Home H2 in manutenzione')
+    await user.clear(textareas[1])
+    await user.type(textareas[1], 'Home in manutenzione')
     await user.click(screen.getByRole('button', { name: 'Salva modifiche' }))
 
     await waitFor(() => {
@@ -76,6 +79,7 @@ describe('MaintenancePage', () => {
     })
 
     expect(mockUpdateAdminMaintenance.mock.calls[0]?.[0].pages.home.message).toBe('Home in manutenzione')
+    expect(mockUpdateAdminMaintenance.mock.calls[0]?.[0].pages.home.homeH2).toBe('Home H2 in manutenzione')
     expect(mockReloadResources).toHaveBeenCalledWith('it')
   })
 

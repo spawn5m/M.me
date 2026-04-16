@@ -162,15 +162,47 @@ export default function MaintenancePage() {
               </div>
 
               <div className="mt-5">
-                <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-[#6B7280]">
-                  Frase da mostrare
-                </label>
-                <textarea
-                  rows={3}
-                  value={page.message}
-                  onChange={(e) => updatePage(key, { message: e.target.value })}
-                  className="w-full border border-[#E5E0D8] px-3 py-2 text-sm text-[#031634] transition-colors focus:border-[#031634] focus:outline-none"
-                />
+                {key === 'home' ? (
+                  <div className="space-y-4">
+                    <p className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-[#6B7280]">
+                      Frasi da mostrare
+                    </p>
+                    <div>
+                      <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-[#6B7280]">
+                        Frase H2
+                      </label>
+                      <textarea
+                        rows={2}
+                        value={page.homeH2 ?? ''}
+                        onChange={(e) => updatePage(key, { homeH2: e.target.value })}
+                        className="w-full border border-[#E5E0D8] px-3 py-2 text-sm text-[#031634] transition-colors focus:border-[#031634] focus:outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-[#6B7280]">
+                        Messaggio principale
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={page.message}
+                        onChange={(e) => updatePage(key, { message: e.target.value })}
+                        className="w-full border border-[#E5E0D8] px-3 py-2 text-sm text-[#031634] transition-colors focus:border-[#031634] focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-[#6B7280]">
+                      Frase da mostrare
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={page.message}
+                      onChange={(e) => updatePage(key, { message: e.target.value })}
+                      className="w-full border border-[#E5E0D8] px-3 py-2 text-sm text-[#031634] transition-colors focus:border-[#031634] focus:outline-none"
+                    />
+                  </>
+                )}
               </div>
             </div>
           )

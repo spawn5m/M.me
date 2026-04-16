@@ -1,9 +1,13 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useAuth, getDefaultRoute } from '../context/AuthContext'
+import { useBranding } from '../context/BrandingContext'
 
 export default function LoginPage() {
+  const { t } = useTranslation()
   const { user, permissions, isLoading: isAuthLoading, login } = useAuth()
+  const { logoUrl } = useBranding()
   const navigate = useNavigate()
   const location = useLocation()
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname ?? null
@@ -42,50 +46,27 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-[#FAF9F6] px-6 py-12 md:px-12 lg:px-20">
-      <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-[minmax(0,1fr)_26rem] lg:items-center">
-        <section>
-          <div className="mb-6 h-12 w-px bg-[#C9A96E]" />
-          <p className="mb-4 text-xs font-medium uppercase tracking-[0.2em] text-[#C9A96E]">
-            Accesso professionale
-          </p>
+      <div className="mx-auto flex max-w-md flex-col items-center gap-8">
+        <div className="flex w-full flex-col items-center gap-4 text-center">
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt="Mirigliani logo"
+              className="w-1/3 max-w-32 object-contain"
+            />
+          )}
           <h1
-            className="max-w-xl text-4xl leading-tight text-[#031634] md:text-6xl"
+            className="text-4xl leading-none text-[#031634] md:text-5xl"
             style={{ fontFamily: 'Playfair Display, serif' }}
           >
-            L&apos;area riservata adotta lo stesso linguaggio visivo delle pagine interne.
+            {t('home.headline')}
           </h1>
-          <p className="mt-5 max-w-2xl text-base leading-relaxed text-[#6B7280]">
-            Un ambiente sobrio, chiaro e coerente con il resto del sito per gestire catalogo, utenti e listini senza stacchi estetici.
-          </p>
-
-          <div className="mt-8 grid gap-4 sm:grid-cols-2">
-            <div className="border border-[#E5E0D8] bg-white p-5 shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
-              <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-[#C9A96E]">Catalogo</p>
-              <p className="text-sm leading-relaxed text-[#6B7280]">
-                Gestione coerente di cofani, accessori e articoli per marmisti.
-              </p>
-            </div>
-
-            <div className="border border-[#E5E0D8] bg-white p-5 shadow-[0_2px_8px_rgba(26,43,74,0.08)]">
-              <p className="mb-2 text-xs font-medium uppercase tracking-[0.18em] text-[#C9A96E]">Listini</p>
-              <p className="text-sm leading-relaxed text-[#6B7280]">
-                Prezzi, assegnazioni e aggiornamenti in continuita con l&apos;esperienza pubblica.
-              </p>
-            </div>
-          </div>
-
-          <Link
-            to="/"
-            className="mt-8 inline-flex min-h-11 items-center justify-center border border-[#E5E0D8] px-4 py-2 text-sm font-medium text-[#031634] transition-colors hover:border-[#C9A96E] hover:text-[#C9A96E]"
-          >
-            Torna al sito
-          </Link>
-        </section>
+        </div>
 
         <div className="w-full border border-[#E5E0D8] bg-white p-8 shadow-[0_12px_32px_rgba(26,43,74,0.08)] md:p-10">
           <div className="mb-8">
             <p className="mb-3 text-xs font-medium uppercase tracking-[0.2em] text-[#C9A96E]">
-              Mirigliani
+              Area professionale
             </p>
             <h2
               className="text-3xl text-[#031634]"
@@ -142,6 +123,13 @@ export default function LoginPage() {
             </button>
           </form>
         </div>
+
+        <Link
+          to="/"
+          className="inline-flex min-h-11 items-center justify-center border border-[#E5E0D8] px-5 py-2 text-sm font-medium text-[#031634] transition-colors hover:border-[#C9A96E] hover:text-[#C9A96E]"
+        >
+          {t('nav.home')}
+        </Link>
       </div>
     </div>
   )

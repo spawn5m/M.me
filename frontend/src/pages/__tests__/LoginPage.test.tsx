@@ -3,6 +3,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import LoginPage from '../LoginPage'
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => ({ 'home.headline': 'MIRIGLIANI', 'nav.home': 'Home' }[key] ?? key),
+  }),
+}))
+
 vi.mock('../../context/AuthContext', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../context/AuthContext')>()
   return {
@@ -10,6 +16,10 @@ vi.mock('../../context/AuthContext', async (importOriginal) => {
     useAuth: vi.fn()
   }
 })
+
+vi.mock('../../context/BrandingContext', () => ({
+  useBranding: () => ({ logoUrl: '/logo.svg' }),
+}))
 
 import { useAuth } from '../../context/AuthContext'
 const mockUseAuth = vi.mocked(useAuth)
@@ -35,6 +45,9 @@ describe('LoginPage', () => {
   it('renderizza form email e password', () => {
     mockUseAuth.mockReturnValue(makeAuth())
     render(<MemoryRouter><LoginPage /></MemoryRouter>)
+    expect(screen.getByRole('heading', { name: 'MIRIGLIANI' })).toBeTruthy()
+    expect(screen.getByAltText('Mirigliani logo')).toBeTruthy()
+    expect(screen.getByRole('link', { name: 'Home' })).toBeTruthy()
     expect(screen.getByPlaceholderText('nome@esempio.it')).toBeTruthy()
     expect(screen.getByPlaceholderText('••••••••')).toBeTruthy()
   })

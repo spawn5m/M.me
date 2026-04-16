@@ -3,6 +3,21 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import PublicMaintenanceScreen from '../PublicMaintenanceScreen'
 
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => {
+      const translations: Record<string, string> = {
+        'home.headline': 'MIRIGLIANI',
+        'maintenance.homeH2': 'STIAMO LAVORANDO PER VOI',
+        'nav.reservedArea': 'Area Riservata',
+        'common.contactUs': 'Contattaci',
+      }
+
+      return translations[key] ?? key
+    },
+  }),
+}))
+
 vi.mock('../../../context/AuthContext', () => ({
   useAuth: () => ({ user: null, permissions: [] }),
   getDefaultRoute: () => '/login',
@@ -29,10 +44,14 @@ describe('PublicMaintenanceScreen', () => {
     const contactLink = screen.getByRole('link', { name: 'Contattaci' })
     const logo = screen.getByAltText('Mirigliani logo')
     const headline = screen.getByRole('heading', { name: 'MIRIGLIANI' })
+    const subheadline = screen.getByRole('heading', { level: 2, name: 'STIAMO LAVORANDO PER VOI' })
+    const copyGroup = screen.getByTestId('maintenance-copy-group')
 
     expect(logo).toHaveStyle({ width: 'clamp(6rem, 14vw, 12rem)', height: 'auto' })
     expect(headline).toBeInTheDocument()
     expect(headline).toHaveStyle({ fontSize: 'clamp(4rem, 12vw, 10rem)', color: '#FFFFFF' })
+    expect(subheadline).toBeInTheDocument()
+    expect(copyGroup.className).toContain('gap-2')
     expect(screen.getByText("Stiamo lavorando per migliorare il sito. Torneremo presto con grandi novita'.")).toBeInTheDocument()
     expect(reservedAreaLink).toHaveAttribute('href', '/login')
     expect(reservedAreaLink.className).toContain('focus-visible:outline')

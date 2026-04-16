@@ -24,9 +24,13 @@ const adminPageSchema = z.object({
   message: z.string().min(1).max(5000),
 })
 
+const adminHomePageSchema = adminPageSchema.extend({
+  homeH2: z.string().max(5000).optional().default(''),
+})
+
 const adminPayloadSchema = z.object({
   pages: z.object({
-    home: adminPageSchema,
+    home: adminHomePageSchema,
     ourStory: adminPageSchema,
     whereWeAre: adminPageSchema,
     funeralHomes: adminPageSchema,
@@ -80,16 +84,19 @@ function writeMaintenanceStateAtomic(data: PublicMaintenanceResponse): void {
   fs.renameSync(tmp, filePath)
 }
 
-function readMaintenanceMessages(): Record<MaintenancePageKey, string> {
+function readMaintenanceMessages(): { pages: Record<MaintenancePageKey, string>; homeH2: string } {
   const locales = readLocales()
-  const maintenance = (locales.maintenance ?? {}) as Partial<Record<MaintenancePageKey, unknown>>
+  const maintenance = (locales.maintenance ?? {}) as Partial<Record<MaintenancePageKey | 'homeH2', unknown>>
 
   return {
-    home: typeof maintenance.home === 'string' ? maintenance.home : DEFAULT_MESSAGES.home,
-    ourStory: typeof maintenance.ourStory === 'string' ? maintenance.ourStory : DEFAULT_MESSAGES.ourStory,
-    whereWeAre: typeof maintenance.whereWeAre === 'string' ? maintenance.whereWeAre : DEFAULT_MESSAGES.whereWeAre,
-    funeralHomes: typeof maintenance.funeralHomes === 'string' ? maintenance.funeralHomes : DEFAULT_MESSAGES.funeralHomes,
-    marmistas: typeof maintenance.marmistas === 'string' ? maintenance.marmistas : DEFAULT_MESSAGES.marmistas,
+    pages: {
+      home: typeof maintenance.home === 'string' ? maintenance.home : DEFAULT_MESSAGES.home,
+      ourStory: typeof maintenance.ourStory === 'string' ? maintenance.ourStory : DEFAULT_MESSAGES.ourStory,
+      whereWeAre: typeof maintenance.whereWeAre === 'string' ? maintenance.whereWeAre : DEFAULT_MESSAGES.whereWeAre,
+      funeralHomes: typeof maintenance.funeralHomes === 'string' ? maintenance.funeralHomes : DEFAULT_MESSAGES.funeralHomes,
+      marmistas: typeof maintenance.marmistas === 'string' ? maintenance.marmistas : DEFAULT_MESSAGES.marmistas,
+    },
+    homeH2: typeof maintenance.homeH2 === 'string' ? maintenance.homeH2 : '',
   }
 }
 
@@ -116,14 +123,14 @@ function buildAdminResponse(): AdminMaintenanceResponse {
   const messages = readMaintenanceMessages()
 
   return {
-    pages: {
-      home: { enabled: state.pages.home.enabled, message: messages.home },
-      ourStory: { enabled: state.pages.ourStory.enabled, message: messages.ourStory },
-      whereWeAre: { enabled: state.pages.whereWeAre.enabled, message: messages.whereWeAre },
-      funeralHomes: { enabled: state.pages.funeralHomes.enabled, message: messages.funeralHomes },
-      marmistas: { enabled: state.pages.marmistas.enabled, message: messages.marmistas },
-    },
-  }
+      pages: {
+        home: { enabled: state.pages.home.enabled, message: messages.pages.home, homeH2: messages.homeH2 },
+        ourStory: { enabled: state.pages.ourStory.enabled, message: messages.pages.ourStory },
+        whereWeAre: { enabled: state.pages.whereWeAre.enabled, message: messages.pages.whereWeAre },
+        funeralHomes: { enabled: state.pages.funeralHomes.enabled, message: messages.pages.funeralHomes },
+        marmistas: { enabled: state.pages.marmistas.enabled, message: messages.pages.marmistas },
+      },
+    }
 }
 
 export const maintenancePublicRoutes: FastifyPluginAsync = async (fastify) => {
@@ -172,6 +179,7 @@ export const maintenanceAdminRoutes: FastifyPluginAsync = async (fastify) => {
       for (const key of MAINTENANCE_KEYS) {
         updatedLocales = setNestedValue(updatedLocales, `maintenance.${key}`, parsed.data.pages[key].message)
       }
+      updatedLocales = setNestedValue(updatedLocales, 'maintenance.homeH2', parsed.data.pages.home.homeH2)
       writeLocalesAtomic(updatedLocales)
     } catch {
       return reply.status(500).send({

@@ -20,6 +20,7 @@ export default function PublicMaintenanceScreen({
   const { user, permissions } = useAuth()
   const { logoUrl } = useBranding()
   const reservedAreaHref = getDefaultRoute(user, permissions)
+  const maintenanceSubheadline = t('maintenance.homeH2')
 
   if (variant === 'dark') {
     return (
@@ -44,11 +45,19 @@ export default function PublicMaintenanceScreen({
             )}
           </div>
 
-          <p
-            className="max-w-3xl font-['Inter'] text-base font-light leading-relaxed text-[#8A9BB5] md:text-lg"
-          >
-            {message}
-          </p>
+          <div data-testid="maintenance-copy-group" className="flex flex-col items-center gap-2">
+            {maintenanceSubheadline && maintenanceSubheadline !== 'maintenance.homeH2' && (
+              <h2 className="font-['Inter'] text-lg font-medium uppercase tracking-[0.2em] text-white md:text-xl">
+                {maintenanceSubheadline}
+              </h2>
+            )}
+
+            <p
+              className="max-w-3xl font-['Inter'] text-base font-light leading-relaxed text-[#8A9BB5] md:text-lg"
+            >
+              {message}
+            </p>
+          </div>
 
           {showReservedAreaButton && (
             <div className="flex flex-col flex-wrap items-center justify-center gap-6 sm:flex-row">

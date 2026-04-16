@@ -160,6 +160,7 @@ export interface PublicMaintenanceResponse {
 
 export interface AdminMaintenancePageConfig extends MaintenancePageState {
   message: string
+  homeH2?: string
 }
 
 export type AdminMaintenanceConfigMap = Record<MaintenancePageKey, AdminMaintenancePageConfig>

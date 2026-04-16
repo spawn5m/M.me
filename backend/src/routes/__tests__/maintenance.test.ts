@@ -11,6 +11,7 @@ const SAMPLE_LOCALE = {
   auth: { login: 'Accedi' },
   maintenance: {
     home: 'Home maintenance',
+    homeH2: 'Home maintenance H2',
     ourStory: 'Story maintenance',
     whereWeAre: 'Where maintenance',
     funeralHomes: 'Funeral maintenance',
@@ -129,7 +130,7 @@ describe('Maintenance routes', () => {
   it('PUT /api/admin/maintenance salva stato e messaggi', async () => {
     const payload = {
       pages: {
-        home: { enabled: true, message: 'Home in manutenzione' },
+        home: { enabled: true, message: 'Home in manutenzione', homeH2: 'Home H2 in manutenzione' },
         ourStory: { enabled: false, message: 'Storia in manutenzione' },
         whereWeAre: { enabled: true, message: 'Dove siamo in manutenzione' },
         funeralHomes: { enabled: false, message: 'Imprese in manutenzione' },
@@ -153,7 +154,16 @@ describe('Maintenance routes', () => {
 
     const savedLocales = JSON.parse(fs.readFileSync(tmpLocalesFile, 'utf-8')) as { maintenance?: Record<string, string> }
     expect(savedLocales.maintenance?.home).toBe('Home in manutenzione')
+    expect(savedLocales.maintenance?.homeH2).toBe('Home H2 in manutenzione')
     expect(savedLocales.maintenance?.whereWeAre).toBe('Dove siamo in manutenzione')
+  })
+
+  it('GET /api/admin/maintenance include homeH2 per la home', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/admin/maintenance', headers: { cookie: superAdminCookie } })
+    expect(res.statusCode).toBe(200)
+
+    const body = res.json() as { pages: { home: { homeH2?: string } } }
+    expect(body.pages.home.homeH2).toBe('Home maintenance H2')
   })
 
   it('PUT /api/admin/maintenance con body invalido → 400', async () => {
