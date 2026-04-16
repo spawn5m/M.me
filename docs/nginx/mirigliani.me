@@ -1,0 +1,44 @@
+# /etc/nginx/sites-available/mirigliani.me
+# Nginx per M.me — SPA + proxy /api/ + /uploads/ → Fastify 3001
+# NON toccare: mirigliani.cloud
+
+server {
+    listen 80;
+    server_name mirigliani.me www.mirigliani.me;
+    return 301 https://mirigliani.me$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name www.mirigliani.me;
+    ssl_certificate     /etc/letsencrypt/live/mirigliani.me/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mirigliani.me/privkey.pem;
+    return 301 https://mirigliani.me$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name mirigliani.me;
+    ssl_certificate     /etc/letsencrypt/live/mirigliani.me/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/mirigliani.me/privkey.pem;
+
+    root /opt/M.me/frontend/dist;
+    index index.html;
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        client_max_body_size 350m;
+    }
+
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
