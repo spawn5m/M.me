@@ -10,3 +10,4 @@ uploads/
 prisma/seed-data/*.xlsx
 *.log
 .worktrees/
+.playwright-mcp/
