@@ -89,7 +89,7 @@ Nginx (443 HTTPS)
                                Prisma v7
                                    │
                            PostgreSQL 16
-                      (DB: mirigliani, user: mirigliani_usr)
+                      (DB: "M.me", user: mirigliani_usr)
 ```
 
 | Layer | Percorso | Descrizione |
@@ -100,7 +100,7 @@ Nginx (443 HTTPS)
 | Fastify | /api/* | Endpoint JSON puri — nessun HTML |
 | Fastify | /* | @fastify/static → /dist frontend |
 | Prisma | schema.prisma | Modello dati unico, migrations versionati |
-| PostgreSQL | DB: mirigliani, user: mirigliani_usr | Isolato dal DB mps esistente |
+| PostgreSQL | DB: "M.me", user: mirigliani_usr | Isolato dal DB mps esistente — nome tra virgolette (contiene punto) |
 
 ### 2.5 Struttura Progetto
 
