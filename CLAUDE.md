@@ -238,15 +238,15 @@ Il componente `Navbar` deve accettare una prop `variant: 'dark' | 'light'` e ren
 - [x] Fase 2 — Front End Pubblico
 - [x] Fase 3 — Back End Area Riservata
 - [x] Fase 4 — Listini
-- [ ] Fase 5 — Area Clienti ← corrente
-- [ ] Fase 6 — Deploy VPS
+- [ ] Fase 5 — Area Clienti
+- [x] Fase 6 — Deploy VPS ← completato 2026-04-16
 
 ---
 
 ## Branch attivo
 
 ```
-main → phase/5-area-clienti (da creare)
+main (deploy attivo su VPS mirigliani.me)
 ```
 
 > Aggiornare con il branch corrente ad ogni sessione.
