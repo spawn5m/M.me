@@ -7,13 +7,15 @@ set -e
 cd /opt/M.me
 git pull origin main
 
-cd backend
+# npm ci dalla root workspace (hoisting corretto per monorepo)
 npm ci
+
+cd backend
 npm run build
+npx prisma generate
 npx prisma migrate deploy
 
 cd ../frontend
-npm ci
 npm run build
 
 pm2 restart mme
