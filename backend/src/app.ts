@@ -23,8 +23,10 @@ import catalogRoutes from './routes/catalog'
 import clientRoutes from './routes/client'
 import permissionsRoutes from './routes/permissions'
 import brandingAdminRoutes from './routes/branding'
+import { mapsPublicRoutes, mapsAdminRoutes } from './routes/maps'
 import { localesPublicRoutes, localesAdminRoutes } from './routes/locales'
 import { maintenancePublicRoutes, maintenanceAdminRoutes } from './routes/maintenance'
+import { syncSystemAuthorization } from './lib/authorization/sync-system-authorization'
 import { MULTIPART_OPTIONS } from './lib/multipart'
 
 const app = Fastify({
@@ -60,6 +62,7 @@ const start = async () => {
     prefix: '/uploads/',
   })
   await app.register(prismaPlugin)
+  await syncSystemAuthorization(app.prisma)
   await app.register(errorHandlerPlugin)
   await app.register(authPlugin)
 
@@ -76,6 +79,8 @@ const start = async () => {
   await app.register(pricelistsRoutes, { prefix: '/api/admin/pricelists' })
   await app.register(catalogRoutes, { prefix: '/api/admin/catalog' })
   await app.register(brandingAdminRoutes, { prefix: '/api/admin/branding' })
+  await app.register(mapsPublicRoutes, { prefix: '/api/public/maps' })
+  await app.register(mapsAdminRoutes, { prefix: '/api/admin/maps' })
   await app.register(localesAdminRoutes, { prefix: '/api/admin/locales' })
   await app.register(maintenancePublicRoutes, { prefix: '/api/public/maintenance' })
   await app.register(maintenanceAdminRoutes, { prefix: '/api/admin/maintenance' })

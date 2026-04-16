@@ -29,6 +29,7 @@ const ADMIN_DEFAULT_ROUTE_RULES: readonly RoutePermissionRule[] = [
   { path: '/admin/pricelists', permissions: ['pricelists.sale.read', 'pricelists.purchase.read'] },
   { path: '/admin/catalog', permissions: ['catalog.pdf.read'] },
   { path: '/admin/locales', permissions: ['locales.manage'] },
+  { path: '/admin/maps', permissions: ['maps.manage'] },
   { path: '/admin/maintenance', permissions: ['maintenance.manage'] },
 ]
 

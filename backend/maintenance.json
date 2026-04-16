@@ -4,10 +4,10 @@
       "enabled": false
     },
     "ourStory": {
-      "enabled": true
+      "enabled": false
     },
     "whereWeAre": {
-      "enabled": true
+      "enabled": false
     },
     "funeralHomes": {
       "enabled": false

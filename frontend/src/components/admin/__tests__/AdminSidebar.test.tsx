@@ -67,6 +67,18 @@ describe('AdminSidebar', () => {
     expect(screen.getByText('Manutenzione')).toBeTruthy()
   })
 
+  it('mostra "Mappe" per chi ha maps.manage', () => {
+    mockUseAuth.mockReturnValue(makeAuth(['manager'], ['maps.manage']))
+    render(<MemoryRouter initialEntries={['/admin/maps']}><AdminSidebar /></MemoryRouter>)
+    expect(screen.getByText('Mappe')).toBeTruthy()
+  })
+
+  it('nasconde "Mappe" a manager senza maps.manage', () => {
+    mockUseAuth.mockReturnValue(makeAuth(['manager']))
+    render(<MemoryRouter><AdminSidebar /></MemoryRouter>)
+    expect(screen.queryByText('Mappe')).toBeNull()
+  })
+
   it('nasconde una voce client quando manca il permesso client corrispondente', () => {
     mockUseAuth.mockReturnValue(makeAuth(['impresario_funebre'], ['dashboard.client.read']))
     render(<MemoryRouter><AdminSidebar variant="client" /></MemoryRouter>)

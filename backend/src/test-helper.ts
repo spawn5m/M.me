@@ -18,6 +18,7 @@ import accessoriesRoutes from './routes/articles/accessories'
 import marmistaRoutes from './routes/articles/marmista'
 import pricelistsRoutes from './routes/pricelists'
 import catalogRoutes from './routes/catalog'
+import { mapsPublicRoutes, mapsAdminRoutes } from './routes/maps'
 import clientRoutes from './routes/client'
 import permissionsRoutes from './routes/permissions'
 import { localesPublicRoutes, localesAdminRoutes } from './routes/locales'
@@ -58,6 +59,8 @@ export async function buildTestApp(): Promise<FastifyInstance> {
   await app.register(pricelistsRoutes, { prefix: '/api/admin/pricelists' })
   await app.register(catalogRoutes, { prefix: '/api/admin/catalog' })
   await app.register(brandingAdminRoutes, { prefix: '/api/admin/branding' })
+  await app.register(mapsPublicRoutes, { prefix: '/api/public/maps' })
+  await app.register(mapsAdminRoutes, { prefix: '/api/admin/maps' })
   await app.register(localesAdminRoutes, { prefix: '/api/admin/locales' })
   await app.register(maintenancePublicRoutes, { prefix: '/api/public/maintenance' })
   await app.register(maintenanceAdminRoutes, { prefix: '/api/admin/maintenance' })

@@ -11,6 +11,17 @@ import DoveSiamoPage from '../DoveSiamoPage'
 import itJSON from '../../locales/it.json'
 import { AuthProvider } from '../../context/AuthContext'
 
+vi.mock('../../lib/api/maps', () => ({
+  fetchPublicMaps: vi.fn().mockResolvedValue({
+    data: {
+      offices: {
+        villamar: { lat: 39.6189, lng: 9.0003 },
+        sassari: { lat: 40.7259, lng: 8.5558 },
+      },
+    },
+  }),
+}))
+
 vi.mock('../../lib/api', () => ({
   default: {
     get: vi.fn().mockRejectedValue(new Error('401')),
@@ -105,5 +116,16 @@ describe('Pagine interne', () => {
   it('DoveSiamoPage monta senza errori e mostra "Dove Siamo"', () => {
     renderWithProviders(<DoveSiamoPage />)
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Dove Siamo')
+  })
+
+  it('DoveSiamoPage mostra i tre link mappa per ogni sede', async () => {
+    renderWithProviders(<DoveSiamoPage />)
+    const appleLinks = await screen.findAllByRole('link', { name: 'Apple Maps' })
+    expect(appleLinks).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: 'Google Maps' })).toHaveLength(2)
+    expect(screen.getAllByRole('link', { name: 'OpenStreetMap' })).toHaveLength(2)
+    expect(screen.queryByText('Apple Maps')).toBeNull()
+    expect(appleLinks[0]?.parentElement?.className).toContain('justify-center')
+    expect(appleLinks[0]?.parentElement?.children.length).toBe(3)
   })
 })

@@ -168,6 +168,21 @@ export interface AdminMaintenanceResponse {
   pages: AdminMaintenanceConfigMap
 }
 
+export interface MapCoordinates {
+  lat: number
+  lng: number
+}
+
+export interface MapsConfig {
+  offices: {
+    villamar: MapCoordinates
+    sassari: MapCoordinates
+  }
+}
+
+export type PublicMapsResponse = MapsConfig
+export type AdminMapsResponse = MapsConfig
+
 // Nota: SessionData augmentation è in src/plugins/auth.ts
 // dove @fastify/secure-session viene importato
 

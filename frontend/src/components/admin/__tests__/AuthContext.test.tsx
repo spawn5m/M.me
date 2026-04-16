@@ -112,4 +112,12 @@ describe('AuthContext', () => {
       'admin'
     )).toBe('/admin/maintenance')
   })
+
+  it('calcola la route mappe se è l unico permesso admin disponibile', () => {
+    expect(getDefaultRoute(
+      { id: '1', email: 'maps@test.com', firstName: 'Maps', lastName: 'User', roles: ['manager'], isActive: true },
+      ['maps.manage'],
+      'admin'
+    )).toBe('/admin/maps')
+  })
 })
