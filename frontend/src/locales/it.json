@@ -161,8 +161,11 @@
     "navigation": "Navigatore",
     "contacts": "Contatti"
   },
+  "common": {
+    "contactUs": "Contattaci"
+  },
   "maintenance": {
-    "home": "Il sito è temporaneamente in manutenzione.",
+    "home": "Stiamo lavorando per migliorare il sito. Torneremo presto con grandi novità.",
     "ourStory": "Questa pagina è temporaneamente in manutenzione.",
     "whereWeAre": "Questa pagina è temporaneamente in manutenzione.",
     "funeralHomes": "Questa pagina è temporaneamente in manutenzione.",

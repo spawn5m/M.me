@@ -302,6 +302,18 @@ const SECTIONS: SectionDef[] = [
         ],
       },
       {
+        label: 'Azioni comuni',
+        fields: [
+          { key: 'common.contactUs', label: 'Pulsante Contattaci' },
+        ],
+      },
+      {
+        label: 'Manutenzione',
+        fields: [
+          { key: 'maintenance.home', label: 'Messaggio manutenzione globale', multiline: true },
+        ],
+      },
+      {
         label: 'Messaggi di errore',
         fields: [
           { key: 'errors.unauthorized', label: 'Errore 401' },
@@ -389,10 +401,21 @@ export default function LocalesPage() {
 
   const handleFieldChange = useCallback((key: string, value: string) => {
     setFormValues((prev) => ({ ...prev, [key]: value }))
-    setDirtyKeys((prev) => new Set(prev).add(key))
+    setDirtyKeys((prev) => {
+      const next = new Set(prev)
+      const savedValue = fullLocale ? getNestedValue(fullLocale, key) : ''
+
+      if (value === savedValue) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+
+      return next
+    })
     setSaveSuccess(false)
     setSaveError(null)
-  }, [])
+  }, [fullLocale])
 
   function doSwitchSection(id: string) {
     setActiveSection(id)
@@ -543,11 +566,12 @@ export default function LocalesPage() {
               <div className="space-y-4">
                 {subgroup.fields.map((field) => {
                   const isDirty = dirtyKeys.has(field.key)
+                  const fieldId = `locale-field-${field.key.replace(/\./g, '-')}`
                   const baseClass = 'w-full border px-3 py-2 text-sm text-[#031634] transition-colors focus:outline-none focus:border-[#031634]'
                   const borderClass = isDirty ? 'border-[#C9A96E]' : 'border-[#E5E0D8]'
                   return (
                     <div key={field.key}>
-                      <label className="mb-1 block text-xs font-medium uppercase tracking-[0.12em] text-[#6B7280]">
+                      <label htmlFor={fieldId} className="mb-1 block text-xs font-medium uppercase tracking-[0.12em] text-[#6B7280]">
                         {field.label}
                         <span className="ml-2 font-mono text-[10px] normal-case tracking-normal text-[#9CA3AF]">
                           {field.key}
@@ -555,6 +579,7 @@ export default function LocalesPage() {
                       </label>
                       {field.multiline ? (
                         <textarea
+                          id={fieldId}
                           rows={2}
                           value={formValues[field.key] ?? ''}
                           onChange={(e) => handleFieldChange(field.key, e.target.value)}
@@ -562,6 +587,7 @@ export default function LocalesPage() {
                         />
                       ) : (
                         <input
+                          id={fieldId}
                           type="text"
                           value={formValues[field.key] ?? ''}
                           onChange={(e) => handleFieldChange(field.key, e.target.value)}

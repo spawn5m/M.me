@@ -24,15 +24,20 @@ export default function PublicMaintenanceScreen({
   if (variant === 'dark') {
     return (
       <main className="min-h-screen bg-[#071325] px-6">
-        <section className="flex min-h-screen flex-col items-center justify-center gap-8 text-center">
+        <section className="flex min-h-screen flex-col items-center justify-center gap-10 text-center">
           <div className="flex flex-col items-center gap-4">
             {logoUrl && (
-              <img src={logoUrl} alt="Mirigliani logo" className="h-20 w-auto object-contain" />
+              <img
+                src={logoUrl}
+                alt="Mirigliani logo"
+                className="object-contain"
+                style={{ width: 'clamp(6rem, 14vw, 12rem)', height: 'auto' }}
+              />
             )}
             {showHeadline && (
               <h1
-                className="font-['Inter'] font-black uppercase tracking-tight leading-none text-white"
-                style={{ fontSize: 'clamp(3rem, 10vw, 8rem)' }}
+                className="font-['Inter'] font-black uppercase tracking-tight text-center leading-none"
+                style={{ fontSize: 'clamp(4rem, 12vw, 10rem)', color: '#FFFFFF' }}
               >
                 {t('home.headline')}
               </h1>
@@ -46,12 +51,20 @@ export default function PublicMaintenanceScreen({
           </p>
 
           {showReservedAreaButton && (
-            <Link
-              to={reservedAreaHref}
-              className="inline-flex min-h-11 items-center justify-center border border-[#C9A96E] px-8 py-3 font-['Inter'] text-sm font-medium uppercase tracking-[0.15em] text-[#C9A96E] transition-colors hover:bg-[#C9A96E]/10"
-            >
-              {t('nav.reservedArea')}
-            </Link>
+            <div className="flex flex-col flex-wrap items-center justify-center gap-6 sm:flex-row">
+              <Link
+                to={reservedAreaHref}
+                className="btn-home-gold inline-flex min-h-11 items-center justify-center px-8 py-4 font-['Inter'] text-sm font-medium uppercase tracking-[0.15em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#C9A96E]"
+              >
+                {t('nav.reservedArea')}
+              </Link>
+              <a
+                href="mailto:info@mirigliani.me"
+                className="btn-home-white inline-flex min-h-11 items-center justify-center px-8 py-4 font-['Inter'] text-sm font-medium uppercase tracking-[0.15em] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"
+              >
+                {t('common.contactUs')}
+              </a>
+            </div>
           )}
         </section>
       </main>

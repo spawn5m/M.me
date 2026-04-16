@@ -95,6 +95,7 @@ beforeEach(() => {
 
     expect(screen.getByTestId('maintenance-screen')).toHaveAttribute('data-variant', 'dark')
     expect(screen.getByTestId('maintenance-screen')).toHaveAttribute('data-reserved', 'true')
+    expect(screen.getByTestId('maintenance-screen')).toHaveTextContent('Stiamo lavorando per migliorare il sito. Torneremo presto con grandi novità.')
   })
 
   it('bypassa la manutenzione globale per gli admin con preview attiva', () => {
