@@ -11,8 +11,8 @@ git pull origin main
 npm ci
 
 cd backend
-npm run build
 npx prisma generate
+npm run build
 npx prisma migrate deploy
 
 cd ../frontend
