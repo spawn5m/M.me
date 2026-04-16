@@ -72,6 +72,10 @@ Deploy successivi: solo `prisma migrate deploy`, nessun seed.
 
 ### `/etc/nginx/sites-available/mirigliani.me` (aggiornamento)
 
+Il frontend usa `baseURL: '/api'` (relativo) — Nginx gestisce tutto su un unico dominio:
+- `/api/*` e `/uploads/*` → proxy a Fastify 3001
+- `/*` → SPA statica da `/opt/M.me/frontend/dist`
+
 ```nginx
 server {
     listen 80;
@@ -96,41 +100,31 @@ server {
     root /opt/M.me/frontend/dist;
     index index.html;
 
+    location /api/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        client_max_body_size 350m;
+    }
+
+    location /uploads/ {
+        proxy_pass http://127.0.0.1:3001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+
     location / {
         try_files $uri $uri/ /index.html;
     }
 }
 ```
 
-### `/etc/nginx/sites-available/api.mirigliani.me` (nuovo)
-
-```nginx
-server {
-    listen 80;
-    server_name api.mirigliani.me;
-    return 301 https://api.mirigliani.me$request_uri;
-}
-
-server {
-    listen 443 ssl;
-    server_name api.mirigliani.me;
-    ssl_certificate     /etc/letsencrypt/live/api.mirigliani.me/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/api.mirigliani.me/privkey.pem;
-
-    location / {
-        proxy_pass http://127.0.0.1:3001;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        client_max_body_size 350m;
-    }
-}
-```
+> `api.mirigliani.me` non è necessario per la SPA — può essere aggiunto in futuro per accesso diretto API da tool esterni.
 
 ### SSL (dopo config Nginx)
 
 ```bash
 certbot --nginx -d mirigliani.me -d www.mirigliani.me
-certbot --nginx -d api.mirigliani.me
 certbot renew --dry-run
 ```
 
@@ -241,5 +235,4 @@ pm2 save
 | `ecosystem.config.js` | Config PM2 |
 | `deploy.sh` | Script deploy ripetibile |
 | `backend/.env.example` | Template variabili (senza segreti) |
-| `docs/nginx/mirigliani.me` | Config Nginx frontend |
-| `docs/nginx/api.mirigliani.me` | Config Nginx API |
+| `docs/nginx/mirigliani.me` | Config Nginx completo (SPA + proxy /api/ + /uploads/) |
