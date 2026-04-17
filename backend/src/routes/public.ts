@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import { UPLOADS_ROOT } from '../lib/paths'
 import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { sendContactEmail } from '../lib/mailer'
@@ -36,7 +37,7 @@ function buildPagination(page: number, limit: number, total: number) {
 
 // ─── Branding ─────────────────────────────────────────────────────────────────
 
-const LOGO_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'logo')
+const LOGO_DIR = path.join(UPLOADS_ROOT, 'images', 'logo')
 const LOGO_BASES = ['logo.png', 'logo.webp', 'logo.svg']
 
 function findLogoUrl(): string | null {
@@ -48,7 +49,7 @@ function findLogoUrl(): string | null {
   return null
 }
 
-const BRANDING_IMG_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'branding')
+const BRANDING_IMG_DIR = path.join(UPLOADS_ROOT, 'images', 'branding')
 const VALID_BRANDING_SLOTS = ['home-funebri', 'home-marmisti', 'home-altri', 'storia-narrativa'] as const
 const BRANDING_IMG_EXTS = ['png', 'webp', 'svg'] as const
 

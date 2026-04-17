@@ -5,6 +5,7 @@ import fastifyRateLimit from '@fastify/rate-limit'
 import multipart from '@fastify/multipart'
 import fastifyStatic from '@fastify/static'
 import path from 'path'
+import { UPLOADS_ROOT } from './lib/paths'
 
 import prismaPlugin from './plugins/prisma'
 import errorHandlerPlugin from './plugins/errorHandler'
@@ -58,7 +59,7 @@ const start = async () => {
 
   await app.register(multipart, MULTIPART_OPTIONS)
   await app.register(fastifyStatic, {
-    root: path.join(process.cwd(), '..', 'uploads'),
+    root: UPLOADS_ROOT,
     prefix: '/uploads/',
   })
   await app.register(prismaPlugin)

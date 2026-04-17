@@ -4,10 +4,11 @@ import { pipeline } from 'stream/promises'
 import * as fs from 'fs'
 import * as path from 'path'
 import { PDF_MAX_FILE_SIZE_BYTES, PDF_MAX_FILE_SIZE_MB } from '../lib/multipart'
+import { UPLOADS_ROOT } from '../lib/paths'
 import { slugify, countSplitPages, deleteSlugPages, runSplit } from '../lib/splitPdfService'
 import type { CatalogStatus } from '../types/shared'
 
-const UPLOADS_PDF = path.resolve(process.cwd(), '..', 'uploads', 'pdf')
+const UPLOADS_PDF = path.join(UPLOADS_ROOT, 'pdf')
 
 const CATALOG_TYPES = ['accessories', 'marmista'] as const
 

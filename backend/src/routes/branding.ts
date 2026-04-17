@@ -1,13 +1,14 @@
 import { FastifyPluginAsync } from 'fastify'
 import fs from 'fs'
 import path from 'path'
+import { UPLOADS_ROOT } from '../lib/paths'
 import sharp from 'sharp'
 
 const PNG_MAGIC_BYTES = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])
 const RIFF_BYTES = Buffer.from([0x52, 0x49, 0x46, 0x46])
 const WEBP_BYTES = Buffer.from([0x57, 0x45, 0x42, 0x50])
 
-const LOGO_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'logo')
+const LOGO_DIR = path.join(UPLOADS_ROOT, 'images', 'logo')
 const PNG_MIMES = new Set(['image/png'])
 // SVG può arrivare con MIME diversi a seconda del browser/OS
 const SVG_MIMES = new Set(['image/svg+xml', 'text/xml', 'text/plain', 'application/xml', 'application/octet-stream'])
@@ -16,7 +17,7 @@ const ALLOWED_MIMES = new Set([...PNG_MIMES, ...SVG_MIMES, ...WEBP_MIMES])
 const MAX_FILE_SIZE = 2 * 1024 * 1024 // 2 MB
 const MAX_DIM = 512
 
-const BRANDING_IMG_DIR = path.resolve(process.cwd(), '..', 'uploads', 'images', 'branding')
+const BRANDING_IMG_DIR = path.join(UPLOADS_ROOT, 'images', 'branding')
 const VALID_SLOTS = new Set(['home-funebri', 'home-marmisti', 'home-altri', 'storia-narrativa'])
 const IMG_ALLOWED_MIMES = new Set([
   'image/png',

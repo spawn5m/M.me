@@ -3,12 +3,13 @@ import path from 'path'
 import { execFileSync } from 'child_process'
 import type { FastifyBaseLogger } from 'fastify'
 import type { PrismaClient } from '@prisma/client'
+import { UPLOADS_ROOT } from './paths'
 
-const UPLOADS_PDF = path.resolve(process.cwd(), '..', 'uploads', 'pdf')
+const UPLOADS_PDF = path.join(UPLOADS_ROOT, 'pdf')
 const PAGES_DIR = path.join(UPLOADS_PDF, 'pages')
 
-const PDFSEPARATE = '/opt/homebrew/bin/pdfseparate'
-const PDFINFO = '/opt/homebrew/bin/pdfinfo'
+const PDFSEPARATE = process.env.PDFSEPARATE_PATH ?? 'pdfseparate'
+const PDFINFO = process.env.PDFINFO_PATH ?? 'pdfinfo'
 
 export function slugify(filename: string): string {
   return filename

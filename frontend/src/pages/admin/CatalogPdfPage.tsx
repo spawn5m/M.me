@@ -86,6 +86,7 @@ function CatalogCard({ type, title }: CatalogCardProps) {
   const [form, setForm] = useState<LayoutForm>(DEFAULT_LAYOUT)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [uploadPct, setUploadPct] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [isEditingLayout, setIsEditingLayout] = useState(false)
   const [editForm, setEditForm] = useState<LayoutForm>(DEFAULT_LAYOUT)
@@ -144,15 +145,17 @@ function CatalogCard({ type, title }: CatalogCardProps) {
   const handleUpload = async () => {
     if (!selectedFile) return
     setIsUploading(true)
+    setUploadPct(0)
     setUploadError(null)
     try {
-      await catalogApi.upload(type, selectedFile, form)
+      await catalogApi.upload(type, selectedFile, form, setUploadPct)
       setSelectedFile(null)
       await fetchStatus()
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Errore durante il caricamento.')
     } finally {
       setIsUploading(false)
+      setUploadPct(0)
     }
   }
 
@@ -286,8 +289,16 @@ function CatalogCard({ type, title }: CatalogCardProps) {
               onClick={() => void handleUpload()}
               className="w-full py-3 bg-[#031634] text-white text-xs font-semibold uppercase tracking-[0.14em] hover:bg-[#1A2B4A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isUploading ? 'Caricamento in corso…' : 'Carica e avvia split'}
+              {isUploading ? `Caricamento… ${uploadPct}%` : 'Carica e avvia split'}
             </button>
+            {isUploading && (
+              <div className="h-1.5 bg-[#E5E0D8] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#C9A96E] transition-all duration-300"
+                  style={{ width: `${uploadPct}%` }}
+                />
+              </div>
+            )}
           </>
         )}
 
@@ -435,12 +446,20 @@ function CatalogCard({ type, title }: CatalogCardProps) {
                     disabled={isUploading}
                     className="px-4 py-2 bg-[#031634] text-white text-xs font-semibold uppercase tracking-[0.14em] hover:bg-[#1A2B4A] transition-colors disabled:opacity-50"
                   >
-                    {isUploading ? '…' : 'Carica'}
+                    {isUploading ? `${uploadPct}%` : 'Carica'}
                   </button>
                 )}
               </div>
               {selectedFile && !isUploading && (
                 <p className="text-[10px] text-[#6B7280] mt-1">{selectedFile.name}</p>
+              )}
+              {isUploading && (
+                <div className="mt-2 h-1.5 bg-[#E5E0D8] rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#C9A96E] transition-all duration-300"
+                    style={{ width: `${uploadPct}%` }}
+                  />
+                </div>
               )}
             </div>
           </>

@@ -6,6 +6,7 @@ import * as path from 'path'
 import * as XLSX from 'xlsx'
 import { parseExcelFile, splitCodes, validateImagePath } from '../../lib/excelImporter'
 import { MULTIPART_MAX_FILE_SIZE_MB } from '../../lib/multipart'
+import { UPLOADS_ROOT } from '../../lib/paths'
 import type { ImportResult } from '../../types/shared'
 
 const coffinBodySchema = z.object({
@@ -154,7 +155,7 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    const uploadDir = path.join(process.cwd(), '..', 'uploads', 'images', 'coffins')
+    const uploadDir = path.join(UPLOADS_ROOT, 'images', 'coffins')
     fs.mkdirSync(uploadDir, { recursive: true })
 
     // Use a unique filename on every upload to avoid stale browser caches after replacements.
@@ -246,7 +247,7 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
 
     const rows = parseExcelFile(tmpPath)
     const result: ImportResult = { imported: 0, skipped: 0, errors: [], warnings: [] }
-    const uploadsRoot = path.join(process.cwd(), '..', 'uploads', 'images')
+    const uploadsRoot = path.join(UPLOADS_ROOT, 'images')
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]

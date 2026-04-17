@@ -4,6 +4,7 @@ import { pipeline } from 'stream/promises'
 import * as fs from 'fs'
 import * as path from 'path'
 import { parseExcelFile, splitCodes, validateImagePath } from '../../lib/excelImporter'
+import { UPLOADS_ROOT } from '../../lib/paths'
 import type { ImportResult } from '../../types/shared'
 
 const bodySchema = z.object({
@@ -108,7 +109,7 @@ const accessoriesRoutes: FastifyPluginAsync = async (fastify) => {
 
     const rows = parseExcelFile(tmpPath)
     const result: ImportResult = { imported: 0, skipped: 0, errors: [], warnings: [] }
-    const uploadsRoot = path.join(process.cwd(), '..', 'uploads', 'images')
+    const uploadsRoot = path.join(UPLOADS_ROOT, 'images')
 
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
