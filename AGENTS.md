@@ -1,13 +1,12 @@
 # AGENTS.md — Mirigliani Project
 
-Questo file guida il comportamento di Codex per l'intero progetto.
-Leggilo all'inizio di ogni sessione prima di scrivere codice.
+Guida comportamento Codex. Leggi ogni sessione prima di scrivere codice.
 
 ---
 
 ## Progetto
 
-Sito web B2B per **Mirigliani** — grossista di forniture funebri e marmi in Sardegna.
+Sito B2B **Mirigliani** — grossista forniture funebri e arte sacra in Sardegna.
 Due sedi: Villamar e Sassari.
 Clienti: Impresari funebri e Marmisti professionisti.
 
@@ -63,7 +62,7 @@ Clienti: Impresari funebri e Marmisti professionisti.
 ### TypeScript
 - Sempre `strict: true` in tsconfig
 - Nessun `any` — usare `unknown` e type guard se necessario
-- Tipi condivisi tra backend e frontend in `backend/src/types/shared.ts`
+- Tipi condivisi backend/frontend in `backend/src/types/shared.ts`
 - Preferire `interface` per oggetti, `type` per union e utility types
 
 ### Naming
@@ -77,50 +76,50 @@ Clienti: Impresari funebri e Marmisti professionisti.
 ### API
 - Route base: `/api/`
 - Route pubbliche: `/api/public/`
-- Sempre risposta paginata per liste: `{ data: [], pagination: {} }`
-- Errori sempre nel formato: `{ error: string, message: string, statusCode: number }`
-- Vedere sezione 22 del documento di specifiche per i codici errore
+- Liste sempre paginate: `{ data: [], pagination: {} }`
+- Errori sempre: `{ error: string, message: string, statusCode: number }`
+- Codici errore: sezione 22 doc specifiche
 
 ### Componenti React
 - Un componente per file
 - Props sempre tipizzate con `interface`
-- Nessun props drilling oltre 2 livelli — usare Context o stato locale
-- Testi UI sempre tramite `useTranslation()` di i18next — mai hardcoded
+- No props drilling oltre 2 livelli — Context o stato locale
+- Testi UI via `useTranslation()` — mai hardcoded
 
 ---
 
 ## Regole critiche
 
 ### NON fare mai
-- `console.log` in produzione — usare `app.log` di Fastify (Pino)
-- SQL raw a meno che Prisma non lo supporti nativamente per quella query
-- Esporre prezzi di acquisto in endpoint pubblici o accessibili a ruoli Impresario/Marmista
-- Restituire la password dell'utente in nessuna risposta API
-- Committare file `.env`, file Excel seed, o file nella cartella `uploads/`
+- `console.log` in produzione — usare `app.log` Fastify (Pino)
+- SQL raw salvo Prisma non supporti nativamente
+- Esporre prezzi acquisto in endpoint pubblici o ruoli Impresario/Marmista
+- Restituire password in nessuna risposta API
+- Committare `.env`, Excel seed, o file `uploads/`
 
 ### Sicurezza
-- Verificare il ruolo dell'utente in OGNI route protetta — non fidarsi del frontend
-- Rate limiting attivo sul login: max 5 tentativi per IP in 15 minuti
-- Upload: validare tipo MIME lato server, non solo estensione
-- Input utente sempre validato con Zod prima di toccare il DB
+- Verificare ruolo in OGNI route protetta — non fidarsi del frontend
+- Rate limiting login: max 5 tentativi per IP in 15 minuti
+- Upload: validare tipo MIME server-side, non solo estensione
+- Input utente sempre validato Zod prima del DB
 
 ### Listini — logica prezzi
-- Il motore di calcolo prezzi è in `backend/src/lib/priceEngine.ts`
-- Ogni modifica al motore richiede test Vitest corrispondenti
-- Flag `autoUpdate: true` → calcolo dinamico ricorsivo da listino padre
-- Flag `autoUpdate: false` → prezzo snapshot salvato staticamente in DB
-- Listino Acquisto (`type: "purchase"`) → visibile SOLO a Manager e Super Admin
+- Motore prezzi: `backend/src/lib/priceEngine.ts`
+- Ogni modifica richiede test Vitest corrispondenti
+- `autoUpdate: true` → calcolo dinamico ricorsivo da listino padre
+- `autoUpdate: false` → prezzo snapshot salvato staticamente in DB
+- Listino Acquisto (`type: "purchase"`) → SOLO Manager e Super Admin
 
 ---
 
 ## Design System — DUALE
 
-> ⚠️ Il progetto ha due design system distinti. Applicare quello corretto per ogni componente.
+> ⚠️ Due design system distinti. Applicare quello corretto per ogni componente.
 
 ### Sistema A — Dark Editorial (HOME ONLY)
 
-Usato **esclusivamente** per `frontend/src/pages/HomePage.tsx` e i suoi sotto-componenti.
-Riferimento: `DESIGN.md` nella root del progetto.
+Solo `frontend/src/pages/HomePage.tsx` e sotto-componenti.
+Riferimento: `DESIGN.md` nella root.
 
 | Token | Valore |
 |---|---|
@@ -145,7 +144,7 @@ Riferimento: `DESIGN.md` nella root del progetto.
 - Sezione 1 Hero: testo LEFT 45% + immagine cut-out RIGHT 55%
 - Sezione 2: testo LEFT 42% + rettangolo dark RIGHT 58% (flush right edge)
 - Sezione 3: rettangolo dark LEFT 55% (flush left edge) + testo RIGHT 45%
-- Sezione 4: strip due location affiancate, linea gold verticale al centro
+- Sezione 4: strip due location affiancate, linea gold verticale centro
 - Navbar: trasparente, wordmark `MIRIGLIANI`, bottone `AREA RISERVATA` outlined gold
 - Footer: `#070F1C`, linea gold 1px in cima, 3 colonne
 
@@ -153,8 +152,8 @@ Riferimento: `DESIGN.md` nella root del progetto.
 
 ### Sistema B — Light Professional (TUTTE LE ALTRE PAGINE)
 
-Usato per tutto tranne `HomePage.tsx`.
-Riferimento: `DESIGN2.md` nella root del progetto.
+Tutto tranne `HomePage.tsx`.
+Riferimento: `DESIGN2.md` nella root.
 
 | Token | Valore |
 |---|---|
@@ -176,7 +175,7 @@ Riferimento: `DESIGN2.md` nella root del progetto.
 
 ## Transizione Dark → Light
 
-La Home è dark, tutte le pagine interne sono light. La transizione avviene tramite:
+Home dark, pagine interne light. Transizione via:
 
 ```tsx
 // frontend/src/App.tsx
@@ -186,90 +185,66 @@ La Home è dark, tutte le pagine interne sono light. La transizione avviene tram
 <Navbar variant={location.pathname === '/' ? 'dark' : 'light'} />
 ```
 
-Il componente `Navbar` deve accettare una prop `variant: 'dark' | 'light'` e renderizzare gli stili appropriati. Non usare due Navbar separate.
+`Navbar` accetta prop `variant: 'dark' | 'light'`. Non usare due Navbar separate.
 
 ---
 
 ## Skills attive
 
 - **UI UX Pro Max** — attiva per tutte le richieste UI/UX
-  - Per la **Home**: stack `react`, stile `dark editorial luxury`, palette dark sopra
-  - Per le **pagine interne**: stack `react`, stile `professional B2B minimal`, palette light sopra
-
----
-
-## Plugin attivi
-
-- **Superpowers** — framework metodologico obbligatorio per tutto lo sviluppo
-  - Installazione: `/plugin marketplace add obra/superpowers-marketplace` → `/plugin install superpowers@superpowers-marketplace`
-  - **Attivare con `/using-superpowers` all'inizio di ogni sessione**
-  - `/superpowers:brainstorm` — prima di iniziare qualsiasi fase o feature complessa
-  - `/superpowers:write-plan` — per task multi-file (migrazioni, nuove route, refactoring)
-  - `/superpowers:execute-plan` — per eseguire il piano con subagent e code review integrata
-
-### Quando usare Superpowers per questo progetto
-
-| Situazione | Comando |
-|---|---|
-| Inizio di ogni fase | `/superpowers:brainstorm` |
-| Nuova entità Prisma + migration + API + frontend | `/superpowers:write-plan` |
-| Implementazione motore listini (Fase 4) | `/superpowers:brainstorm` poi `/superpowers:write-plan` |
-| Qualsiasi task che tocca più di 3 file | `/superpowers:write-plan` |
-| Dopo approvazione del piano | `/superpowers:execute-plan` |
+  - **Home**: stack `react`, stile `dark editorial luxury`, palette dark sopra
+  - **Pagine interne**: stack `react`, stile `professional B2B minimal`, palette light sopra
 
 ---
 
 ## MCP attivi
 
 - **21st.dev Magic** — componenti React UI professionali
-- **Context7** — documentazione live Fastify v5, Prisma v7, React, Zod
+- **Context7** — doc live Fastify v5, Prisma v7, React, Zod
 - **Prisma MCP** — schema e query assistance
-- **Sequential Thinking** — per logica complessa (listini, permessi)
+- **Sequential Thinking** — logica complessa (listini, permessi)
 - **PostgreSQL** — query dirette al DB locale
 
 ---
 
 ## Fase corrente
 
-> **Aggiornare questa sezione ad ogni cambio di fase**
+> **Aggiornare ad ogni cambio di fase**
 
-- [ ] Fase 0 — Setup & Skill
+- [x] Fase 0 — Setup & Skill
 - [x] Fase 1 — Fondamenta
 - [x] Fase 2 — Front End Pubblico
 - [x] Fase 3 — Back End Area Riservata
 - [x] Fase 4 — Listini
-- [ ] Fase 5 — Area Clienti ← corrente
-- [ ] Fase 6 — Deploy VPS
+- [x] Fase 6 — Deploy VPS ← completato 2026-04-16
 
 ---
 
 ## Branch attivo
 
 ```
-main → phase/5-area-clienti (da creare)
+main (deploy attivo su VPS mirigliani.me)
 ```
 
-> Aggiornare con il branch corrente ad ogni sessione.
+> Aggiornare con branch corrente ad ogni sessione.
 
 ---
 
 ## Avvio sessione — checklist
 
-> Eseguire questi comandi **ogni volta** che si apre Codex sul progetto.
+> Eseguire ogni volta che si apre Codex.
 
 ```
-1. /using-superpowers          ← attiva il framework metodologico
-2. Leggi AGENTS.md             ← questo file
-3. Leggi DESIGN.md             ← design system dark (solo Home)
-4. Leggi DESIGN2.md            ← design system light (pagine interne/admin)
-5. Controlla "Fase corrente" e "Branch attivo" qui sotto
+1. Leggi AGENTS.md             ← questo file
+2. Leggi DESIGN.md             ← design system dark (solo Home)
+3. Leggi DESIGN2.md            ← design system light (pagine interne/admin)
+4. Controlla "Fase corrente" e "Branch attivo" qui sotto
 ```
 
 ---
 
 ## Note sessione
 
-> Usare questa sezione per annotare decisioni prese durante la sessione corrente
-> che non sono ancora nel documento di specifiche.
+> Annotare decisioni della sessione corrente non ancora nel doc specifiche.
 
 -
