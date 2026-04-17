@@ -7,9 +7,9 @@ set -e
 cd /opt/M.me
 git pull origin main
 
-# Garantisce struttura uploads (non versionata)
-mkdir -p uploads/pdf/pages
-mkdir -p uploads/images/{coffins,accessories,logo,branding}
+# Garantisce struttura uploads (non versionata, path relativo a /opt/M.me)
+mkdir -p /opt/M.me/uploads/pdf/pages
+mkdir -p /opt/M.me/uploads/images/{coffins,accessories,logo,branding}
 
 # npm ci dalla root workspace (hoisting corretto per monorepo)
 npm ci
