@@ -106,7 +106,8 @@ function AppContent() {
     const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]')
     if (link) {
       link.href = logoUrl ?? '/favicon.svg'
-      link.type = logoUrl?.endsWith('.svg') ? 'image/svg+xml' : 'image/png'
+      const ext = logoUrl?.split('?')[0].split('.').pop()
+      link.type = ext === 'svg' ? 'image/svg+xml' : ext === 'webp' ? 'image/webp' : 'image/png'
     }
   }, [logoUrl])
 
