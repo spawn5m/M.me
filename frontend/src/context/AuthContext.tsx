@@ -6,7 +6,6 @@ interface AuthUser {
   email: string
   firstName: string
   lastName: string
-  roles: string[]
   isActive: boolean
 }
 
@@ -78,7 +77,6 @@ interface AuthResponse {
 
 interface AuthContextValue {
   user: AuthUser | null
-  roles: string[]
   permissions: string[]
   isLoading: boolean
   hasPermission: (permission: string) => boolean
@@ -133,7 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
         value={{
           user,
-          roles: user?.roles ?? [],
           permissions,
           isLoading,
           hasPermission,
