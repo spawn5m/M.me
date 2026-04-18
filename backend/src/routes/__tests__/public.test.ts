@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb } from '../../test-helper'
+import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb, grantUserPermissions } from '../../test-helper'
 
 describe('Public API', () => {
   let app: FastifyInstance
@@ -88,16 +88,19 @@ describe('Public API', () => {
       roles: ['impresario_funebre'],
     })
 
+    await grantUserPermissions(app, impresarioId, ['client.catalog.funeral.read'])
+
     await app.prisma.user.update({
       where: { id: impresarioId },
       data: { funeralPriceListId: derivedList.id },
     })
 
-    await seedTestUser(app, {
+    const { id: managerId } = await seedTestUser(app, {
       email: 'manager-public@test.com',
       password: 'pass1234!',
       roles: ['manager'],
     })
+    await grantUserPermissions(app, managerId, ['pricelists.sale.preview'])
 
     impresarioCookie = await getAuthCookie(app, 'imp-public@test.com', 'pass1234!')
     managerCookie = await getAuthCookie(app, 'manager-public@test.com', 'pass1234!')

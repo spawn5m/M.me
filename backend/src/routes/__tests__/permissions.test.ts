@@ -17,7 +17,6 @@ interface AuthorizationRoleRecord {
   id: string
   name: string
   label: string
-  isSystem: boolean
 }
 
 interface AuthorizationUserRecord {
@@ -53,7 +52,6 @@ interface AuthorizationPrismaClient {
       data: {
         name: string
         label: string
-        isSystem: boolean
       }
     }): Promise<AuthorizationRoleRecord>
   }
@@ -227,14 +225,12 @@ describe('Permissions API', () => {
       data: {
         name: 'zebra_role',
         label: 'Zebra Role',
-        isSystem: false,
       },
     })
     const alphaRole = await getAuthorizationPrisma(app).role.create({
       data: {
         name: 'alpha_role',
         label: 'Alpha Role',
-        isSystem: false,
       },
     })
 

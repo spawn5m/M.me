@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb } from '../../test-helper'
+import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb, grantUserPermissions } from '../../test-helper'
 import { SYSTEM_PERMISSIONS, type PermissionCode } from '../../lib/authorization/permissions'
 
 interface AuthorizationPermissionRecord {
@@ -462,6 +462,7 @@ describe('Pricelists API', () => {
     const { id: userId } = await seedTestUser(app, {
       email: 'marmista@test.com', password: 'password123', roles: ['marmista'],
     })
+    await grantUserPermissions(app, userId, ['client.catalog.marmista.read'])
     const pl = await app.prisma.priceList.create({
       data: { name: 'Listino Funebre', type: 'sale', articleType: 'funeral', autoUpdate: false },
     })
@@ -478,6 +479,7 @@ describe('Pricelists API', () => {
     const { id: userId } = await seedTestUser(app, {
       email: 'marmista2@test.com', password: 'password123', roles: ['marmista'],
     })
+    await grantUserPermissions(app, userId, ['client.catalog.marmista.read'])
     const pl = await app.prisma.priceList.create({
       data: { name: 'Listino Marmista', type: 'sale', articleType: 'marmista', autoUpdate: false },
     })
@@ -495,6 +497,7 @@ describe('Pricelists API', () => {
     const { id: userId } = await seedTestUser(app, {
       email: 'imp2@test.com', password: 'password123', roles: ['impresario_funebre'],
     })
+    await grantUserPermissions(app, userId, ['client.catalog.funeral.read'])
     const pl = await app.prisma.priceList.create({
       data: { name: 'Listino Marmista', type: 'sale', articleType: 'marmista', autoUpdate: false },
     })

@@ -191,14 +191,13 @@ describe('Role permission routes', () => {
 
     expect(res.statusCode).toBe(200)
     const body = res.json() as {
-      role: { id: string; name: string; isSystem: boolean }
+      role: { id: string; name: string }
       permissions: Array<{ code: string }>
     }
 
     expect(body.role).toMatchObject({
       id: customRoleId,
       name: 'custom_role_permissions',
-      isSystem: false,
     })
     expect(body.permissions.map((permission) => permission.code)).toEqual(['catalog.pdf.read'])
   })
@@ -226,7 +225,7 @@ describe('Role permission routes', () => {
     ])
   })
 
-  it('returns 409 when updating a system role', async () => {
+  it('updates a system role like any other role', async () => {
     const res = await app.inject({
       method: 'PUT',
       url: `/api/roles/${systemRoleId}/permissions`,
@@ -234,11 +233,10 @@ describe('Role permission routes', () => {
       payload: { permissionCodes: ['roles.read'] },
     })
 
-    expect(res.statusCode).toBe(409)
-    expect(res.json()).toMatchObject({
-      error: 'Conflict',
-      statusCode: 409,
-    })
+    expect(res.statusCode).toBe(200)
+    const body = res.json() as { role: { id: string }; permissions: Array<{ code: string }> }
+    expect(body.role.id).toBe(systemRoleId)
+    expect(body.permissions.map((p) => p.code)).toEqual(['roles.read'])
   })
 
   it('returns 400 when a requested permission code is invalid', async () => {

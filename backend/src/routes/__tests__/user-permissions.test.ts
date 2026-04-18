@@ -204,7 +204,7 @@ describe('User permission routes', () => {
       'users.read.all',
       'users.update.all',
       'users.super_admin.read',
-      'users.super_admin.manage',
+      'users.is_super_admin',
       'articles.coffins.read',
     ])
     await grantRolePermissions(app, 'manager', [
@@ -233,6 +233,7 @@ describe('User permission routes', () => {
     const targetSuperAdmin = await getUserByEmail(app, 'target-superadmin@test.com')
 
     await grantUserPermissions(app, collaborator.id, ['roles.read'], fullSuperAdmin.id)
+    await grantUserPermissions(app, targetSuperAdmin.id, ['users.is_super_admin'])
 
     superAdminCookie = await getAuthCookie(app, 'superadmin-permissions@test.com', 'password123')
     managerCookie = await getAuthCookie(app, 'manager-permissions@test.com', 'password123')

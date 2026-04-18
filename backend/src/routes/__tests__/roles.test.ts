@@ -334,7 +334,7 @@ describe('Roles API', () => {
   })
 
   describe('DELETE /api/roles/:id', () => {
-    it('restituisce 409 se il ruolo è di sistema', async () => {
+    it('elimina il ruolo super_admin come qualsiasi altro ruolo (204)', async () => {
       const superAdminRole = await app.prisma.role.findUnique({ where: { name: 'super_admin' } })
       if (!superAdminRole) {
         throw new Error('Ruolo super_admin non trovato')
@@ -345,7 +345,7 @@ describe('Roles API', () => {
         url: `/api/roles/${superAdminRole.id}`,
         headers: { cookie: superAdminCookie }
       })
-      expect(res.statusCode).toBe(409)
+      expect(res.statusCode).toBe(204)
     })
 
     it('elimina un ruolo custom (204)', async () => {

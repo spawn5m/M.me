@@ -25,72 +25,13 @@ describe('system authorization bootstrap', () => {
     await prisma.$disconnect()
   })
 
-  it('sincronizza maps.manage e lo assegna ai ruoli di sistema all avvio', async () => {
-    await prisma.role.createMany({
-      data: [
-        { name: 'super_admin', label: 'Super Admin' },
-        { name: 'manager', label: 'Manager' },
-      ],
-    })
-
-    const maintenancePermission = await prisma.permission.create({
-      data: {
-        code: 'maintenance.manage',
-        resource: 'maintenance',
-        action: 'manage',
-        scope: null,
-        label: 'Gestisci Manutenzione',
-        description: 'Attivare la manutenzione delle pagine pubbliche e modificarne i messaggi.',
-        isSystem: true,
-      },
-    })
-
-    const roles = await prisma.role.findMany({
-      where: { name: { in: ['super_admin', 'manager'] } },
-      select: { id: true, name: true },
-    })
-
-    for (const role of roles) {
-      await prisma.rolePermission.create({
-        data: {
-          roleId: role.id,
-          permissionId: maintenancePermission.id,
-        },
-      })
-    }
-
+  it('sincronizza maps.manage nel catalogo permessi all avvio', async () => {
     await syncSystemAuthorization(prisma)
 
     const mapsPermission = await prisma.permission.findUnique({
       where: { code: 'maps.manage' },
     })
 
-    const rolesAfterBootstrap = await prisma.role.findMany({
-      where: { name: { in: ['super_admin', 'manager'] } },
-      select: {
-        name: true,
-        rolePermissions: {
-          select: { permission: { select: { code: true } } },
-        },
-      },
-    })
-
     expect(mapsPermission).not.toBeNull()
-    expect(rolesAfterBootstrap).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          name: 'super_admin',
-          rolePermissions: expect.arrayContaining([
-            expect.objectContaining({ permission: expect.objectContaining({ code: 'maps.manage' }) }),
-          ]),
-        }),
-        expect.objectContaining({
-          name: 'manager',
-          rolePermissions: expect.arrayContaining([
-            expect.objectContaining({ permission: expect.objectContaining({ code: 'maps.manage' }) }),
-          ]),
-        }),
-      ]),
-    )
   })
 })

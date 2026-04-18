@@ -13,7 +13,6 @@ describe('getEffectivePermissions', () => {
         select: {
           role: {
             select: {
-              name: true,
               rolePermissions: {
                 select: {
                   permission: {
@@ -46,7 +45,6 @@ describe('getEffectivePermissions', () => {
           userRoles: [
             {
               role: {
-                name: 'manager',
                 rolePermissions: [
                   { permission: { code: 'users.read.all' } },
                   { permission: { code: 'pricelists.sale.read' } },
@@ -55,7 +53,6 @@ describe('getEffectivePermissions', () => {
             },
             {
               role: {
-                name: 'collaboratore',
                 rolePermissions: [
                   { permission: { code: 'articles.coffins.read' } },
                   { permission: { code: 'users.read.all' } },
@@ -72,7 +69,6 @@ describe('getEffectivePermissions', () => {
     }
 
     await expect(getEffectivePermissions(dataSource, 'user-123')).resolves.toEqual({
-      roles: ['collaboratore', 'manager'],
       permissions: [
         'articles.coffins.read',
         'catalog.pdf.read',
@@ -95,7 +91,6 @@ describe('getEffectivePermissions', () => {
     }
 
     await expect(getEffectivePermissions(dataSource, 'missing-user')).resolves.toEqual({
-      roles: [],
       permissions: [],
     })
   })
