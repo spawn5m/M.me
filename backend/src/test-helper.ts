@@ -7,6 +7,8 @@ import prismaPlugin from './plugins/prisma'
 import errorHandlerPlugin from './plugins/errorHandler'
 import authPlugin from './plugins/auth'
 
+import { SYSTEM_PERMISSIONS, type PermissionCode } from './lib/authorization/permissions'
+
 import authRoutes from './routes/auth'
 import publicRoutes from './routes/public'
 import usersRoutes from './routes/users'
@@ -110,7 +112,7 @@ export async function seedTestUser(
     let role = await app.prisma.role.findUnique({ where: { name: roleName } })
     if (!role) {
       role = await app.prisma.role.create({
-        data: { name: roleName, label: roleName, isSystem: true }
+        data: { name: roleName, label: roleName }
       })
     }
     await app.prisma.userRole.create({
@@ -149,4 +151,29 @@ export async function cleanupTestDb(app: FastifyInstance): Promise<void> {
   await app.prisma.user.deleteMany()
   await app.prisma.role.deleteMany()
   await app.prisma.permission.deleteMany()
+}
+
+export async function grantUserPermissions(
+  app: FastifyInstance,
+  userId: string,
+  permissionCodes: PermissionCode[]
+): Promise<void> {
+  for (const code of permissionCodes) {
+    const definition = SYSTEM_PERMISSIONS.find((p) => p.code === code)
+    if (!definition) throw new Error(`Permission ${code} non trovata in SYSTEM_PERMISSIONS`)
+
+    const { isSystem: _is, ...permData } = definition
+
+    const permission = await app.prisma.permission.upsert({
+      where: { code },
+      update: { ...permData, isSystem: _is },
+      create: { ...permData, isSystem: _is },
+    })
+
+    await app.prisma.userPermission.upsert({
+      where: { userId_permissionId: { userId, permissionId: permission.id } },
+      update: {},
+      create: { userId, permissionId: permission.id },
+    })
+  }
 }
