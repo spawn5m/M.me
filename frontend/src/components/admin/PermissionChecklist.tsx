@@ -8,24 +8,32 @@ interface PermissionChecklistProps {
   onToggle: (permissionCode: string) => void
 }
 
+const SUPERSEDED_BY: Record<string, string> = {
+  'users.read.team': 'users.read.all',
+  'users.update.team': 'users.update.all',
+}
+
 function PermissionRow({
   permission,
   checked,
   readOnly,
+  supersededBy,
   onToggle,
 }: {
   permission: AdminPermission
   checked: boolean
   readOnly: boolean
+  supersededBy: string | null
   onToggle: (code: string) => void
 }) {
+  const disabled = readOnly || supersededBy !== null
   return (
     <tr
-      onClick={() => { if (!readOnly) onToggle(permission.code) }}
+      onClick={() => { if (!disabled) onToggle(permission.code) }}
       className={[
         'transition-colors',
-        readOnly ? '' : 'cursor-pointer',
-        checked ? 'bg-[#FCFBF8]' : 'hover:bg-[#F8F7F4]',
+        disabled ? 'opacity-50' : 'cursor-pointer',
+        checked ? 'bg-[#FCFBF8]' : (!disabled ? 'hover:bg-[#F8F7F4]' : ''),
       ].join(' ')}
     >
       <td className="px-3 py-2 text-center">
@@ -34,7 +42,7 @@ function PermissionRow({
           type="checkbox"
           aria-label={permission.label}
           checked={checked}
-          disabled={readOnly}
+          disabled={disabled}
           onClick={(e) => e.stopPropagation()}
           onChange={() => onToggle(permission.code)}
           className="h-4 w-4 accent-[#1A2B4A]"
@@ -45,7 +53,12 @@ function PermissionRow({
       </td>
       <td className="px-3 py-2 text-[#1A1A1A]">
         <span className="font-medium">{permission.label}</span>
-        {permission.description && (
+        {supersededBy && (
+          <p className="mt-0.5 text-xs text-[#6B7280]">
+            Incluso in <code className="admin-code text-[10px]">{supersededBy}</code>
+          </p>
+        )}
+        {!supersededBy && permission.description && (
           <p className="mt-0.5 text-xs text-[#6B7280] leading-relaxed">
             {permission.description}
           </p>
@@ -139,15 +152,19 @@ export default function PermissionChecklist({
                   </td>
                 </tr>
               ) : (
-                filteredPermissions.map((permission) => (
-                  <PermissionRow
-                    key={permission.code}
-                    permission={permission}
-                    checked={selectedCodes.includes(permission.code)}
-                    readOnly={readOnly}
-                    onToggle={onToggle}
-                  />
-                ))
+                filteredPermissions.map((permission) => {
+                  const superseder = SUPERSEDED_BY[permission.code]
+                  return (
+                    <PermissionRow
+                      key={permission.code}
+                      permission={permission}
+                      checked={selectedCodes.includes(permission.code)}
+                      readOnly={readOnly}
+                      supersededBy={superseder && selectedCodes.includes(superseder) ? superseder : null}
+                      onToggle={onToggle}
+                    />
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -178,15 +195,19 @@ export default function PermissionChecklist({
                           </div>
                         </td>
                       </tr>
-                      {perms.map((permission) => (
-                        <PermissionRow
-                          key={permission.code}
-                          permission={permission}
-                          checked={selectedCodes.includes(permission.code)}
-                          readOnly={readOnly}
-                          onToggle={onToggle}
-                        />
-                      ))}
+                      {perms.map((permission) => {
+                        const superseder = SUPERSEDED_BY[permission.code]
+                        return (
+                          <PermissionRow
+                            key={permission.code}
+                            permission={permission}
+                            checked={selectedCodes.includes(permission.code)}
+                            readOnly={readOnly}
+                            supersededBy={superseder && selectedCodes.includes(superseder) ? superseder : null}
+                            onToggle={onToggle}
+                          />
+                        )
+                      })}
                     </>
                   )
                 })}
