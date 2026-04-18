@@ -77,8 +77,8 @@ async function main() {
 
   const hashedPassword = await bcrypt.hash(password, 12)
 
-  const superAdminPermission = await prisma.permission.findUniqueOrThrow({
-    where: { code: 'users.is_super_admin' }
+  const allPermissions = await prisma.permission.findMany({
+    select: { id: true }
   })
 
   const user = await prisma.user.create({
@@ -89,7 +89,7 @@ async function main() {
       lastName: 'Admin',
       isActive: true,
       userPermissions: {
-        create: { permissionId: superAdminPermission.id }
+        create: allPermissions.map((p) => ({ permissionId: p.id }))
       }
     }
   })
