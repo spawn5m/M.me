@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest'
 import { FastifyInstance } from 'fastify'
-import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb } from '../../test-helper'
+import { buildTestApp, seedTestUser, getAuthCookie, cleanupTestDb, grantUserPermissions } from '../../test-helper'
 import { SYSTEM_PERMISSIONS, type PermissionCode } from '../../lib/authorization/permissions'
 
 interface AuthorizationPermissionRecord {
@@ -109,23 +109,12 @@ describe('Users API', () => {
     await app.prisma.priceList.deleteMany()
     await cleanupTestDb(app)
 
-    await seedTestUser(app, {
+    // Super admin: utente con users.is_super_admin come permesso diretto (nessun ruolo)
+    const superAdminUser = await seedTestUser(app, {
       email: 'superadmin@test.com',
       password: 'password123',
-      roles: ['super_admin']
     })
-    await seedTestUser(app, {
-      email: 'manager@test.com',
-      password: 'password123',
-      roles: ['manager']
-    })
-    await seedTestUser(app, {
-      email: 'collaboratore@test.com',
-      password: 'password123',
-      roles: ['collaboratore']
-    })
-
-    await grantRolePermissions(app, 'super_admin', [
+    await grantUserPermissions(app, superAdminUser.id, [
       'users.read.team',
       'users.read.all',
       'users.create',
@@ -133,8 +122,15 @@ describe('Users API', () => {
       'users.update.all',
       'users.disable',
       'users.super_admin.read',
-      'users.super_admin.manage',
+      'users.is_super_admin',
     ])
+
+    // Manager: ruolo custom con permessi via ruolo
+    await seedTestUser(app, {
+      email: 'manager@test.com',
+      password: 'password123',
+      roles: ['manager'],
+    })
     await grantRolePermissions(app, 'manager', [
       'users.read.team',
       'users.read.all',
@@ -143,6 +139,13 @@ describe('Users API', () => {
       'users.update.all',
       'users.disable',
     ])
+
+    // Collaboratore: ruolo custom con permessi ridotti
+    await seedTestUser(app, {
+      email: 'collaboratore@test.com',
+      password: 'password123',
+      roles: ['collaboratore'],
+    })
     await grantRolePermissions(app, 'collaboratore', [
       'users.read.team',
       'users.update.team',
@@ -207,11 +210,11 @@ describe('Users API', () => {
       expect(res.statusCode).toBe(200)
 
       const body = JSON.parse(res.body) as {
-        data: Array<{ email: string; roles: Array<{ name: string }> }>
+        data: Array<{ email: string; permissions: string[] }>
       }
 
       expect(body.data.some((user) => user.email === 'superadmin@test.com')).toBe(false)
-      expect(body.data.some((user) => user.roles.some((role) => role.name === 'super_admin'))).toBe(false)
+      expect(body.data.some((user: { permissions: string[] }) => user.permissions.includes('users.is_super_admin'))).toBe(false)
     })
 
     it('usa fallback sicuri per page e pageSize non numerici', async () => {
