@@ -91,7 +91,7 @@ describe('Auth API', () => {
     await cleanupTestDb(app)
   })
 
-  it('POST /api/auth/login returns roles and permissions', async () => {
+  it('POST /api/auth/login returns permissions', async () => {
     await seedTestUser(app, {
       email: 'manager-auth@test.com',
       password: 'password123',
@@ -122,11 +122,11 @@ describe('Auth API', () => {
     expect(response.statusCode).toBe(200)
 
     const body = JSON.parse(response.body) as {
-      user: { roles: string[] }
+      user: Record<string, unknown>
       permissions?: string[]
     }
 
-    expect(body.user.roles).toEqual(['manager'])
+    expect(body.user.roles).toBeUndefined()
     expect(body.permissions).toEqual(['users.read.team'])
   })
 
@@ -171,11 +171,11 @@ describe('Auth API', () => {
     expect(response.statusCode).toBe(200)
 
     const body = JSON.parse(response.body) as {
-      user: { roles: string[] }
+      user: Record<string, unknown>
       permissions?: string[]
     }
 
-    expect(body.user.roles).toEqual(['manager'])
+    expect(body.user.roles).toBeUndefined()
     expect(body.permissions).toEqual(['roles.manage', 'users.read.team'])
   })
 

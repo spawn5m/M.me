@@ -51,7 +51,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    const { roles, permissions } = await getEffectivePermissions(fastify.prisma, user.id)
+    const { permissions } = await getEffectivePermissions(fastify.prisma, user.id)
     request.session.set('userId', user.id)
 
     return reply.send({
@@ -60,7 +60,6 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        roles,
         isActive: user.isActive
       },
       permissions
@@ -97,7 +96,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    const { roles, permissions } = await getEffectivePermissions(fastify.prisma, user.id)
+    const { permissions } = await getEffectivePermissions(fastify.prisma, user.id)
 
     return reply.send({
       user: {
@@ -105,7 +104,6 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        roles,
         isActive: user.isActive,
         funeralPriceList: user.funeralPriceList ?? null,
         marmistaPriceList: user.marmistaPriceList ?? null,
