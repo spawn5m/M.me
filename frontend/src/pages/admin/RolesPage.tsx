@@ -33,20 +33,6 @@ const columns = [
         {r.name}
       </code>
     )
-  },
-  {
-    key: 'isSystem',
-    header: 'Tipo',
-    render: (r: AdminRole) => (
-      <span className={[
-        'admin-badge',
-        r.isSystem
-          ? 'admin-badge-dark'
-          : 'admin-badge-gold'
-      ].join(' ')}>
-        {r.isSystem ? 'Sistema' : 'Custom'}
-      </span>
-    )
   }
 ]
 
@@ -195,7 +181,7 @@ export default function RolesPage() {
   }
 
   const handlePermissionSave = async () => {
-    if (!permissionTarget || permissionTarget.isSystem) return
+    if (!permissionTarget) return
 
     const requestId = permissionRequestIdRef.current
 
@@ -310,10 +296,6 @@ export default function RolesPage() {
             variant: 'danger',
             onClick: (r) => {
               const role = r as AdminRole
-              if (role.isSystem) {
-                setPageError('I ruoli di sistema non possono essere eliminati')
-                return
-              }
               setConfirmTarget(role)
             }
           }
@@ -405,7 +387,7 @@ export default function RolesPage() {
         title={permissionTarget ? `Permessi ruolo: ${permissionTarget.label}` : 'Permessi ruolo'}
         permissions={permissionCatalog}
         selectedCodes={selectedPermissionCodes}
-        readOnly={permissionTarget?.isSystem ?? true}
+        readOnly={false}
         isLoading={isPermissionLoading}
         isSaving={isPermissionSaving}
         effectiveCodes={permissionDetail?.permissions.map((permission) => permission.code) ?? []}
@@ -415,17 +397,12 @@ export default function RolesPage() {
             <div className="space-y-3">
               {permissionTarget && (
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className={['admin-badge', permissionTarget.isSystem ? 'admin-badge-dark' : 'admin-badge-gold'].join(' ')}>
-                    {permissionTarget.isSystem ? 'Ruolo di sistema' : 'Ruolo custom'}
-                  </span>
                   <code className="admin-code">{permissionTarget.name}</code>
                 </div>
               )}
 
               <p className="text-sm text-[#6B7280]">
-                {permissionTarget?.isSystem
-                  ? 'I permessi dei ruoli di sistema sono disponibili in sola lettura.'
-                  : 'I permessi dei ruoli personalizzati possono essere aggiornati e sostituiti integralmente.'}
+                I permessi di questo ruolo possono essere aggiornati e sostituiti integralmente.
               </p>
 
               {permissionError && (
@@ -438,7 +415,7 @@ export default function RolesPage() {
         }}
         onToggle={togglePermission}
         onClose={closePermissions}
-        onSave={permissionDetail && !permissionTarget?.isSystem ? handlePermissionSave : undefined}
+        onSave={permissionDetail ? handlePermissionSave : undefined}
       />
     </div>
   )
