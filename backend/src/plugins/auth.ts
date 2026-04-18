@@ -7,7 +7,6 @@ import { hasAllPermissions, hasAnyPermission, hasPermission } from '../lib/autho
 
 interface AuthorizationContext {
   userId: string
-  roles: string[]
   permissions: string[]
 }
 
@@ -79,7 +78,6 @@ declare module 'fastify' {
   interface FastifyInstance {
     authenticate: AuthPreHandler
     loadAuthorizationContext: AuthPreHandler
-    checkRole: (allowedRoles: string[]) => AuthPreHandler
     checkPermission: (permission: string) => AuthPreHandler
     checkAnyPermission: (permissions: string[]) => AuthPreHandler
     checkAllPermissions: (permissions: string[]) => AuthPreHandler
@@ -107,29 +105,13 @@ const authPlugin: FastifyPluginAsync = fp(async (fastify) => {
         return sendUnauthorized(reply)
       }
 
-      const { roles, permissions } = await getEffectivePermissions(fastify.prisma, user.id)
+      const { permissions } = await getEffectivePermissions(fastify.prisma, user.id)
 
       request.auth = {
         userId: user.id,
-        roles,
         permissions,
       }
     }
-  )
-
-  fastify.decorate(
-    'checkRole',
-    (allowedRoles: string[]) =>
-      async (request: FastifyRequest, reply: FastifyReply) => {
-        if (!(await ensureAuthorizationContext(request, reply))) {
-          return
-        }
-
-        const hasRole = allowedRoles.some((role) => request.auth.roles.includes(role))
-        if (!hasRole) {
-          return sendForbidden(reply, 'Ruolo non autorizzato per questa operazione')
-        }
-      }
   )
 
   fastify.decorate(

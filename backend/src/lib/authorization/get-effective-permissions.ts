@@ -1,6 +1,3 @@
-// Task 1 intentionally targets the post-migration authorization data shape.
-// The current generated Prisma client does not expose `Permission.code` or
-// `userPermissions` yet; Task 2 wires this contract to the real schema.
 interface AuthorizationRolePermissionRecord {
   permission: {
     code: string
@@ -9,7 +6,6 @@ interface AuthorizationRolePermissionRecord {
 
 interface AuthorizationUserRoleRecord {
   role: {
-    name: string
     rolePermissions: AuthorizationRolePermissionRecord[]
   }
 }
@@ -30,7 +26,6 @@ export const EFFECTIVE_PERMISSIONS_USER_SELECT = {
     select: {
       role: {
         select: {
-          name: true,
           rolePermissions: {
             select: {
               permission: {
@@ -71,10 +66,9 @@ export async function getEffectivePermissions(dataSource: EffectivePermissionsDa
   })
 
   if (!user) {
-    return { roles: [], permissions: [] }
+    return { permissions: [] }
   }
 
-  const roles = user.userRoles.map((entry) => entry.role.name).sort()
   const permissions = Array.from(
     new Set([
       ...user.userRoles.flatMap((entry) => entry.role.rolePermissions.map((permission) => permission.permission.code)),
@@ -82,5 +76,5 @@ export async function getEffectivePermissions(dataSource: EffectivePermissionsDa
     ]),
   ).sort()
 
-  return { roles, permissions }
+  return { permissions }
 }
