@@ -72,7 +72,7 @@ const rolesRoutes: FastifyPluginAsync = async (fastify) => {
     let role
     try {
       role = await fastify.prisma.role.create({
-        data: { name, label, isSystem: false }
+        data: { name, label }
       })
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
@@ -163,14 +163,6 @@ const rolesRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    if (role.isSystem) {
-      return reply.status(409).send({
-        error: 'Conflict',
-        message: 'I ruoli di sistema non possono essere modificati',
-        statusCode: 409
-      })
-    }
-
     const replaceError = await replaceRolePermissions(
       fastify.prisma,
       id,
@@ -205,14 +197,6 @@ const rolesRoutes: FastifyPluginAsync = async (fastify) => {
         error: 'NotFound',
         message: 'Ruolo non trovato',
         statusCode: 404
-      })
-    }
-
-    if (role.isSystem) {
-      return reply.status(409).send({
-        error: 'Conflict',
-        message: 'I ruoli di sistema non possono essere eliminati',
-        statusCode: 409
       })
     }
 

@@ -128,7 +128,6 @@ function toAdminRole(role: RoleRecord): AdminRole {
     id: role.id,
     name: role.name,
     label: role.label,
-    isSystem: role.isSystem,
   }
 }
 
