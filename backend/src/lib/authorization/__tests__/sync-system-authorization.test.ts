@@ -28,8 +28,8 @@ describe('system authorization bootstrap', () => {
   it('sincronizza maps.manage e lo assegna ai ruoli di sistema all avvio', async () => {
     await prisma.role.createMany({
       data: [
-        { name: 'super_admin', label: 'Super Admin', isSystem: true },
-        { name: 'manager', label: 'Manager', isSystem: true },
+        { name: 'super_admin', label: 'Super Admin' },
+        { name: 'manager', label: 'Manager' },
       ],
     })
 

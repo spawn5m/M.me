@@ -17,12 +17,10 @@ export async function syncSystemAuthorization(prisma: PrismaClient) {
       where: { name: role.name },
       update: {
         label: role.label,
-        isSystem: true,
       },
       create: {
         name: role.name,
         label: role.label,
-        isSystem: true,
       },
     })
   }

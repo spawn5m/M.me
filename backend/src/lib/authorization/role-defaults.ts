@@ -19,7 +19,7 @@ export const SYSTEM_ROLE_DEFAULTS: Record<SystemRoleName, PermissionCode[]> = {
     'users.assign_manager',
     'users.assign_pricelist',
     'users.super_admin.read',
-    'users.super_admin.manage',
+    'users.is_super_admin',
     'roles.read',
     'roles.manage',
     'articles.coffins.read',

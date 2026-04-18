@@ -44,7 +44,6 @@ model Role {
   id              String           @id @default(cuid())
   name            String           @unique
   label           String
-  isSystem        Boolean          @default(false)
   userRoles       UserRole[]
   rolePermissions RolePermission[]
 }

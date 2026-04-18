@@ -18,7 +18,6 @@ interface AuthorizationRoleRecord {
   id: string
   name: string
   label: string
-  isSystem: boolean
 }
 
 interface AuthorizationPrismaClient {
@@ -49,7 +48,6 @@ interface AuthorizationPrismaClient {
       data: {
         name: string
         label: string
-        isSystem: boolean
       }
     }): Promise<AuthorizationRoleRecord>
   }
@@ -155,7 +153,6 @@ describe('Role permission routes', () => {
       data: {
         name: 'custom_role_permissions',
         label: 'Custom Role Permissions',
-        isSystem: false,
       },
     })
     customRoleId = customRole.id

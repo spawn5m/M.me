@@ -202,7 +202,6 @@ describe('Roles API', () => {
       expect(res.statusCode).toBe(201)
       const body = JSON.parse(res.body)
       expect(body.name).toBe('ruolo_test')
-      expect(body.isSystem).toBe(false)
     })
 
     it('creates a custom role with an initial permission bundle', async () => {
@@ -336,17 +335,14 @@ describe('Roles API', () => {
 
   describe('DELETE /api/roles/:id', () => {
     it('restituisce 409 se il ruolo è di sistema', async () => {
-      const listRes = await app.inject({
-        method: 'GET',
-        url: '/api/roles',
-        headers: { cookie: superAdminCookie }
-      })
-      const { data } = JSON.parse(listRes.body)
-      const systemRole = data.find((r: { isSystem: boolean }) => r.isSystem)
+      const superAdminRole = await app.prisma.role.findUnique({ where: { name: 'super_admin' } })
+      if (!superAdminRole) {
+        throw new Error('Ruolo super_admin non trovato')
+      }
 
       const res = await app.inject({
         method: 'DELETE',
-        url: `/api/roles/${systemRole.id}`,
+        url: `/api/roles/${superAdminRole.id}`,
         headers: { cookie: superAdminCookie }
       })
       expect(res.statusCode).toBe(409)
