@@ -21,7 +21,6 @@ export interface AuthUser {
   email: string
   firstName: string
   lastName: string
-  roles: string[]
   isActive: boolean
 }
 
@@ -56,7 +55,6 @@ export interface AdminRole {
   id: string
   name: string
   label: string
-  isSystem: boolean
 }
 
 export interface AdminPermission {
@@ -86,6 +84,7 @@ export interface AdminUser {
   lastName: string
   isActive: boolean
   roles: AdminRole[]
+  permissions: string[]
   manager: string | null
   funeralPriceList: AdminAssignedPriceList | null
   marmistaPriceList: AdminAssignedPriceList | null
