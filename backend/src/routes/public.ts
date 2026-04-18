@@ -9,6 +9,10 @@ import {
   loadPriceListTree,
   type PrismaClientLike,
 } from '../lib/priceListUtils'
+import {
+  getEffectivePermissions,
+  type EffectivePermissionsDataSource,
+} from '../lib/authorization/get-effective-permissions'
 import type { CatalogLayoutPublic } from '../types/shared'
 
 // ─── Zod Schemas ─────────────────────────────────────────────────────────────
@@ -76,24 +80,6 @@ interface PublicPricePrisma extends PrismaClientLike {
   }
 }
 
-interface PublicRolePrisma extends PrismaClientLike {
-  user: {
-    findUnique: (args: {
-      where: { id: string }
-      select: {
-        userRoles: {
-          select: {
-            role: {
-              select: {
-                name: true
-              }
-            }
-          }
-        }
-      }
-    }) => Promise<{ userRoles: Array<{ role: { name: string } }> } | null>
-  }
-}
 
 interface SessionLike {
   get: (key: string) => unknown
@@ -104,27 +90,9 @@ function getSessionUserId(request: { session?: SessionLike }) {
   return typeof userId === 'string' ? userId : null
 }
 
-async function loadSessionRoles(prisma: PublicRolePrisma, userId: string) {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      userRoles: {
-        select: {
-          role: {
-            select: {
-              name: true,
-            },
-          },
-        },
-      },
-    },
-  })
-
-  return user?.userRoles.map((entry: { role: { name: string } }) => entry.role.name) ?? []
-}
-
-function canSeeAdminFuneralPrices(roles: string[]) {
-  return roles.some((role) => role === 'manager' || role === 'super_admin')
+async function loadSessionPermissions(prisma: EffectivePermissionsDataSource, userId: string): Promise<string[]> {
+  const { permissions } = await getEffectivePermissions(prisma, userId)
+  return permissions
 }
 
 async function loadAssignedFuneralPriceMap(
@@ -410,18 +378,20 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
 
     const userId = getSessionUserId(request as { session?: SessionLike })
     const articleIds = articles.map((article) => article.id)
-    const roles = userId ? await loadSessionRoles(fastify.prisma as unknown as PublicRolePrisma, userId) : []
+    const permissions = userId
+      ? await loadSessionPermissions(fastify.prisma as unknown as EffectivePermissionsDataSource, userId)
+      : []
 
     let assignedPriceMap = new Map<string, number>()
     let adminPriceOptionsMap = new Map<string, PublicCoffinPriceOption[]>()
 
     if (articleIds.length > 0) {
-      if (canSeeAdminFuneralPrices(roles)) {
+      if (permissions.includes('pricelists.sale.preview')) {
         adminPriceOptionsMap = await loadAdminFuneralPriceOptions(
           fastify.prisma as unknown as PublicPricePrisma,
           articleIds,
         )
-      } else if (roles.includes('impresario_funebre') && userId) {
+      } else if (permissions.includes('client.catalog.funeral.read') && userId) {
         assignedPriceMap = await loadAssignedFuneralPriceMap(
           fastify.prisma as unknown as PublicPricePrisma,
           userId,
@@ -433,10 +403,10 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({
       data: articles.map((article) => ({
         ...article,
-        ...(roles.includes('impresario_funebre')
+        ...(permissions.includes('client.catalog.funeral.read')
           ? { price: assignedPriceMap.get(article.id) ?? null }
           : {}),
-        ...(canSeeAdminFuneralPrices(roles)
+        ...(permissions.includes('pricelists.sale.preview')
           ? { priceOptions: adminPriceOptionsMap.get(article.id) ?? [] }
           : {}),
       })),
@@ -542,18 +512,20 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
 
     const userId = getSessionUserId(request as { session?: SessionLike })
     const articleIds = articles.map((a) => a.id)
-    const roles = userId ? await loadSessionRoles(fastify.prisma as unknown as PublicRolePrisma, userId) : []
+    const permissions = userId
+      ? await loadSessionPermissions(fastify.prisma as unknown as EffectivePermissionsDataSource, userId)
+      : []
 
     let assignedPriceMap = new Map<string, number>()
     let adminPriceOptionsMap = new Map<string, PublicCoffinPriceOption[]>()
 
     if (articleIds.length > 0) {
-      if (canSeeAdminFuneralPrices(roles)) {
+      if (permissions.includes('pricelists.sale.preview')) {
         adminPriceOptionsMap = await loadAdminAccessoryPriceOptions(
           fastify.prisma as unknown as PrismaClientLike,
           articleIds,
         )
-      } else if (roles.includes('impresario_funebre') && userId) {
+      } else if (permissions.includes('client.catalog.funeral.read') && userId) {
         assignedPriceMap = await loadAssignedAccessoryPriceMap(
           fastify.prisma as unknown as PublicPricePrisma,
           userId,
@@ -565,10 +537,10 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({
       data: articles.map((article) => ({
         ...article,
-        ...(roles.includes('impresario_funebre')
+        ...(permissions.includes('client.catalog.funeral.read')
           ? { price: assignedPriceMap.get(article.id) ?? null }
           : {}),
-        ...(canSeeAdminFuneralPrices(roles)
+        ...(permissions.includes('pricelists.sale.preview')
           ? { priceOptions: adminPriceOptionsMap.get(article.id) ?? [] }
           : {}),
       })),
@@ -652,18 +624,20 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
 
     const userId = getSessionUserId(request as { session?: SessionLike })
     const articleIds = articles.map((a) => a.id)
-    const roles = userId ? await loadSessionRoles(fastify.prisma as unknown as PublicRolePrisma, userId) : []
+    const permissions = userId
+      ? await loadSessionPermissions(fastify.prisma as unknown as EffectivePermissionsDataSource, userId)
+      : []
 
     let assignedPriceMap = new Map<string, number>()
     let adminPriceOptionsMap = new Map<string, PublicCoffinPriceOption[]>()
 
     if (articleIds.length > 0) {
-      if (canSeeAdminFuneralPrices(roles)) {
+      if (permissions.includes('pricelists.sale.preview')) {
         adminPriceOptionsMap = await loadAdminMarmistaPriceOptions(
           fastify.prisma as unknown as PrismaClientLike,
           articleIds,
         )
-      } else if (roles.includes('marmista') && userId) {
+      } else if (permissions.includes('client.catalog.marmista.read') && userId) {
         assignedPriceMap = await loadAssignedMarmistaPrice(
           fastify.prisma as unknown as PublicPricePrisma,
           userId,
@@ -675,10 +649,10 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send({
       data: articles.map((article) => ({
         ...article,
-        ...(roles.includes('marmista')
+        ...(permissions.includes('client.catalog.marmista.read')
           ? { price: assignedPriceMap.get(article.id) ?? null }
           : {}),
-        ...(canSeeAdminFuneralPrices(roles)
+        ...(permissions.includes('pricelists.sale.preview')
           ? { priceOptions: adminPriceOptionsMap.get(article.id) ?? [] }
           : {}),
       })),
