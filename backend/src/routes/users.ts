@@ -570,6 +570,37 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.send(userToResponse(updated))
   })
 
+  // PUT /api/users/:id/password
+  fastify.put('/:id/password', {
+    preHandler: [fastify.checkAnyPermission(['users.update.team', 'users.update.all'])]
+  }, async (req, reply) => {
+    const { id } = req.params as { id: string }
+    const parsed = z.object({ newPassword: z.string().min(8, 'Password minimo 8 caratteri') }).safeParse(req.body)
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: 'ValidationError',
+        message: parsed.error.errors[0].message,
+        statusCode: 400,
+      })
+    }
+
+    const user = await fastify.prisma.user.findUnique({ where: { id }, include: USER_INCLUDE })
+    if (!user) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Utente non trovato', statusCode: 404 })
+    }
+
+    const accessError = ensureCanAccessUser(reply, user as UserRecord, req.auth, {
+      allowAllPermission: canUpdateAllUsers(req.auth.permissions),
+      superAdminCheck: 'write',
+    })
+    if (accessError) return accessError
+
+    const hashed = await bcrypt.hash(parsed.data.newPassword, 12)
+    await fastify.prisma.user.update({ where: { id }, data: { password: hashed } })
+
+    return reply.status(204).send()
+  })
+
   // DELETE /api/users/:id — soft delete
   fastify.delete('/:id', {
     preHandler: [fastify.checkPermission('users.disable')]
