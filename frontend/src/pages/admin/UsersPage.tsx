@@ -262,8 +262,6 @@ export default function UsersPage() {
     }
   }
 
-  const userHasRole = (user: AdminUser, roleName: string) =>
-    user.roles.some(r => r.name === roleName)
 
   useEffect(() => {
     if (!assignTarget) {
@@ -409,7 +407,7 @@ export default function UsersPage() {
             onClick: (u) => openAssign(u as AdminUser),
             hidden: (u) => {
               const user = u as AdminUser
-              return userHasRole(user, 'super_admin') || userHasRole(user, 'manager')
+              return user.permissions.includes('user.isManager') || user.permissions.includes('users.is_super_admin')
             }
           },
           {
@@ -615,7 +613,7 @@ export default function UsersPage() {
                 </div>
               )}
 
-              {userHasRole(assignTarget, 'impresario_funebre') && (
+              {assignTarget.permissions.includes('client.catalog.funeral.read') && (
                 <div>
                   <label className="admin-label" htmlFor={funeralSelectId}>Listino Cofani</label>
                   <select id={funeralSelectId} value={assignFuneralId} onChange={e => setAssignFuneralId(e.target.value)}
@@ -627,7 +625,7 @@ export default function UsersPage() {
                   </select>
                 </div>
               )}
-              {(userHasRole(assignTarget, 'marmista') || userHasRole(assignTarget, 'impresario_funebre')) && (
+              {(assignTarget.permissions.includes('client.catalog.marmista.read') || assignTarget.permissions.includes('client.catalog.funeral.read')) && (
                 <div>
                   <label className="admin-label" htmlFor={marmistaSelectId}>Listino Marmista</label>
                   <select id={marmistaSelectId} value={assignMarmistaId} onChange={e => setAssignMarmistaId(e.target.value)}
