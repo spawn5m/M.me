@@ -389,13 +389,13 @@ const pricelistsRoutes: FastifyPluginAsync = async (fastify) => {
 
     const user = await fastify.prisma.user.findUnique({
       where: { id: req.params.userId },
-      include: { userRoles: { include: { role: true } } },
+      include: { userPermissions: { include: { permission: { select: { code: true } } } } },
     })
     if (!user) return reply.status(404).send({ error: 'NotFound', message: 'Utente non trovato', statusCode: 404 })
 
-    const userRoleNames = user.userRoles.map(ur => ur.role.name)
-    const isMarmista = userRoleNames.includes('marmista')
-    const isFuneralClient = userRoleNames.includes('impresario_funebre')
+    const userPermCodes = user.userPermissions.map((up) => up.permission.code)
+    const isMarmista = userPermCodes.includes('client.catalog.marmista.read')
+    const isFuneralClient = userPermCodes.includes('client.catalog.funeral.read')
 
     if (isMarmista && pl.articleType === 'funeral') {
       return reply.status(400).send({ error: 'BadRequest', message: 'Non si può assegnare un listino funebre a un marmista', statusCode: 400 })
