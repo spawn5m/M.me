@@ -1,13 +1,13 @@
 import { FastifyPluginAsync } from 'fastify'
 import bcrypt from 'bcrypt'
 import { z } from 'zod'
-import { Prisma, User, UserRole, Role } from '@prisma/client'
+import { Prisma, User, UserRole, Role, UserPermission, Permission } from '@prisma/client'
 
 import {
   getUserPermissionDetail,
   replaceUserDirectPermissions,
 } from '../lib/authorization/admin-permission-details'
-import { hasAnyPermission, hasPermission } from '../lib/authorization/checks'
+import { hasPermission } from '../lib/authorization/checks'
 
 const PRICE_LIST_SUMMARY_SELECT = {
   id: true,
@@ -17,7 +17,20 @@ const PRICE_LIST_SUMMARY_SELECT = {
 } as const
 
 const USER_INCLUDE = {
-  userRoles: { include: { role: true } },
+  userRoles: {
+    include: {
+      role: {
+        include: {
+          rolePermissions: {
+            include: { permission: { select: { code: true } } }
+          }
+        }
+      }
+    }
+  },
+  userPermissions: {
+    include: { permission: { select: { code: true } } }
+  },
   managers: true,
   funeralPriceList: { select: PRICE_LIST_SUMMARY_SELECT },
   marmistaPriceList: { select: PRICE_LIST_SUMMARY_SELECT },
@@ -28,32 +41,38 @@ const USER_INCLUDE = {
 
 type PriceListSummary = { id: string; name: string; type: 'purchase' | 'sale'; articleType: 'funeral' | 'marmista' | 'accessories' }
 
-type UserWithRoles = User & {
-  userRoles: (UserRole & { role: Role })[]
-  managers?: { managerId: string }[]
+type UserWithPermissions = User & {
+  userRoles: (UserRole & {
+    role: Role & {
+      rolePermissions: (Pick<UserPermission, never> & { permission: Pick<Permission, 'code'> })[]
+    }
+  })[]
+  userPermissions: { permission: Pick<Permission, 'code'> }[]
+  managers: { managerId: string }[]
   funeralPriceList?: PriceListSummary | null
   marmistaPriceList?: PriceListSummary | null
   accessoriesPriceList?: PriceListSummary | null
 }
 
-type UserRecord = UserWithRoles & {
-  managers: { managerId: string }[]
-}
+type UserRecord = UserWithPermissions
 
-function userToResponse(user: UserWithRoles) {
-  const { password: _pw, userRoles, managers, funeralPriceList, marmistaPriceList, accessoriesPriceList, ...rest } = user
+function userToResponse(user: UserWithPermissions) {
+  const { password: _pw, userRoles, userPermissions, managers, funeralPriceList, marmistaPriceList, accessoriesPriceList, ...rest } = user
+  const fromRoles = userRoles.flatMap((ur) => ur.role.rolePermissions.map((rp) => rp.permission.code))
+  const direct = userPermissions.map((up) => up.permission.code)
   return {
     ...rest,
     roles: userRoles.map((ur) => ({ id: ur.role.id, name: ur.role.name, label: ur.role.label })),
-    manager: managers?.[0]?.managerId ?? null,
+    permissions: Array.from(new Set([...fromRoles, ...direct])).sort(),
+    manager: managers[0]?.managerId ?? null,
     funeralPriceList: funeralPriceList ?? null,
     marmistaPriceList: marmistaPriceList ?? null,
     accessoriesPriceList: accessoriesPriceList ?? null,
   }
 }
 
-function isSuperAdminUser(user: UserWithRoles) {
-  return user.userRoles.some((userRole) => userRole.role.name === 'super_admin')
+function isSuperAdminUser(user: UserWithPermissions) {
+  return user.userPermissions.some((up) => up.permission.code === 'users.is_super_admin')
 }
 
 function isManagedBy(user: UserRecord, managerId: string) {
@@ -72,10 +91,6 @@ function canReadSuperAdmins(permissions: readonly string[]) {
   return hasPermission(permissions, 'users.super_admin.read')
 }
 
-function canManageSuperAdmins(permissions: readonly string[]) {
-  return hasPermission(permissions, 'users.super_admin.manage')
-}
-
 function canAssignManagers(permissions: readonly string[]) {
   return hasPermission(permissions, 'users.assign_manager')
 }
@@ -88,7 +103,10 @@ function ensureCanAccessUser(
   reply: { status: (code: number) => { send: (payload: unknown) => unknown } },
   user: UserRecord,
   auth: { userId: string; permissions: string[] },
-  options: { allowAllPermission: boolean; allowSuperAdminPermission: boolean }
+  options: {
+    allowAllPermission: boolean
+    superAdminCheck: 'read' | 'write'
+  }
 ) {
   if (!options.allowAllPermission && !isManagedBy(user, auth.userId)) {
     return reply.status(403).send({
@@ -98,12 +116,24 @@ function ensureCanAccessUser(
     })
   }
 
-  if (isSuperAdminUser(user) && !options.allowSuperAdminPermission) {
-    return reply.status(403).send({
-      error: 'Forbidden',
-      message: 'Permessi insufficienti per questa operazione',
-      statusCode: 403
-    })
+  if (isSuperAdminUser(user)) {
+    if (options.superAdminCheck === 'read') {
+      if (!canReadSuperAdmins(auth.permissions)) {
+        return reply.status(403).send({
+          error: 'Forbidden',
+          message: 'Permessi insufficienti per questa operazione',
+          statusCode: 403
+        })
+      }
+    } else {
+      if (auth.userId !== user.id) {
+        return reply.status(403).send({
+          error: 'Forbidden',
+          message: 'Solo il super admin può modificare se stesso',
+          statusCode: 403
+        })
+      }
+    }
   }
 
   return null
@@ -208,15 +238,11 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     if (!canReadSuperAdmins(permissions)) {
-      where.userRoles = { none: { role: { name: 'super_admin' } } }
+      where.userPermissions = { none: { permission: { code: 'users.is_super_admin' } } }
     }
 
     if (query.role) {
-      const baseFilter = where.userRoles as Prisma.UserRoleListRelationFilter | undefined
-      where.userRoles = {
-        ...baseFilter,
-        some: { role: { name: query.role } }
-      }
+      where.userRoles = { some: { role: { name: query.role } } }
     }
 
     if (query.isActive !== undefined) {
@@ -286,19 +312,6 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
       return reply.status(400).send(managerIdError)
     }
 
-    if (roleIds.length > 0) {
-      const assignedRoles = await fastify.prisma.role.findMany({ where: { id: { in: roleIds } } })
-      const isAssigningSuperAdmin = assignedRoles.some((role) => role.name === 'super_admin')
-
-      if (isAssigningSuperAdmin && !canManageSuperAdmins(req.auth.permissions)) {
-        return reply.status(403).send({
-          error: 'Forbidden',
-          message: 'Permessi insufficienti per questa operazione',
-          statusCode: 403
-        })
-      }
-    }
-
     const existing = await fastify.prisma.user.findUnique({ where: { email } })
     if (existing) {
       return reply.status(409).send({
@@ -336,7 +349,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     const where: Prisma.UserWhereInput = { managers: { some: { managerId: userId } } }
 
     if (!canReadSuperAdmins(req.auth.permissions)) {
-      where.userRoles = { none: { role: { name: 'super_admin' } } }
+      where.userPermissions = { none: { permission: { code: 'users.is_super_admin' } } }
     }
 
     const subordinates = await fastify.prisma.user.findMany({
@@ -371,7 +384,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const accessError = ensureCanAccessUser(reply, user as UserRecord, req.auth, {
       allowAllPermission: canReadAllUsers(req.auth.permissions),
-      allowSuperAdminPermission: canReadSuperAdmins(req.auth.permissions),
+      superAdminCheck: 'read',
     })
     if (accessError) {
       return accessError
@@ -412,10 +425,26 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const accessError = ensureCanAccessUser(reply, user as UserRecord, req.auth, {
       allowAllPermission: canUpdateAllUsers(req.auth.permissions),
-      allowSuperAdminPermission: canManageSuperAdmins(req.auth.permissions),
+      superAdminCheck: 'write',
     })
     if (accessError) {
       return accessError
+    }
+
+    if (parsed.data.permissionCodes.includes('users.is_super_admin')) {
+      const existingSuperAdmin = await fastify.prisma.userPermission.findFirst({
+        where: {
+          permission: { code: 'users.is_super_admin' },
+          userId: { not: id }
+        }
+      })
+      if (existingSuperAdmin) {
+        return reply.status(409).send({
+          error: 'Conflict',
+          message: 'Esiste già un utente con il permesso users.is_super_admin',
+          statusCode: 409
+        })
+      }
     }
 
     const replaceError = await replaceUserDirectPermissions(
@@ -453,7 +482,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const accessError = ensureCanAccessUser(reply, user as UserRecord, req.auth, {
       allowAllPermission: canReadAllUsers(req.auth.permissions),
-      allowSuperAdminPermission: canReadSuperAdmins(req.auth.permissions),
+      superAdminCheck: 'read',
     })
     if (accessError) {
       return accessError
@@ -487,7 +516,7 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
 
     const accessError = ensureCanAccessUser(reply, existing as UserRecord, req.auth, {
       allowAllPermission: canUpdateAllUsers(req.auth.permissions),
-      allowSuperAdminPermission: canManageSuperAdmins(req.auth.permissions),
+      superAdminCheck: 'write',
     })
     if (accessError) {
       return accessError
@@ -526,17 +555,6 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     if (roleIds !== undefined) {
-      const assignedRoles = await fastify.prisma.role.findMany({ where: { id: { in: roleIds } } })
-      const isAssigningSuperAdmin = assignedRoles.some((role) => role.name === 'super_admin')
-
-      if (isAssigningSuperAdmin && !canManageSuperAdmins(req.auth.permissions)) {
-        return reply.status(403).send({
-          error: 'Forbidden',
-          message: 'Permessi insufficienti per questa operazione',
-          statusCode: 403
-        })
-      }
-
       updateData.userRoles = {
         deleteMany: {},
         create: roleIds.map((roleId) => ({ roleId }))
@@ -567,10 +585,10 @@ const usersRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    if (isSuperAdminUser(existing) && !canManageSuperAdmins(req.auth.permissions)) {
+    if (isSuperAdminUser(existing as UserRecord) && req.auth.userId !== existing.id) {
       return reply.status(403).send({
         error: 'Forbidden',
-        message: 'Permessi insufficienti per questa operazione',
+        message: 'Solo il super admin può disattivare se stesso',
         statusCode: 403
       })
     }
