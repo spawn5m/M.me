@@ -68,7 +68,11 @@ function PermissionRow({
   )
 }
 
-function resolveGroup(resource: string): string {
+const MACRO_USER_CODES = new Set(['users.is_super_admin', 'user.isManager'])
+
+function resolveGroup(permission: AdminPermission): string {
+  if (MACRO_USER_CODES.has(permission.code)) return 'Macro User'
+  const { resource } = permission
   if (resource.startsWith('client.')) return 'client'
   if (resource.startsWith('articles')) return 'articles'
   if (resource.startsWith('catalog')) return 'catalog'
@@ -101,7 +105,7 @@ export default function PermissionChecklist({
   const groupedPermissions = useMemo(() => {
     const map = new Map<string, AdminPermission[]>()
     for (const p of permissions) {
-      const key = resolveGroup(p.resource)
+      const key = resolveGroup(p)
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(p)
     }
