@@ -98,8 +98,8 @@ function ChevronIcon({ open }: { open: boolean }) {
   )
 }
 
-export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' | 'client' }) {
-  const { hasPermission, hasAnyPermission } = useAuth()
+export default function AdminSidebar({ variant = 'admin', onLogout }: { variant?: 'admin' | 'client'; onLogout: () => void }) {
+  const { user, hasPermission, hasAnyPermission } = useAuth()
   const location = useLocation()
   const { logoUrl } = useBranding()
 
@@ -131,7 +131,7 @@ export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' 
   }
 
   return (
-    <aside className="w-full shrink-0 border-b border-[#E5E0D8] bg-[#F4F1EA] lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r">
+    <aside className="flex w-full shrink-0 flex-col border-b border-[#E5E0D8] bg-[#F4F1EA] lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r">
       <div className="border-b border-[#E5E0D8] px-6 py-7">
         <NavLink
           to="/"
@@ -209,6 +209,19 @@ export default function AdminSidebar({ variant = 'admin' }: { variant?: 'admin' 
           )
         })}
       </nav>
+
+      <div className="mt-auto border-t border-[#E5E0D8] px-6 py-4">
+        <p className="text-sm font-medium text-[#031634]">
+          {user?.firstName} {user?.lastName}
+        </p>
+        <p className="mb-3 text-xs uppercase tracking-[0.18em] text-[#6B7280]">Sessione attiva</p>
+        <button
+          onClick={onLogout}
+          className="w-full border border-[#E5E0D8] px-4 py-2 text-sm font-medium text-[#031634] transition-colors hover:border-[#C9A96E] hover:text-[#C9A96E]"
+        >
+          Esci
+        </button>
+      </div>
     </aside>
   )
 }
