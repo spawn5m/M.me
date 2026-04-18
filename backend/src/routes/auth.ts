@@ -9,6 +9,11 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password obbligatoria')
 })
 
+const changePasswordSchema = z.object({
+  oldPassword: z.string().min(1, 'Password attuale obbligatoria'),
+  newPassword: z.string().min(8, 'Password minimo 8 caratteri'),
+})
+
 const authRoutes: FastifyPluginAsync = async (fastify) => {
   // POST /api/auth/login
   fastify.post('/login', {
@@ -64,6 +69,41 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
       },
       permissions
     })
+  })
+
+  // PUT /api/auth/password — self-service cambio password
+  fastify.put('/password', {
+    preHandler: [fastify.authenticate]
+  }, async (request, reply) => {
+    const parsed = changePasswordSchema.safeParse(request.body)
+    if (!parsed.success) {
+      return reply.status(400).send({
+        error: 'ValidationError',
+        message: parsed.error.errors[0].message,
+        statusCode: 400,
+      })
+    }
+
+    const user = await fastify.prisma.user.findUnique({
+      where: { id: request.auth.userId }
+    })
+    if (!user) {
+      return reply.status(404).send({ error: 'NotFound', message: 'Utente non trovato', statusCode: 404 })
+    }
+
+    const match = await bcrypt.compare(parsed.data.oldPassword, user.password)
+    if (!match) {
+      return reply.status(401).send({
+        error: 'Unauthorized',
+        message: 'Password attuale errata',
+        statusCode: 401,
+      })
+    }
+
+    const hashed = await bcrypt.hash(parsed.data.newPassword, 12)
+    await fastify.prisma.user.update({ where: { id: user.id }, data: { password: hashed } })
+
+    return reply.status(204).send()
   })
 
   // POST /api/auth/logout

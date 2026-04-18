@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useBranding } from '../../context/BrandingContext'
+import api from '../../lib/api'
 
 interface NavLeaf {
   to: string
@@ -210,18 +211,136 @@ export default function AdminSidebar({ variant = 'admin', onLogout }: { variant?
         })}
       </nav>
 
-      <div className="mt-auto border-t border-[#E5E0D8] px-6 py-4">
-        <p className="text-sm font-medium text-[#031634]">
-          {user?.firstName} {user?.lastName}
-        </p>
-        <p className="mb-3 text-xs uppercase tracking-[0.18em] text-[#6B7280]">Sessione attiva</p>
-        <button
-          onClick={onLogout}
-          className="w-full border border-[#E5E0D8] px-4 py-2 text-sm font-medium text-[#031634] transition-colors hover:border-[#C9A96E] hover:text-[#C9A96E]"
-        >
-          Esci
-        </button>
-      </div>
+      <UserMenu user={user} onLogout={onLogout} />
     </aside>
+  )
+}
+
+function UserMenu({ user, onLogout }: { user: { firstName: string; lastName: string } | null; onLogout: () => void }) {
+  const [open, setOpen] = useState(false)
+  const [showProfile, setShowProfile] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  return (
+    <div ref={ref} className="mt-auto border-t border-[#E5E0D8] px-4 py-4">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-2 py-1.5 text-left transition-colors hover:text-[#C9A96E]"
+      >
+        <div>
+          <p className="text-sm font-medium text-[#031634]">{user?.firstName} {user?.lastName}</p>
+          <p className="text-xs uppercase tracking-[0.18em] text-[#6B7280]">Sessione attiva</p>
+        </div>
+        <ChevronIcon open={open} />
+      </button>
+
+      {open && (
+        <div className="mt-2 border border-[#E5E0D8] bg-white shadow-sm">
+          <button
+            onClick={() => { setOpen(false); setShowProfile(true) }}
+            className="block w-full px-4 py-2.5 text-left text-sm text-[#031634] transition-colors hover:bg-[#F8F7F4] hover:text-[#C9A96E]"
+          >
+            Vedi profilo
+          </button>
+          <button
+            onClick={onLogout}
+            className="block w-full border-t border-[#E5E0D8] px-4 py-2.5 text-left text-sm text-[#031634] transition-colors hover:bg-[#F8F7F4] hover:text-[#C9A96E]"
+          >
+            Esci
+          </button>
+        </div>
+      )}
+
+      {showProfile && <ProfileModal user={user} onClose={() => setShowProfile(false)} />}
+    </div>
+  )
+}
+
+function ProfileModal({ user, onClose }: { user: { firstName: string; lastName: string } | null; onClose: () => void }) {
+  const [oldPassword, setOldPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    setError(null)
+    setSuccess(false)
+    setLoading(true)
+    try {
+      await api.put('/auth/password', { oldPassword, newPassword })
+      setSuccess(true)
+      setOldPassword('')
+      setNewPassword('')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
+      setError(msg ?? 'Errore durante il cambio password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-sm border border-[#E5E0D8] bg-white shadow-lg">
+        <div className="flex items-center justify-between border-b border-[#E5E0D8] px-6 py-4">
+          <h2 className="text-base font-semibold text-[#031634]">Profilo</h2>
+          <button onClick={onClose} className="text-[#6B7280] transition-colors hover:text-[#031634]">✕</button>
+        </div>
+
+        <div className="px-6 py-5">
+          <p className="mb-1 text-sm font-medium text-[#031634]">{user?.firstName} {user?.lastName}</p>
+          <p className="mb-5 text-xs uppercase tracking-[0.18em] text-[#6B7280]">Sessione attiva</p>
+
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#1A2B4A]">Cambia password</p>
+
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <div>
+              <label className="admin-label" htmlFor="old-password">Password attuale</label>
+              <input
+                id="old-password"
+                type="password"
+                value={oldPassword}
+                onChange={(e) => setOldPassword(e.target.value)}
+                className="admin-input"
+                required
+              />
+            </div>
+            <div>
+              <label className="admin-label" htmlFor="new-password">Nuova password</label>
+              <input
+                id="new-password"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="admin-input"
+                minLength={8}
+                required
+              />
+            </div>
+
+            {error && <p className="text-xs text-red-600">{error}</p>}
+            {success && <p className="text-xs text-green-600">Password aggiornata.</p>}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full border border-[#1A2B4A] px-4 py-2 text-sm font-medium text-[#1A2B4A] transition-colors hover:bg-[#1A2B4A] hover:text-white disabled:opacity-50"
+            >
+              {loading ? 'Salvataggio…' : 'Aggiorna password'}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
   )
 }
