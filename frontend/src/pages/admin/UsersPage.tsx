@@ -16,19 +16,31 @@ import type {
 
 // ─── Schema form ──────────────────────────────────────────────────────────────
 
+const anagraficaSchema = {
+  intestazione: z.string().optional(),
+  indirizzo: z.string().optional(),
+  numeroCivico: z.string().optional(),
+  cap: z.string().optional(),
+  comune: z.string().optional(),
+  provincia: z.string().max(2, 'Max 2 caratteri').optional(),
+  codicePP: z.string().optional(),
+}
+
 const createSchema = z.object({
   email: z.string().email('Email non valida'),
   password: z.string().min(8, 'Minimo 8 caratteri'),
   firstName: z.string().min(1, 'Obbligatorio'),
   lastName: z.string().min(1, 'Obbligatorio'),
-  roleIds: z.array(z.string()).default([])
+  roleIds: z.array(z.string()).default([]),
+  ...anagraficaSchema,
 })
 
 const editSchema = z.object({
   email: z.string().email('Email non valida'),
   firstName: z.string().min(1, 'Obbligatorio'),
   lastName: z.string().min(1, 'Obbligatorio'),
-  roleIds: z.array(z.string()).default([])
+  roleIds: z.array(z.string()).default([]),
+  ...anagraficaSchema,
 })
 
 type CreateFormValues = z.infer<typeof createSchema>
@@ -103,6 +115,61 @@ const columns = [
   }
 ]
 
+// ─── AnagraficaFields ─────────────────────────────────────────────────────────
+
+type AnyRegister = ReturnType<typeof useForm>['register']
+type AnyErrors = ReturnType<typeof useForm>['formState']['errors']
+
+function AnagraficaFields({ register, errors }: { register: AnyRegister; errors: AnyErrors }) {
+  const intestazioneId = useId()
+  const indirizzoId = useId()
+  const numeroCivicoId = useId()
+  const capId = useId()
+  const comuneId = useId()
+  const provinciaId = useId()
+  const codicePPId = useId()
+
+  return (
+    <div className="space-y-3 border-t border-[#E5E0D8] pt-4">
+      <p className="text-xs font-semibold uppercase tracking-wider text-[#1A2B4A]">Anagrafica</p>
+      <div>
+        <label className="admin-label" htmlFor={intestazioneId}>Intestazione</label>
+        <input id={intestazioneId} {...register('intestazione')} className="admin-input" />
+        {errors.intestazione && <p className="text-red-500 text-xs mt-1">{String(errors.intestazione.message)}</p>}
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="col-span-2">
+          <label className="admin-label" htmlFor={indirizzoId}>Indirizzo</label>
+          <input id={indirizzoId} {...register('indirizzo')} className="admin-input" />
+        </div>
+        <div>
+          <label className="admin-label" htmlFor={numeroCivicoId}>N. civico</label>
+          <input id={numeroCivicoId} {...register('numeroCivico')} className="admin-input" />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
+          <label className="admin-label" htmlFor={capId}>CAP</label>
+          <input id={capId} {...register('cap')} className="admin-input" />
+        </div>
+        <div>
+          <label className="admin-label" htmlFor={comuneId}>Comune</label>
+          <input id={comuneId} {...register('comune')} className="admin-input" />
+        </div>
+        <div>
+          <label className="admin-label" htmlFor={provinciaId}>Prov.</label>
+          <input id={provinciaId} {...register('provincia')} maxLength={2} className="admin-input uppercase" />
+          {errors.provincia && <p className="text-red-500 text-xs mt-1">{String(errors.provincia.message)}</p>}
+        </div>
+      </div>
+      <div>
+        <label className="admin-label" htmlFor={codicePPId}>Codice PP</label>
+        <input id={codicePPId} {...register('codicePP')} className="admin-input" />
+      </div>
+    </div>
+  )
+}
+
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function UsersPage() {
@@ -175,6 +242,13 @@ export default function UsersPage() {
       firstName: user.firstName,
       lastName: user.lastName,
       roleIds: user.roles.map(r => r.id),
+      intestazione: user.intestazione ?? '',
+      indirizzo: user.indirizzo ?? '',
+      numeroCivico: user.numeroCivico ?? '',
+      cap: user.cap ?? '',
+      comune: user.comune ?? '',
+      provincia: user.provincia ?? '',
+      codicePP: user.codicePP ?? '',
     })
   }
 
@@ -480,6 +554,8 @@ export default function UsersPage() {
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
+          <AnagraficaFields register={register} errors={errors} />
+
           <div>
             <label className="admin-label">
               Ruoli
@@ -541,6 +617,9 @@ export default function UsersPage() {
             <input id={editEmailId} {...registerEdit('email')} type="email" className="admin-input" />
             {errorsEdit.email && <p className="text-red-500 text-xs mt-1">{errorsEdit.email.message}</p>}
           </div>
+
+          <AnagraficaFields register={registerEdit} errors={errorsEdit} />
+
           <div>
             <label className="admin-label">Ruoli</label>
             {rolesUnavailable ? (

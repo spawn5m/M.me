@@ -182,13 +182,24 @@ async function validateManagerId(fastify: Parameters<FastifyPluginAsync>[0], man
 
 // ─── Zod schemas ──────────────────────────────────────────────────────────────
 
+const anagraficaFields = {
+  intestazione: z.string().optional(),
+  indirizzo: z.string().optional(),
+  numeroCivico: z.string().optional(),
+  cap: z.string().optional(),
+  comune: z.string().optional(),
+  provincia: z.string().max(2, 'Provincia max 2 caratteri').optional(),
+  codicePP: z.string().optional(),
+}
+
 const createUserSchema = z.object({
   email: z.string().email('Email non valida'),
   password: z.string().min(8, 'La password deve avere almeno 8 caratteri'),
   firstName: z.string().min(1, 'Nome obbligatorio'),
   lastName: z.string().min(1, 'Cognome obbligatorio'),
   roleIds: z.array(z.string()).default([]),
-  managerId: z.string().optional()
+  managerId: z.string().optional(),
+  ...anagraficaFields,
 })
 
 const updateUserSchema = z.object({
@@ -197,7 +208,8 @@ const updateUserSchema = z.object({
   lastName: z.string().min(1).optional(),
   isActive: z.boolean().optional(),
   roleIds: z.array(z.string()).optional(),
-  managerId: z.string().nullable().optional()
+  managerId: z.string().nullable().optional(),
+  ...anagraficaFields,
 })
 
 const replaceUserPermissionsSchema = z.object({

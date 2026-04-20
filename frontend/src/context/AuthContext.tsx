@@ -36,7 +36,6 @@ const CLIENT_DEFAULT_ROUTE_RULES: readonly RoutePermissionRule[] = [
   { path: '/client/dashboard', permissions: ['dashboard.client.read'] },
   { path: '/client/catalog/funeral', permissions: ['client.catalog.funeral.read'] },
   { path: '/client/catalog/marmista', permissions: ['client.catalog.marmista.read'] },
-  { path: '/client/change-password', permissions: ['client.password.change'] }
 ]
 
 function getUniquePermissions(rules: readonly RoutePermissionRule[]) {
@@ -58,16 +57,20 @@ export function getDefaultRoute(
   if (!user) return '/login'
 
   if (scope === 'admin') {
-    return getFirstAllowedRoute(permissions, ADMIN_DEFAULT_ROUTE_RULES) ?? '/login'
+    return getFirstAllowedRoute(permissions, ADMIN_DEFAULT_ROUTE_RULES)
+      ?? getFirstAllowedRoute(permissions, CLIENT_DEFAULT_ROUTE_RULES)
+      ?? '/'
   }
 
   if (scope === 'client') {
-    return getFirstAllowedRoute(permissions, CLIENT_DEFAULT_ROUTE_RULES) ?? '/login'
+    return getFirstAllowedRoute(permissions, CLIENT_DEFAULT_ROUTE_RULES)
+      ?? getFirstAllowedRoute(permissions, ADMIN_DEFAULT_ROUTE_RULES)
+      ?? '/'
   }
 
-  return getFirstAllowedRoute(permissions, CLIENT_DEFAULT_ROUTE_RULES)
-    ?? getFirstAllowedRoute(permissions, ADMIN_DEFAULT_ROUTE_RULES)
-    ?? '/login'
+  return getFirstAllowedRoute(permissions, ADMIN_DEFAULT_ROUTE_RULES)
+    ?? getFirstAllowedRoute(permissions, CLIENT_DEFAULT_ROUTE_RULES)
+    ?? '/'
 }
 
 interface AuthResponse {

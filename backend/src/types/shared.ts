@@ -82,6 +82,13 @@ export interface AdminUser {
   email: string
   firstName: string
   lastName: string
+  intestazione: string | null
+  indirizzo: string | null
+  numeroCivico: string | null
+  cap: string | null
+  comune: string | null
+  provincia: string | null
+  codicePP: string | null
   isActive: boolean
   roles: AdminRole[]
   permissions: string[]
@@ -130,7 +137,7 @@ export interface AdminAccessoryArticle {
 
 export interface AdminMarmistaArticle {
   id: string; code: string; description: string; notes: string | null
-  pdfPage: number | null; publicPrice: number | null
+  pdfPage: number | null; publicPrice: number | null; color: boolean
   accessory: AdminLookup | null; categories: AdminLookup[]
 }
 

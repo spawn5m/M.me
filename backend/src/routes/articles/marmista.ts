@@ -2,6 +2,7 @@ import { FastifyPluginAsync } from 'fastify'
 import { z } from 'zod'
 import { pipeline } from 'stream/promises'
 import * as fs from 'fs'
+import * as XLSX from 'xlsx'
 import { parseExcelFile, splitCodes } from '../../lib/excelImporter'
 import type { ImportResult } from '../../types/shared'
 
@@ -11,6 +12,7 @@ const bodySchema = z.object({
   notes: z.string().optional().nullable(),
   pdfPage: z.number().int().optional().nullable(),
   publicPrice: z.number().optional().nullable(),
+  color: z.boolean().optional().default(false),
   accessoryId: z.string().optional().nullable(),
   categoryIds: z.array(z.string()).optional().default([]),
 })
@@ -94,6 +96,13 @@ const marmistaRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.status(204).send()
   })
 
+  fastify.delete('/', {
+    preHandler: [fastify.checkPermission('articles.marmista.delete')]
+  }, async (_req, reply) => {
+    await fastify.prisma.marmistaArticle.deleteMany({})
+    return reply.status(204).send()
+  })
+
   fastify.post('/import', {
     preHandler: [fastify.checkPermission('articles.marmista.import')]
   }, async (req, reply) => {
@@ -108,6 +117,8 @@ const marmistaRoutes: FastifyPluginAsync = async (fastify) => {
     const rows = parseExcelFile(tmpPath)
     const result: ImportResult = { imported: 0, skipped: 0, errors: [], warnings: [] }
 
+    // Passata 1: upsert tutti gli articoli senza relazione accessorio
+    const validRows: Array<{ row: typeof rows[number]; rowNum: number }> = []
     for (let i = 0; i < rows.length; i++) {
       const row = rows[i]
       const rowNum = i + 2
@@ -124,16 +135,10 @@ const marmistaRoutes: FastifyPluginAsync = async (fastify) => {
           continue
         }
 
-        let accessoryId: string | null = null
-        if (row.accessorio_id) {
-          const accessory = await fastify.prisma.marmistaArticle.findUnique({ where: { code: row.accessorio_id } })
-          if (!accessory) {
-            result.skipped++
-            result.errors.push({ row: rowNum, code: row.codice, reason: `Accessorio non trovato: ${row.accessorio_id}` })
-            continue
-          }
-          accessoryId = accessory.id
-        }
+        const colorRaw = row.colore ?? row.color ?? row.COLOR ?? row.COLORE
+        const colorVal = colorRaw !== undefined && colorRaw !== ''
+          ? String(colorRaw).toLowerCase() === 'true' || String(colorRaw) === '1'
+          : false
 
         await fastify.prisma.marmistaArticle.upsert({
           where: { code: row.codice },
@@ -143,7 +148,7 @@ const marmistaRoutes: FastifyPluginAsync = async (fastify) => {
             notes: row.note || null,
             pdfPage: row.pagina_pdf ? parseInt(String(row.pagina_pdf), 10) : null,
             publicPrice: row.prezzo_pubblico ? parseFloat(String(row.prezzo_pubblico)) : null,
-            ...(accessoryId ? { accessory: { connect: { id: accessoryId } } } : {}),
+            color: colorVal,
             categories: { connect: categoryResult.ids.map((id) => ({ id })) },
           },
           update: {
@@ -151,19 +156,52 @@ const marmistaRoutes: FastifyPluginAsync = async (fastify) => {
             notes: row.note || null,
             pdfPage: row.pagina_pdf ? parseInt(String(row.pagina_pdf), 10) : null,
             publicPrice: row.prezzo_pubblico ? parseFloat(String(row.prezzo_pubblico)) : null,
-            accessory: accessoryId ? { connect: { id: accessoryId } } : { disconnect: true },
+            color: colorVal,
             categories: { set: categoryResult.ids.map((id) => ({ id })) },
           },
         })
 
         result.imported++
+        if (row.accessorio_id) validRows.push({ row, rowNum })
       } catch (error) {
         result.errors.push({ row: rowNum, code: row.codice, reason: String(error) })
       }
     }
 
+    // Passata 2: aggiorna relazioni accessorio ora che tutti gli articoli esistono
+    for (const { row, rowNum } of validRows) {
+      try {
+        const accessory = await fastify.prisma.marmistaArticle.findUnique({ where: { code: row.accessorio_id } })
+        if (!accessory) {
+          result.warnings.push({ row: rowNum, code: row.codice, reason: `Accessorio non trovato: ${row.accessorio_id}` })
+          continue
+        }
+        await fastify.prisma.marmistaArticle.update({
+          where: { code: row.codice },
+          data: { accessory: { connect: { id: accessory.id } } },
+        })
+      } catch (error) {
+        result.warnings.push({ row: rowNum, code: row.codice, reason: `Errore accessorio: ${String(error)}` })
+      }
+    }
+
     fs.unlinkSync(tmpPath)
     return result
+  })
+
+  // GET /import-template
+  fastify.get('/import-template', {
+    preHandler: [fastify.checkPermission('articles.marmista.import')]
+  }, async (_req, reply) => {
+    const headers = ['codice', 'descrizione', 'note', 'prezzo_pubblico', 'categorie', 'pagina_pdf', 'accessorio_id', 'colore']
+    const ws = XLSX.utils.aoa_to_sheet([headers])
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Marmisti')
+    const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
+    reply
+      .header('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+      .header('Content-Disposition', 'attachment; filename="template-marmisti.xlsx"')
+      .send(buffer)
   })
 }
 

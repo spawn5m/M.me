@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clientApi } from '../../lib/api/client'
 
@@ -24,11 +24,24 @@ export default function MarmistaClientCatalogPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
   const [page, setPage] = useState(1)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value)
+    if (debounceRef.current) clearTimeout(debounceRef.current)
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(value)
+      setPage(1)
+    }, 300)
+  }
 
   useEffect(() => {
     setLoading(true)
-    clientApi.catalog.marmista({ page: String(page), pageSize: '50' })
+    const params: Record<string, string> = { page: String(page), pageSize: '50' }
+    if (debouncedSearch.trim()) params.search = debouncedSearch.trim()
+    clientApi.catalog.marmista(params)
       .then(res => {
         setItems(res.data)
         setPagination(res.pagination)
@@ -37,17 +50,7 @@ export default function MarmistaClientCatalogPage() {
       })
       .catch(() => setError('Impossibile caricare il catalogo.'))
       .finally(() => setLoading(false))
-  }, [page])
-
-  const filtered = useMemo(() => {
-    if (!search.trim()) return items
-    const q = search.toLowerCase()
-    return items.filter(
-      item =>
-        item.code.toLowerCase().includes(q) ||
-        item.description.toLowerCase().includes(q)
-    )
-  }, [items, search])
+  }, [page, debouncedSearch])
 
   return (
     <div className="space-y-4">
@@ -71,7 +74,7 @@ export default function MarmistaClientCatalogPage() {
         type="text"
         placeholder="Cerca per codice o descrizione..."
         value={search}
-        onChange={e => setSearch(e.target.value)}
+        onChange={e => handleSearchChange(e.target.value)}
         className="w-full max-w-sm border border-[#E5E0D8] rounded-[6px] px-3 py-2 text-sm text-[#1A1A1A] placeholder-[#6B7280] focus:outline-none focus:border-[#1A2B4A]"
       />
 
@@ -97,19 +100,19 @@ export default function MarmistaClientCatalogPage() {
                   Caricamento...
                 </td>
               </tr>
-            ) : filtered.length === 0 ? (
+            ) : items.length === 0 ? (
               <tr>
                 <td colSpan={3} className="text-center py-10 text-[#6B7280]">
                   Nessun articolo trovato.
                 </td>
               </tr>
             ) : (
-              filtered.map((item, i) => (
+              items.map((item, i) => (
                 <tr
                   key={item.id}
                   onClick={() => navigate(`/client/catalog/marmista/${item.id}`)}
                   className={`cursor-pointer hover:bg-[#F8F7F4] transition-colors ${
-                    i !== filtered.length - 1 ? 'border-b border-[#E5E0D8]' : ''
+                    i !== items.length - 1 ? 'border-b border-[#E5E0D8]' : ''
                   }`}
                 >
                   <td className="px-4 py-3 font-['JetBrains_Mono'] text-[#1A2B4A] font-medium">

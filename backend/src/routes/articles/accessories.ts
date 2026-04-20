@@ -96,6 +96,13 @@ const accessoriesRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.status(204).send()
   })
 
+  fastify.delete('/', {
+    preHandler: [fastify.checkPermission('articles.accessories.delete')]
+  }, async (_req, reply) => {
+    await fastify.prisma.accessoryArticle.deleteMany({})
+    return reply.status(204).send()
+  })
+
   fastify.post('/import', {
     preHandler: [fastify.checkPermission('articles.accessories.import')]
   }, async (req, reply) => {

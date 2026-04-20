@@ -33,6 +33,9 @@ export const articlesApi = {
     remove: (id: string) =>
       api.delete(`${base}/coffins/${id}`),
 
+    clearAll: () =>
+      api.delete(`${base}/coffins`),
+
     uploadImage: (id: string, file: File) => {
       const form = new FormData()
       form.append('file', file)
@@ -65,6 +68,9 @@ export const articlesApi = {
     remove: (id: string) =>
       api.delete(`${base}/accessories/${id}`),
 
+    clearAll: () =>
+      api.delete(`${base}/accessories`),
+
     import: (file: File) => {
       const form = new FormData()
       form.append('file', file)
@@ -88,10 +94,16 @@ export const articlesApi = {
     remove: (id: string) =>
       api.delete(`${base}/marmista/${id}`),
 
+    clearAll: () =>
+      api.delete(`${base}/marmista`),
+
     import: (file: File) => {
       const form = new FormData()
       form.append('file', file)
       return api.post<ImportResult>(`${base}/marmista/import`, form).then(r => r.data)
     },
+
+    downloadTemplate: () =>
+      api.get(`${base}/marmista/import-template`, { responseType: 'blob' }).then(r => r.data as Blob),
   },
 }

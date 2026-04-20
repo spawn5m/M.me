@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMarmista } from '../hooks/useMarmista'
 import { useAuth } from '../context/AuthContext'
@@ -16,7 +16,28 @@ export default function MarmistiPage() {
   const { user, hasPermission } = useAuth()
   const isMarmista = user?.roles?.includes('marmista') ?? false
   const canSeePurchase = hasPermission('pricelists.purchase.read')
-  const { items, loading } = useMarmista()
+
+  const [filterSearch, setFilterSearch] = useState('')
+  const [filterCategory, setFilterCategory] = useState('')
+  const [availableCategories, setAvailableCategories] = useState<string[]>([])
+  const categoryCodeMap = useMemo(() => new Map<string, string>(), [])
+
+  useEffect(() => {
+    api.get<{ data: Array<{ code: string; label: string }> }>('/public/marmista-categories')
+      .then(res => {
+        res.data.data.forEach(c => categoryCodeMap.set(c.label, c.code))
+        setAvailableCategories(res.data.data.map(c => c.label))
+      })
+      .catch(() => {})
+  }, [categoryCodeMap])
+
+  const handleFilterChange = useCallback(({ search, category }: { search: string; category: string }) => {
+    setFilterSearch(search)
+    setFilterCategory(category ? (categoryCodeMap.get(category) ?? category) : '')
+  }, [categoryCodeMap])
+
+  const hasActiveFilters = filterSearch !== '' || filterCategory !== ''
+  const { items, loading } = useMarmista({ search: filterSearch, category: filterCategory, limit: 100, enabled: hasActiveFilters })
 
   // ── Listini vendita disponibili ───────────────────────────────────────────
 
@@ -108,6 +129,7 @@ export default function MarmistiPage() {
           categories: item.categories,
           pdfPage: item.pdfPage,
           publicPrice: item.publicPrice ?? null,
+          color: item.color ?? false,
           price: salePrice,
           purchasePrice: purchaseStep === 'active' ? (purchasePrices[item.id] ?? null) : null,
         }
@@ -236,6 +258,8 @@ export default function MarmistiPage() {
           catalogType="marmista"
           showPrice={showPrice}
           catalogPdfUrl="/uploads/pdf/VEZZANI%20CATALOGO%202026.pdf"
+          availableCategories={availableCategories}
+          onFilterChange={handleFilterChange}
         />
       </section>
 

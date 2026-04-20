@@ -14,6 +14,7 @@ interface PublicMarmistaRaw {
   description: string
   notes?: string | null
   publicPrice?: number | null
+  color?: boolean
   price?: number | null
   priceOptions?: CoffinPriceOption[]
   pdfPage?: number | null
@@ -40,6 +41,7 @@ function normalizeMarmista(data: PublicMarmistaRaw[]): MarmistaItem[] {
       description: item.description,
       notes: item.notes ?? undefined,
       publicPrice: item.publicPrice ?? undefined,
+      color: item.color ?? false,
       pdfPage: item.pdfPage ?? undefined,
       categories: normalizeLookupList(item.categories),
     }
@@ -54,6 +56,7 @@ interface UseMarmistaParams {
   limit?: number
   category?: string
   search?: string
+  enabled?: boolean
 }
 
 interface UseMarmistaResult {
@@ -64,17 +67,19 @@ interface UseMarmistaResult {
 }
 
 export function useMarmista(params: UseMarmistaParams = {}): UseMarmistaResult {
+  const { enabled = true, ...fetchParams } = params
   const [items, setItems] = useState<MarmistaItem[]>([])
   const [pagination, setPagination] = useState<Pagination | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (!enabled) { setItems([]); setPagination(null); setLoading(false); return }
     let cancelled = false
     async function fetchData() {
       setLoading(true)
       try {
-        const res = await api.get('/public/marmista', { params })
+        const res = await api.get('/public/marmista', { params: fetchParams })
         if (!cancelled) {
           const data = normalizeMarmista(res.data.data as PublicMarmistaRaw[])
           setItems(data.length > 0 ? data : mockMarmista)
@@ -93,7 +98,7 @@ export function useMarmista(params: UseMarmistaParams = {}): UseMarmistaResult {
     return () => {
       cancelled = true
     }
-  }, [params.page, params.limit, params.category, params.search])
+  }, [enabled, params.page, params.limit, params.category, params.search])
 
   return { items, pagination, loading, error }
 }

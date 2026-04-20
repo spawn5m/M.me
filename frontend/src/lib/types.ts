@@ -67,6 +67,7 @@ export interface MarmistaItem {
   notes?: string
   pdfPage?: number
   publicPrice?: number
+  color?: boolean
   price?: number | null           // prezzo listino assegnato (marmista loggato)
   priceOptions?: CoffinPriceOption[] // opzioni listini vendita (manager/admin)
   linkedAccessory?: { id: string; code: string; description: string }

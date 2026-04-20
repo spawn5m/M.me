@@ -25,6 +25,7 @@ const funeralCatalogQuerySchema = z.object({
 
 const marmistaCatalogQuerySchema = z.object({
   category: z.string().optional(),
+  search: z.string().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 })
@@ -207,7 +208,7 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
     }
 
     const query = marmistaCatalogQuerySchema.parse(req.query)
-    const { page, pageSize, category } = query
+    const { page, pageSize, category, search } = query
 
     const tree = await loadPriceListTree(fastify.prisma as PrismaClientLike, user.marmistaPriceListId)
     const computedItems = tree ? await buildComputedItems(fastify.prisma as PrismaClientLike, tree) : []
@@ -216,6 +217,12 @@ const clientRoutes: FastifyPluginAsync = async (fastify) => {
     const where = {
       id: { in: allowedArticleIds },
       ...(category ? { categories: { some: { code: category } } } : {}),
+      ...(search ? {
+        OR: [
+          { code: { contains: search, mode: 'insensitive' as const } },
+          { description: { contains: search, mode: 'insensitive' as const } },
+        ],
+      } : {}),
     }
 
     const [total, articles] = await Promise.all([

@@ -50,6 +50,8 @@ export default function AccessoriesPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [isImporting, setIsImporting] = useState(false)
   const [availableCategories, setAvailableCategories] = useState<AdminLookup[]>([])
@@ -122,6 +124,12 @@ export default function AccessoriesPage() {
     finally { setIsDeleting(false) }
   }
 
+  const handleClearAll = async () => {
+    setIsClearing(true)
+    try { await articlesApi.accessories.clearAll(); setIsClearConfirmOpen(false); load() }
+    finally { setIsClearing(false) }
+  }
+
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -156,7 +164,8 @@ export default function AccessoriesPage() {
           <h1 className="admin-page-title">Accessori</h1>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => setTab('import')} className="admin-button-secondary">Import Excel</button>
+          <button onClick={() => setIsClearConfirmOpen(true)} className="admin-button-danger">Svuota tabella</button>
+          <button onClick={() => setTab('import')} className="admin-button-secondary">Importa CSV / XLSX</button>
           <button onClick={openCreate} className="admin-button-primary">+ Aggiungi</button>
         </div>
       </div>
@@ -165,7 +174,7 @@ export default function AccessoriesPage() {
         {(['list', 'import'] as Tab[]).map(t => (
           <button key={t} onClick={() => setTab(t)}
             className={['admin-tab', tab === t ? 'admin-tab-active' : ''].join(' ')}>
-            {t === 'list' ? 'Lista' : 'Import Excel'}
+            {t === 'list' ? 'Lista' : 'Importa CSV / XLSX'}
           </button>
         ))}
       </div>
@@ -177,7 +186,7 @@ export default function AccessoriesPage() {
       {tab === 'import' && (
         <div className="admin-panel max-w-xl p-6">
           <p className="mb-4 text-sm text-[#6B7280]">Carica un file Excel con colonne: <code className="admin-code">codice, descrizione, note, categorie, pagina_pdf</code></p>
-          <input type="file" accept=".xlsx,.xls" onChange={handleImport} disabled={isImporting}
+          <input type="file" accept=".xlsx,.xls,.csv" onChange={handleImport} disabled={isImporting}
             className="admin-file-input disabled:opacity-50" />
           {isImporting && <p className="text-sm text-[#6B7280] mt-3">Importazione in corso…</p>}
           {importResult && (
@@ -227,6 +236,8 @@ export default function AccessoriesPage() {
       </FormModal>
 
       <ConfirmDialog isOpen={!!deletingId} title="Elimina Accessorio" message="Eliminare questo accessorio?" onConfirm={handleDelete} onCancel={() => setDeletingId(null)} isConfirming={isDeleting} confirmLabel="Elimina" />
+
+      <ConfirmDialog isOpen={isClearConfirmOpen} title="Svuota tabella Accessori" message="Stai per eliminare TUTTI gli accessori. Questa operazione non è reversibile. Continuare?" onConfirm={handleClearAll} onCancel={() => setIsClearConfirmOpen(false)} isConfirming={isClearing} confirmLabel="Svuota tutto" />
     </div>
   )
 }

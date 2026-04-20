@@ -128,6 +128,8 @@ export default function CoffinsPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false)
+  const [isClearing, setIsClearing] = useState(false)
   const [importResult, setImportResult] = useState<ImportResult | null>(null)
   const [isImporting, setIsImporting] = useState(false)
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -316,6 +318,12 @@ export default function CoffinsPage() {
     }
   }
 
+  const handleClearAll = async () => {
+    setIsClearing(true)
+    try { await articlesApi.coffins.clearAll(); setIsClearConfirmOpen(false); load() }
+    finally { setIsClearing(false) }
+  }
+
   const handleDownloadTemplate = async () => {
     const blob = await articlesApi.coffins.downloadTemplate()
     const url = URL.createObjectURL(blob)
@@ -378,11 +386,12 @@ export default function CoffinsPage() {
           </p>
         </div>
         <div className="flex gap-3">
+          <button onClick={() => setIsClearConfirmOpen(true)} className="admin-button-danger">Svuota tabella</button>
           <button
             onClick={() => setTab('import')}
             className="admin-button-secondary"
           >
-            Import Excel
+            Importa CSV / XLSX
           </button>
           <button
             onClick={openCreate}
@@ -416,7 +425,7 @@ export default function CoffinsPage() {
             onClick={() => setTab(t)}
             className={['admin-tab', tab === t ? 'admin-tab-active' : ''].join(' ')}
           >
-            {t === 'list' ? 'Lista' : 'Import Excel'}
+            {t === 'list' ? 'Lista' : 'Importa CSV / XLSX'}
           </button>
         ))}
       </div>
@@ -483,7 +492,7 @@ export default function CoffinsPage() {
               <span className="sr-only">Scegli file Excel</span>
               <input
                 type="file"
-                accept=".xlsx,.xls"
+                accept=".xlsx,.xls,.csv"
                 onChange={handleImport}
                 disabled={isImporting}
                 className="admin-file-input disabled:opacity-50"
@@ -678,6 +687,16 @@ export default function CoffinsPage() {
         onCancel={() => setDeletingId(null)}
         isConfirming={isDeleting}
         confirmLabel="Elimina"
+      />
+
+      <ConfirmDialog
+        isOpen={isClearConfirmOpen}
+        title="Svuota tabella Cofani"
+        message="Stai per eliminare TUTTI i cofani. Questa operazione non è reversibile. Continuare?"
+        onConfirm={handleClearAll}
+        onCancel={() => setIsClearConfirmOpen(false)}
+        isConfirming={isClearing}
+        confirmLabel="Svuota tutto"
       />
     </div>
   )

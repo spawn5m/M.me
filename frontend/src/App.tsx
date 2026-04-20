@@ -31,13 +31,14 @@ const BrandingLogoPage = lazy(() => import('./pages/admin/BrandingLogoPage'))
 const LocalesPage = lazy(() => import('./pages/admin/LocalesPage'))
 const MapsPage = lazy(() => import('./pages/admin/MapsPage'))
 const MaintenancePage = lazy(() => import('./pages/admin/MaintenancePage'))
+const ProfilePage = lazy(() => import('./pages/admin/ProfilePage'))
 
 const ClientDashboard = lazy(() => import('./pages/client/ClientDashboard'))
 const FuneralCatalogPage = lazy(() => import('./pages/client/FuneralCatalogPage'))
 const FuneralDetailPage = lazy(() => import('./pages/client/FuneralDetailPage'))
 const MarmistaClientCatalogPage = lazy(() => import('./pages/client/MarmistaClientCatalogPage'))
 const MarmistaClientDetailPage = lazy(() => import('./pages/client/MarmistaClientDetailPage'))
-const ChangePasswordPage = lazy(() => import('./pages/client/ChangePasswordPage'))
+const ClientProfilePage = lazy(() => import('./pages/client/ProfilePage'))
 
 const ADMIN_SHELL_PERMISSIONS = ADMIN_ROUTE_PERMISSIONS
 
@@ -158,6 +159,7 @@ function AppContent() {
             <Route path="maintenance" element={<ProtectedRoute requiredPermissions={['maintenance.manage']}><MaintenancePage /></ProtectedRoute>} />
             <Route path="pricelists" element={<ProtectedRoute requiredPermissions={['pricelists.sale.read', 'pricelists.purchase.read']}><PriceListsPage /></ProtectedRoute>} />
             <Route path="pricelists/:id" element={<ProtectedRoute requiredPermissions={['pricelists.sale.read', 'pricelists.purchase.read']}><PriceListDetailPage /></ProtectedRoute>} />
+            <Route path="profile" element={<ProfilePage />} />
           </Route>
           {/* Client — protette per impresario_funebre e marmista */}
           <Route
@@ -182,7 +184,7 @@ function AppContent() {
             <Route path="catalog/marmista/:id" element={
               <ProtectedRoute requiredPermissions={['client.catalog.marmista.read']}><MarmistaClientDetailPage /></ProtectedRoute>
             } />
-            <Route path="change-password" element={<ProtectedRoute requiredPermissions={['client.password.change']}><ChangePasswordPage /></ProtectedRoute>} />
+<Route path="profile" element={<ClientProfilePage />} />
           </Route>
         </Routes>
       </Suspense>

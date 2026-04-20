@@ -15,6 +15,13 @@ model User {
   password            String
   firstName           String
   lastName            String
+  intestazione        String?
+  indirizzo           String?
+  numeroCivico        String?
+  cap                 String?
+  comune              String?
+  provincia           String?
+  codicePP            String?
   isActive            Boolean       @default(true)
   funeralPriceListId      String?
   marmistaPriceListId     String?
@@ -157,10 +164,11 @@ model Figure {
 }
 
 model Color {
-  id       String          @id @default(cuid())
-  code     String          @unique
-  label    String
-  articles CoffinArticle[]
+  id               String            @id @default(cuid())
+  code             String            @unique
+  label            String
+  articles         CoffinArticle[]
+  marmistaArticles MarmistaArticle[]
 }
 
 model Finish {
@@ -209,10 +217,12 @@ model MarmistaArticle {
   notes          String?
   pdfPage        Int?
   publicPrice    Float?
+  color          Boolean            @default(false)
   accessoryId    String?
   accessory      MarmistaArticle?   @relation("MarmistaAccessory", fields: [accessoryId], references: [id])
   accessories    MarmistaArticle[]  @relation("MarmistaAccessory")
   categories     MarmistaCategory[]
+  colors         Color[]
   priceListItems PriceListItem[]
   createdAt      DateTime           @default(now())
   updatedAt      DateTime           @updatedAt

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { catalogPublicApi } from '../../lib/api/catalog'
 import type { CatalogLayoutPublic } from '../../../../backend/src/types/shared'
@@ -14,6 +14,7 @@ export interface CatalogViewItem {
   publicPrice?: number | null   // sempre visibile (prezzo pubblico)
   price?: number | null         // prezzo listino (condizionale)
   purchasePrice?: number | null
+  color?: boolean
 }
 
 interface AccessoriesViewProps {
@@ -22,6 +23,8 @@ interface AccessoriesViewProps {
   showPrice?: boolean
   catalogType?: 'accessories' | 'marmista'
   catalogPdfUrl?: string
+  availableCategories?: string[]
+  onFilterChange?: (filters: { search: string; category: string }) => void
 }
 
 export default function AccessoriesView({
@@ -30,12 +33,17 @@ export default function AccessoriesView({
   showPrice = false,
   catalogType = 'accessories',
   catalogPdfUrl = '/uploads/pdf/CATALOGO%20CEABIS%202024.pdf',
+  availableCategories: availableCategoriesProp,
+  onFilterChange,
 }: AccessoriesViewProps) {
   const { t } = useTranslation()
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [catalogLayoutData, setCatalogLayoutData] = useState<CatalogLayoutPublic | null>(null)
+  const [currentFileIdx, setCurrentFileIdx] = useState(1)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isServerSide = !!onFilterChange
 
   useEffect(() => {
     catalogPublicApi.layout(catalogType)
@@ -44,11 +52,12 @@ export default function AccessoriesView({
   }, [catalogType])
 
   const categories = useMemo(
-    () => [...new Set(items.flatMap((a) => a.categories))],
-    [items]
+    () => availableCategoriesProp ?? [...new Set(items.flatMap((a) => a.categories))],
+    [availableCategoriesProp, items]
   )
 
   const filtered = useMemo(() => {
+    if (isServerSide) return items
     return items.filter((a) => {
       const matchSearch =
         !search ||
@@ -57,71 +66,84 @@ export default function AccessoriesView({
       const matchCat = !category || a.categories.includes(category)
       return matchSearch && matchCat
     })
-  }, [items, search, category])
+  }, [items, search, category, isServerSide])
+
+  const hasFilters = search !== '' || category !== ''
 
   const activeItem = useMemo(() => {
+    if (!hasFilters) return null
     if (selectedId) {
       const found = filtered.find((a) => a.id === selectedId)
       if (found) return found
     }
     return filtered[0] ?? null
-  }, [selectedId, filtered])
+  }, [selectedId, filtered, hasFilters])
 
-  const pdfSrc = (() => {
-    if (!activeItem?.pdfPage) return `${catalogPdfUrl}#view=FitH`
-    if (catalogLayoutData?.slug && catalogLayoutData.totalPdfPages) {
-      const layout = {
-        offset: catalogLayoutData.layout.offset,
-        firstPageType: catalogLayoutData.layout.firstPageType,
-        bodyPageType: catalogLayoutData.layout.bodyPageType,
-        lastPageType: catalogLayoutData.layout.lastPageType,
-        totalPdfPages: catalogLayoutData.totalPdfPages,
-      }
-      const fileIdx = catalogPageToPdfFile(activeItem.pdfPage, layout)
-      return `/uploads/pdf/pages/${catalogLayoutData.slug}/${fileIdx}.pdf#view=FitH`
-    }
-    return `${catalogPdfUrl}#page=${activeItem.pdfPage}&view=FitH`
-  })()
+  const totalPdfFiles = catalogLayoutData?.totalPdfPages ?? null
 
-  const pdfPageLabel = (() => {
-    if (!activeItem?.pdfPage) return null
-    if (catalogLayoutData?.slug && catalogLayoutData.totalPdfPages) {
-      const layout = {
-        offset: catalogLayoutData.layout.offset,
-        firstPageType: catalogLayoutData.layout.firstPageType,
-        bodyPageType: catalogLayoutData.layout.bodyPageType,
-        lastPageType: catalogLayoutData.layout.lastPageType,
-        totalPdfPages: catalogLayoutData.totalPdfPages,
-      }
-      const fileIdx = catalogPageToPdfFile(activeItem.pdfPage, layout)
-      return pdfFileToDisplayLabel(fileIdx, layout)
+  const pdfLayout = useMemo(() => {
+    if (!catalogLayoutData?.slug || !catalogLayoutData.totalPdfPages) return null
+    return {
+      offset: catalogLayoutData.layout.offset,
+      firstPageType: catalogLayoutData.layout.firstPageType,
+      bodyPageType: catalogLayoutData.layout.bodyPageType,
+      lastPageType: catalogLayoutData.layout.lastPageType,
+      totalPdfPages: catalogLayoutData.totalPdfPages,
     }
-    return `p. ${activeItem.pdfPage}`
-  })()
+  }, [catalogLayoutData])
+
+  // Sync file index when active item or layout changes
+  useEffect(() => {
+    if (!activeItem?.pdfPage) return
+    setCurrentFileIdx(
+      pdfLayout ? catalogPageToPdfFile(activeItem.pdfPage, pdfLayout) : activeItem.pdfPage
+    )
+  }, [activeItem, pdfLayout])
+
+  const pdfSrc = pdfLayout && catalogLayoutData?.slug
+    ? `/uploads/pdf/pages/${catalogLayoutData.slug}/${currentFileIdx}.pdf#zoom=page-width`
+    : `${catalogPdfUrl}#page=${currentFileIdx}&zoom=page-width`
+
+  const pdfPageLabel = pdfLayout
+    ? pdfFileToDisplayLabel(currentFileIdx, pdfLayout)
+    : `p. ${currentFileIdx}`
+
+  const goToFile = useCallback((delta: number) => {
+    setCurrentFileIdx(prev => {
+      const next = prev + delta
+      if (next < 1) return 1
+      if (totalPdfFiles && next > totalPdfFiles) return totalPdfFiles
+      return next
+    })
+  }, [totalPdfFiles])
 
   function handleSearchChange(value: string) {
     setSearch(value)
     setSelectedId(null)
+    if (onFilterChange) {
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => onFilterChange({ search: value, category }), 350)
+    }
   }
 
   function handleCategoryChange(value: string) {
     setCategory(value)
     setSelectedId(null)
+    if (onFilterChange) onFilterChange({ search, category: value })
   }
 
   function handleReset() {
     setSearch('')
     setCategory('')
     setSelectedId(null)
+    if (onFilterChange) onFilterChange({ search: '', category: '' })
   }
 
-  const hasFilters = search !== '' || category !== ''
-
   return (
-    <div className="flex gap-4 h-[calc(100vh-140px)] min-h-[800px]">
+    <div className="flex gap-4 h-[calc(100vh-140px)] min-h-[600px]">
 
-      {/* ── 1/6 — Filtri + Lista ──────────────────────────────── */}
-      <div className="w-1/6 flex flex-col border-r border-[#E5E0D8] overflow-hidden">
+      {/* ── 2/6 — Filtri + Lista ──────────────────────────────── */}
+      <div className="w-2/6 flex flex-col border-r border-[#E5E0D8] overflow-hidden">
 
         {/* Filtri */}
         <div className="px-4 py-4 bg-[#FAF9F6] border-b border-[#E5E0D8] shrink-0 space-y-2.5">
@@ -169,25 +191,23 @@ export default function AccessoriesView({
           </select>
 
           {/* Clear + contatore */}
-          <div className="flex items-center justify-between">
-            {hasFilters ? (
+          {hasFilters && (
+            <div className="flex items-center justify-between">
               <button
                 onClick={handleReset}
                 className="text-xs font-medium text-[#C9A96E] hover:underline transition-colors"
               >
                 {t('catalog.clearFilters')}
               </button>
-            ) : (
-              <span />
-            )}
-            <span className="font-mono text-[10px] text-[#44474e]">
-              {filtered.length} {t('catalog.itemsFound')}
-            </span>
-          </div>
+              <span className="font-mono text-[10px] text-[#44474e]">
+                {filtered.length} {t('catalog.itemsFound')}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Intestazione colonne */}
-        {(() => {
+        {/* Intestazione colonne — visibile solo con filtri attivi */}
+        {hasFilters && (() => {
           const isMarmista = catalogType === 'marmista'
           const cols = isMarmista
             ? showPrice ? 'grid-cols-[1fr_auto_auto]' : 'grid-cols-[1fr_auto]'
@@ -203,7 +223,11 @@ export default function AccessoriesView({
 
         {/* Lista articoli */}
         <div className="flex-1 overflow-y-auto">
-          {loading ? (
+          {!hasFilters ? (
+            <div className="px-4 py-10 text-sm text-[#6B7280] text-center">
+              {t('catalog.searchToDiscover')}
+            </div>
+          ) : loading ? (
             <div className="px-4 py-10 text-sm text-[#6B7280] text-center">
               {t('catalog.loading')}
             </div>
@@ -226,8 +250,16 @@ export default function AccessoriesView({
                 >
                   {/* Codice + prezzi sulla stessa riga */}
                   <div className="flex items-start justify-between gap-2 mb-1">
-                    <span className="font-mono text-[10px] text-[#C9A96E] tracking-widest shrink-0 pt-0.5">
-                      {item.code}
+                    <span className="flex items-center gap-1 shrink-0 pt-0.5">
+                      <span className="font-mono text-[10px] text-[#C9A96E] tracking-widest">{item.code}</span>
+                      {item.color && (
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-label="Disponibile a colori" title="Disponibile a colori">
+                          <circle cx="6" cy="6" r="4" fill="#E74C3C"/>
+                          <circle cx="18" cy="6" r="4" fill="#3498DB"/>
+                          <circle cx="6" cy="18" r="4" fill="#2ECC71"/>
+                          <circle cx="18" cy="18" r="4" fill="#F39C12"/>
+                        </svg>
+                      )}
                     </span>
                     {/* Colonna prezzi */}
                     {(() => {
@@ -279,8 +311,8 @@ export default function AccessoriesView({
         </div>
       </div>
 
-      {/* ── 5/6 — Visualizzatore PDF ─────────────────────────── */}
-      <div className="w-5/6 flex flex-col bg-[#E9E8E5] overflow-hidden">
+      {/* ── 4/6 — Visualizzatore PDF ─────────────────────────── */}
+      <div className="w-4/6 flex flex-col bg-[#E9E8E5] overflow-hidden">
 
         {/* Barra info pagina */}
         <div className="px-4 py-2 bg-[#FAF9F6] border-b border-[#E5E0D8] shrink-0 flex items-center gap-3 min-h-[36px]">
@@ -292,24 +324,51 @@ export default function AccessoriesView({
               <span className="text-[11px] text-[#031634] truncate flex-1">
                 {activeItem.description}
               </span>
-              {pdfPageLabel !== null && (
-                <span className="font-mono text-[10px] text-[#6B7280] shrink-0">
-                  {pdfPageLabel}
-                </span>
-              )}
+              <span className="font-mono text-[10px] text-[#6B7280] shrink-0">
+                {pdfPageLabel}
+              </span>
             </>
           ) : (
             <span className="text-[11px] text-[#6B7280]">{t('catalog.selectItemToView')}</span>
           )}
         </div>
 
-        {/* PDF iframe — key forza reload al cambio pagina */}
+        {/* PDF iframe */}
         <iframe
           key={pdfSrc}
           src={pdfSrc}
           className="flex-1 w-full border-0"
           title={t('catalog.accessoryCatalog')}
         />
+
+        {/* Navigazione pagine PDF */}
+        <div className="shrink-0 flex items-center justify-center gap-4 px-4 py-2.5 bg-[#FAF9F6] border-t border-[#E5E0D8]">
+          <button
+            onClick={() => goToFile(-1)}
+            disabled={currentFileIdx <= 1}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E0D8] text-[11px] font-medium text-[#1A2B4A] uppercase tracking-[0.1em] hover:bg-[#F4F3F0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="15 18 9 12 15 6" />
+            </svg>
+            Precedente
+          </button>
+
+          <span className="font-mono text-[11px] text-[#6B7280] min-w-[6rem] text-center">
+            {pdfPageLabel}
+          </span>
+
+          <button
+            onClick={() => goToFile(1)}
+            disabled={totalPdfFiles !== null && currentFileIdx >= totalPdfFiles}
+            className="flex items-center gap-1.5 px-3 py-1.5 border border-[#E5E0D8] text-[11px] font-medium text-[#1A2B4A] uppercase tracking-[0.1em] hover:bg-[#F4F3F0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            Successivo
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="9 18 15 12 9 6" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   )

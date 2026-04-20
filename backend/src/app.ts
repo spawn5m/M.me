@@ -29,6 +29,7 @@ import { localesPublicRoutes, localesAdminRoutes } from './routes/locales'
 import { maintenancePublicRoutes, maintenanceAdminRoutes } from './routes/maintenance'
 import { syncSystemAuthorization } from './lib/authorization/sync-system-authorization'
 import { MULTIPART_OPTIONS } from './lib/multipart'
+import adminRoutes from './routes/admin'
 
 const app = Fastify({
   bodyLimit: 350 * 1024 * 1024, // 350 MB — necessario per upload catalogo PDF
@@ -85,6 +86,7 @@ const start = async () => {
   await app.register(localesAdminRoutes, { prefix: '/api/admin/locales' })
   await app.register(maintenancePublicRoutes, { prefix: '/api/public/maintenance' })
   await app.register(maintenanceAdminRoutes, { prefix: '/api/admin/maintenance' })
+  await app.register(adminRoutes, { prefix: '/api/admin' })
   await app.register(clientRoutes, { prefix: '/api/client' })
 
   const port = Number(process.env.PORT) || 3001

@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import * as XLSX from 'xlsx'
 import { articlesApi } from '../../lib/api/articles'
 import { pricelistsApi } from '../../lib/api/pricelists'
 import ConfirmDialog from '../../components/admin/ConfirmDialog'
@@ -38,6 +39,9 @@ export default function PriceListDetailPage() {
   const [isSubmittingRule, setIsSubmittingRule] = useState(false)
   const [previewItems, setPreviewItems] = useState<PriceListPreviewItem[]>([])
   const [editableItems, setEditableItems] = useState<EditablePriceItem[]>([])
+  const [importMessage, setImportMessage] = useState<string | null>(null)
+  const [saveSuccess, setSaveSuccess] = useState(false)
+  const importFileRef = useRef<HTMLInputElement>(null)
 
   const { register, handleSubmit, reset, formState: { errors } } = useForm<RuleFormData>({
     defaultValues: { filterType: '', filterValue: '', discountType: 'percentage', discountValue: '' },
@@ -136,6 +140,54 @@ export default function PriceListDetailPage() {
     return () => { cancelled = true }
   }, [priceList])
 
+  const handleDownloadTemplate = () => {
+    if (!priceList) return
+    const rows: (string | number)[][] = [['codice', 'prezzo']]
+    for (const item of editableItems) {
+      const code = item.key.split(':')[1]
+      rows.push([code, item.price !== '' ? parseFloat(item.price) : ''])
+    }
+    const ws = XLSX.utils.aoa_to_sheet(rows)
+    ws['!cols'] = [{ wch: 16 }, { wch: 12 }]
+    const wb = XLSX.utils.book_new()
+    XLSX.utils.book_append_sheet(wb, ws, 'Prezzi')
+    XLSX.writeFile(wb, `${priceList.name}-template.xlsx`)
+  }
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setImportMessage(null)
+    try {
+      const buffer = await file.arrayBuffer()
+      const wb = XLSX.read(buffer)
+      const ws = wb.Sheets[wb.SheetNames[0]]
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' })
+      const codeMap = new Map<string, number>()
+      for (const row of rows) {
+        const code = String(row['codice'] ?? '').trim()
+        const raw = row['prezzo']
+        const price = typeof raw === 'number' ? raw : parseFloat(String(raw))
+        if (code && !isNaN(price) && price >= 0) {
+          codeMap.set(code, price)
+        }
+      }
+      let matched = 0
+      setEditableItems(prev => prev.map(item => {
+        const code = item.key.split(':')[1]
+        if (codeMap.has(code)) {
+          matched++
+          return { ...item, price: String(codeMap.get(code)) }
+        }
+        return item
+      }))
+      setImportMessage(`${matched} prezzi importati. Clicca "Salva Prezzi" per confermare.`)
+    } catch {
+      setImportMessage('Errore lettura file. Verifica formato (CSV o XLSX con colonne codice/prezzo).')
+    }
+  }
+
   const handleRecalculate = async () => {
     if (!id) return
     setIsRecalculating(true)
@@ -161,6 +213,7 @@ export default function PriceListDetailPage() {
   const handleSaveItems = async () => {
     if (!id || !priceList || priceList.parentId) return
     setIsSavingItems(true)
+    setSaveSuccess(false)
     try {
       const items = editableItems
         .filter((item) => item.price.trim() !== '')
@@ -173,6 +226,7 @@ export default function PriceListDetailPage() {
         .filter((item) => !Number.isNaN(item.price))
 
       await pricelistsApi.setItems(id, items)
+      setSaveSuccess(true)
       await load()
     } finally {
       setIsSavingItems(false)
@@ -273,7 +327,6 @@ export default function PriceListDetailPage() {
               >
                 {isPreviewLoading ? 'Calcolo…' : 'Anteprima Prezzi'}
               </button>
-
             )}
 
             {!priceList.autoUpdate && (
@@ -287,15 +340,53 @@ export default function PriceListDetailPage() {
             )}
 
             {!priceList.parentId && (
-              <button
-                onClick={handleSaveItems}
-                disabled={isSavingItems}
-                className="admin-button-primary disabled:opacity-50"
-              >
-                {isSavingItems ? 'Salvataggio…' : 'Salva Prezzi'}
-              </button>
+              <>
+                <input
+                  ref={importFileRef}
+                  type="file"
+                  accept=".csv,.xlsx,.xls"
+                  className="hidden"
+                  onChange={handleImportFile}
+                />
+                <button
+                  onClick={handleDownloadTemplate}
+                  className="admin-button-secondary"
+                >
+                  Scarica Template
+                </button>
+                <button
+                  onClick={() => importFileRef.current?.click()}
+                  className="admin-button-secondary"
+                >
+                  Importa CSV / XLSX
+                </button>
+                <button
+                  onClick={handleSaveItems}
+                  disabled={isSavingItems}
+                  className="admin-button-primary disabled:opacity-50"
+                >
+                  {isSavingItems ? 'Salvataggio…' : 'Salva Prezzi'}
+                </button>
+              </>
             )}
           </div>
+
+          {importMessage && (
+            <p className={[
+              'mb-4 border px-3 py-2 text-sm',
+              importMessage.startsWith('Errore')
+                ? 'border-red-200 bg-red-50 text-red-600'
+                : 'border-green-200 bg-green-50 text-green-700'
+            ].join(' ')}>
+              {importMessage}
+            </p>
+          )}
+
+          {saveSuccess && (
+            <p className="mb-4 border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+              Prezzi salvati.
+            </p>
+          )}
 
           {!priceList.parentId ? (
             editableItems.length === 0 ? (

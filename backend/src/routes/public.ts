@@ -25,7 +25,7 @@ const contactSchema = z.object({
 
 const paginationSchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(12),
+  limit: z.coerce.number().int().positive().max(500).default(12),
 })
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -580,10 +580,19 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
 
   // ── Marmista ──────────────────────────────────────────────────────────────
 
+  fastify.get('/marmista-categories', async (_request, reply) => {
+    const categories = await fastify.prisma.marmistaCategory.findMany({
+      orderBy: { label: 'asc' },
+      select: { code: true, label: true },
+    })
+    return reply.send({ data: categories })
+  })
+
   fastify.get('/marmista', async (request, reply) => {
     const queryRaw = request.query as Record<string, unknown>
     const parsed = paginationSchema.extend({
       category: z.string().optional(),
+      search: z.string().optional(),
     }).safeParse(queryRaw)
 
     if (!parsed.success) {
@@ -594,12 +603,18 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
       })
     }
 
-    const { page, limit, category } = parsed.data
+    const { page, limit, category, search } = parsed.data
     const skip = (page - 1) * limit
 
-    const where = category
-      ? { categories: { some: { code: category } } }
-      : {}
+    const where = {
+      ...(category ? { categories: { some: { code: category } } } : {}),
+      ...(search ? {
+        OR: [
+          { code: { contains: search, mode: 'insensitive' as const } },
+          { description: { contains: search, mode: 'insensitive' as const } },
+        ],
+      } : {}),
+    }
 
     const [total, articles] = await Promise.all([
       fastify.prisma.marmistaArticle.count({ where }),
@@ -615,6 +630,7 @@ const publicRoutes: FastifyPluginAsync = async (fastify) => {
           notes: true,
           pdfPage: true,
           publicPrice: true,
+          color: true,
           createdAt: true,
           updatedAt: true,
           categories: { select: { id: true, code: true, label: true } },

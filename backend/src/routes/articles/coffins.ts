@@ -233,6 +233,13 @@ const coffinsRoutes: FastifyPluginAsync = async (fastify) => {
     return reply.status(204).send()
   })
 
+  fastify.delete('/', {
+    preHandler: [fastify.checkPermission('articles.coffins.delete')]
+  }, async (_req, reply) => {
+    await fastify.prisma.coffinArticle.deleteMany({})
+    return reply.status(204).send()
+  })
+
   // POST /import — importa da Excel
   fastify.post('/import', {
     preHandler: [fastify.checkPermission('articles.coffins.import')]
