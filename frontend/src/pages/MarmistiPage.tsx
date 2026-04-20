@@ -13,8 +13,8 @@ interface MarmistaPriceList { id: string; name: string; priceListType: 'sale' | 
 
 export default function MarmistiPage() {
   const { t } = useTranslation()
-  const { user, hasPermission } = useAuth()
-  const isMarmista = user?.roles?.includes('marmista') ?? false
+  const { hasPermission } = useAuth()
+  const isMarmista = hasPermission('client.catalog.marmista.read')
   const canSeePurchase = hasPermission('pricelists.purchase.read')
 
   const [filterSearch, setFilterSearch] = useState('')

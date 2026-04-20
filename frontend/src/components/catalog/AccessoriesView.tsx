@@ -253,7 +253,7 @@ export default function AccessoriesView({
                     <span className="flex items-center gap-1 shrink-0 pt-0.5">
                       <span className="font-mono text-[10px] text-[#C9A96E] tracking-widest">{item.code}</span>
                       {item.color && (
-                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-label="Disponibile a colori" title="Disponibile a colori">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-label="Disponibile a colori">
                           <circle cx="6" cy="6" r="4" fill="#E74C3C"/>
                           <circle cx="18" cy="6" r="4" fill="#3498DB"/>
                           <circle cx="6" cy="18" r="4" fill="#2ECC71"/>

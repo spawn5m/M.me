@@ -554,7 +554,7 @@ export default function UsersPage() {
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
-          <AnagraficaFields register={register} errors={errors} />
+          <AnagraficaFields register={register as unknown as AnyRegister} errors={errors as unknown as AnyErrors} />
 
           <div>
             <label className="admin-label">
@@ -618,7 +618,7 @@ export default function UsersPage() {
             {errorsEdit.email && <p className="text-red-500 text-xs mt-1">{errorsEdit.email.message}</p>}
           </div>
 
-          <AnagraficaFields register={registerEdit} errors={errorsEdit} />
+          <AnagraficaFields register={registerEdit as unknown as AnyRegister} errors={errorsEdit as unknown as AnyErrors} />
 
           <div>
             <label className="admin-label">Ruoli</label>
